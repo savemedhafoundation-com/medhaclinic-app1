@@ -87,7 +87,7 @@ export default function HealthAssessmentScreen() {
             {/* CTA */}
             <TouchableOpacity
               className="flex-row items-center justify-center bg-[#1fa2ff] py-4 rounded-[30px] gap-2"
-            //   onPress={() => router.push('/assessment/step-1')}
+               onPress={() => router.push('/process')}
             >
               <Text className="text-white text-[16px] font-bold">Start Health Assessment</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
