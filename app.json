@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "medha-clinic",
+    "name": "medhaclinic",
     "slug": "medha-clinic",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -45,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "729a6d9c-0240-4d73-9bf3-8cb689d25829"
+      }
     }
   }
 }

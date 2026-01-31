@@ -1,254 +1,179 @@
-//updated
-
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import SvgHeader from '../../components/Clipperbg';
+import BottomNav from '../../components/BottomNav';
+
 import {
-  ImageBackground,
+  Image,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import bg from '../../assets/images/headerbar.png';
-// import logo from '../../assets/images/medha_logo.png';
+const HEADER_HEIGHT = 220;
+const logo = require('../../assets/images/medha_logo.png');
 
-export default function BasicDetailsScreen() {
+export default function HealthAssessmentIntro() {
   return (
-        <View style={styles.root}>
-             <View style={styles.appBarContainer}>
-        <ImageBackground
-          source={bg}
-          style={styles.appBar}
-          imageStyle={styles.appBarImage}
-          resizeMode="cover"
-        >
-          <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.back}>←</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
+    <View className="flex-1 bg-[#f5f6f8]">
+
+      {/* ===== FIXED HEADER / APP BAR ===== */}
+  <View className="absolute top-0 left-0 right-0 z-10">
+  <SvgHeader />
+
+  <SafeAreaView className="absolute top-0 w-full">
+    <View className="h-14 justify-center mt-4">
+
+      {/* LEFT + RIGHT ICONS */}
+      <View className="absolute left-4 right-4 flex-row items-center justify-between">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <Ionicons name="menu" size={26} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-{/* <ImageBackground
-  source={bg}
-  style={styles.appBar}
-  imageStyle={styles.appBarImage}
-      resizeMode="cover"   // 🔥 NOT contain
-  // 🔥 IMPORTANT
->
-  <SafeAreaView edges={[]}>
-    <View style={styles.headerRow}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>←</Text>
-      </TouchableOpacity>
+      {/* CENTER LOGO */}
+      <View className="items-center">
+        <Image
+          source={logo}
+          className="w-[150px] h-[100px]"
+          resizeMode="contain"
+        />
+      </View>
 
-      <View style={{ width: 24 }} />
     </View>
   </SafeAreaView>
-</ImageBackground> */}
-     
-   <View style={styles.scrollContainer}>
-     <ScrollView contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-     
-     >
-          {/* <Image source={logo} style={styles.logo} resizeMode="contain" /> */}
+</View>
 
-          <Text style={styles.heading}>Let’s Get started</Text>
-          <Text style={styles.subheading}>
-            Please tell us a bit about yourself so we can guide your health journey.
-          </Text>
+      {/* ===== SCROLL VIEW (SCROLLS UNDER HEADER) ===== */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 220,
+        }}
+      >
+        {/* Spacer = header height */}
+        <View style={{ height: HEADER_HEIGHT }} />
 
-          <Text style={styles.step}>Step 1 of 2</Text>
-          <View style={styles.progressBar}>
-            <View style={styles.progressFill} />
+        {/* Breadcrumb */}
+        <Text className="text-gray-500 text-[14px] mb-1">
+          ‹ Health Assessment
+        </Text>
+
+        {/* Title */}
+        <Text className="text-[34px] font-bold text-[#0b4ea2]">
+          Let’s Get started
+        </Text>
+
+        <Text className="text-[16px] text-[#1f3c66] mt-2 mb-6">
+          Please tell us a bit about yourself so we can guide
+          your health journey.
+        </Text>
+
+        {/* Progress */}
+        <View className="mb-8">
+          <View className="h-3 bg-[#d6e6ff] rounded-full overflow-hidden">
+            <View className="h-3 w-[50%] bg-[#0b4ea2] rounded-full" />
           </View>
-
-          {/* Cards */}
-                    <InfoCard icon="person" title="Basic Details" desc="Know your Health abilities"
-                      route="/healthassessment"
-
-                    />
-
-
-       <InfoCard
-  icon="restaurant"
-  title="Diet & Lifestyle"
-  desc="Eating habits & daily activity"
-  route="/dietscreen"
-/>
-
-<InfoCard
-  icon="nutrition"
-  title="Your Food Preferences"
-  desc="Vegetarian, non-vegetarian or mixed"
-  route="/healthassessment/food-preferences"
-/>
-
-<InfoCard
-  icon="medkit"
-  title="Medical History"
-  desc="Existing medical conditions"
-  route="/healthassessment/medical-history"
-/>
-
-{/* <InfoCard
-  icon="accessibility"
-  title="Current Symptoms"
-  desc="Symptoms you are facing now"
-  route="/healthassessment/current-symptoms"
-/> */}
-
-          <Text style={styles.note}>
-            All fields are optional, but more information means better care for you.
-            Your details will remain confidential.
+          <Text className="text-[#0b4ea2] text-[14px] mt-2">
+            Step 1 of 2
           </Text>
+        </View>
 
-          <TouchableOpacity>
-            <Text style={styles.skip}>Skip for now</Text>
-          </TouchableOpacity>
+        {/* Cards */}
+        <AssessmentCard
+          icon="person"
+          title="Basic Health Assessment"
+          desc="Know your Health abilities"
+          onPress={() => router.push('/healthassessment')}
+        />
 
-          <TouchableOpacity style={styles.cta}>
-            <Text style={styles.ctaText}>Next</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+        <AssessmentCard
+          icon="heart"
+          title="Daily Immunity Checkup"
+          desc="Know your daily health reports"
+          onPress={() => router.push('immunity/dailyimmunity')}
+        />
+
+        <AssessmentCard
+          icon="calendar"
+          title="Weekly Immunity Checkup"
+          desc="Know your weekly health reports"
+          onPress={() => router.push('immunity/weeklyimmunity')}
+        />
+
+        {/* Info */}
+        <View className="bg-white rounded-[24px] p-4 mt-6">
+          <Text className="text-center text-[14px] text-[#1f3c66] leading-6">
+            All fields are optional, but more information means
+            better care for you. Your details will remain
+            confidential.
+          </Text>
+        </View>
+
+        {/* Actions */}
+        <TouchableOpacity className="mt-5">
+          <Text className="text-center text-[#0b4ea2] text-[15px]">
+            Skip for now
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="mt-4 bg-[#1fa2ff] py-4 rounded-full flex-row items-center justify-center gap-2"
+          onPress={() => router.push('/healthassessment')}
+        >
+          <Text className="text-white text-[18px] font-semibold">
+            Next
+          </Text>
+          <Ionicons name="chevron-forward" size={22} color="#fff" />
+        </TouchableOpacity>
+      </ScrollView>
+        <View className="absolute bottom-0 left-0 right-0">
+    <BottomNav />
+  </View>
     </View>
-
-
-    
   );
 }
 
-function InfoCard({ icon, title, desc, route }) {
+/* ================= CARD ================= */
+
+function AssessmentCard({ icon, title, desc, onPress }) {
   return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={styles.card}
-      onPress={() => router.push(route)}
-    >
-      <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={22} color="#0b4ea2" />
-      </View>
+    <TouchableOpacity activeOpacity={0.9} onPress={onPress} className="mb-4">
+      <View
+        className="bg-[#0b4ea2] px-4 py-5 flex-row items-center"
+        style={{
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 10,
+          borderBottomLeftRadius: 10,
+          borderBottomRightRadius: 20,
+        }}
+      >
+        <View className="w-12 h-12 rounded-full bg-white items-center justify-center mr-4">
+          <Ionicons name={icon} size={22} color="#0b4ea2" />
+        </View>
 
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.cardDesc}>{desc}</Text>
-      </View>
+        <View className="flex-1">
+          <Text className="text-white text-[18px] font-semibold">
+            {title}
+          </Text>
+          <Text className="text-[#d6ecff] text-[14px] mt-1">
+            {desc}
+          </Text>
+        </View>
 
-      <View style={styles.knowMore}>
-        <Text style={styles.knowText}>Know More</Text>
+        <View className="bg-white px-4 py-2 rounded-full">
+          <Text className="text-[#0b4ea2] font-semibold text-[13px]">
+            Get Started
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  bg: { flex: 2 },
-  overlay: { flex: 1 },
-  container: { padding:30, paddingBottom: 170 },
-
-  logo: { width: 220, height: 80, alignSelf: 'center', marginBottom: 20 },
- header: {
-    height: 150,
-    justifyContent: 'flex-end',
-  },
-
-  headerImage: {
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-
-  headerRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 16,
-  paddingBottom: 20,
-  justifyContent: 'space-between',
-  },
-  heading: { fontSize: 32, fontWeight: '700', color: '#0b4ea2', marginTop: 16,},
-  subheading: { fontSize: 16, color: '#1f3c66', marginTop: 14, marginBottom: 20 },
-
-  step: { fontSize: 14, color: '#0b4ea2', marginBottom: 6 },
-  progressBar: { height: 6, backgroundColor: '#d6e6ff', borderRadius: 3, marginBottom: 24 },
-  progressFill: { width: '50%', height: 6, backgroundColor: '#0b4ea2', borderRadius: 3 },
-
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0b4ea2',
-    borderRadius: 26,
-    padding: 16,
-    marginBottom: 14,
-  },
-
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-
-  cardTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  cardDesc: { color: '#d6ecff', fontSize: 13, marginTop: 4 },
-
-appBar: {
-  width: '100%',
-  height: 220,              // 🔥 slightly taller
-  justifyContent: 'flex-end',
-},
-
-  // appBarImage: {
-  //   borderBottomLeftRadius: 28,
-  //   borderBottomRightRadius: 28,
-  // },
-
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-
-    justifyContent: 'space-between',
-  },
-  knowMore: {
-    backgroundColor: '#1fa2ff',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 14,
-    marginLeft: 10,
-  },
-  knowText: { color: '#fff', fontSize: 12 },
-
-  note: { textAlign: 'center', fontSize: 13, color: '#1f3c66', marginTop: 20 },
-  skip: { textAlign: 'center', color: '#0b4ea2', marginTop: 8 },
-root: {
-  flex: 1,
-  backgroundColor: '#f5f6f8',
-},
-
-appBarContainer: {
-  height: 220,   // fixed header height
-},
-
-scrollContainer: {
-  flex: 1,       // 🔥 REQUIRED for scrolling
-},
-  cta: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignSelf: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1fa2ff',
-    paddingHorizontal: 40,
-    paddingVertical: 14,
-    borderRadius: 30,
-    gap: 8,
-  },
-  ctaText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-});

@@ -19,6 +19,10 @@ export default function RootLayout() {
       <Stack.Screen name="dashboard" />
       <Stack.Screen name="information" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="certification" />
+      <Stack.Screen name="immunity/dailyimmunity" />
+      <Stack.Screen name="immunity/weeklyimmunity" />
+      <Stack.Screen name="immunity/Immunity _results" />
     </Stack>
   );
 }

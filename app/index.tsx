@@ -75,7 +75,7 @@ export default function WelcomeScreen() {
             }).start(() => {
               try {
                 // IMPORTANT: Make sure "Home" matches your navigator screen name exactly.
-                router.push('/Loginscreen');
+                router.replace('/Loginscreen');
               } catch (e) {
                 // if navigation fails, allow retry and reset
                 isNavigating.current = false;         

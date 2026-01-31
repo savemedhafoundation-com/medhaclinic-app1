@@ -20,6 +20,13 @@ export default function RootLayout() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="dietscreen" />
-    </Stack>
+      <Stack.Screen name="foodpreferance"/>
+      <Stack.Screen name="process"/>
+      <Stack.Screen name="certification"/>
+      <Stack.Screen name="dashboard"/>
+      <Stack.Screen name="immunity/Immunity _results"/>
+      <Stack.Screen name="immunity/dailyimmunity"/>
+
+          </Stack>
   );
 }

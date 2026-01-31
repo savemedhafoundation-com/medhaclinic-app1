@@ -3,12 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    Image,
-    ImageBackground,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ImageBackground,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,29 +31,42 @@ export default function DietLifestyleScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ padding: 20, paddingBottom: 140 }}
           >
-            {/* HEADER */}
+            {/* ===== HEADER ===== */}
             <View className="flex-row items-center gap-3">
               <TouchableOpacity onPress={() => router.back()}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
 
-              <Image source={logo} className="w-[180px] h-[60px]" resizeMode="contain" />
+              <Image
+                source={logo}
+                className="w-[180px] h-[60px]"
+                resizeMode="contain"
+              />
             </View>
 
-            <Text className="text-[28px] font-bold text-[#0b4ea2] mt-4">Diet & Lifestyle</Text>
-            <Text className="text-[16px] text-[#1f3c66] mb-5">
-              Tell us about your eating habits and lifestyle
+            {/* ===== TITLE + SUBTITLE (REORDERED) ===== */}
+            <Text className="mt-4 mb-5">
+              <Text className="text-[28px] font-bold text-[#0b4ea2]">
+                Diet & Lifestyle{'\n'}
+              </Text>
+              <Text className="text-[16px] text-[#1f3c66]">
+                Tell us about your eating habits and lifestyle
+              </Text>
             </Text>
 
-            {/* CARD */}
+            {/* ===== EATING HABITS CARD ===== */}
             <View className="bg-white rounded-[22px] p-4 mb-5">
-              <Text className="text-[18px] font-bold text-[#0b4ea2]">Eating Habits</Text>
-              <Text className="text-[14px] text-[#1f3c66] mt-2.5 mb-3">
-                How would you describe your eating habits?
+              <Text className="mb-3">
+                <Text className="text-[18px] font-bold text-[#0b4ea2]">
+                  Eating Habits{'\n'}
+                </Text>
+                <Text className="text-[14px] text-[#1f3c66]">
+                  How would you describe your eating habits?
+                </Text>
               </Text>
 
               <View className="flex-row gap-2.5 mb-4">
-                {['Very Healthy', 'Moderate', 'Not Healthy'].map((item) => (
+                {['Very Healthy', 'Moderate', 'Not Healthy'].map(item => (
                   <SelectCard
                     key={item}
                     text={item}
@@ -63,12 +76,14 @@ export default function DietLifestyleScreen() {
                 ))}
               </View>
 
-              <Text className="text-[14px] text-[#1f3c66] mt-2.5 mb-3">
-                How many meals do you eat per day?
+              <Text className="mb-3">
+                <Text className="text-[14px] text-[#1f3c66]">
+                  How many meals do you eat per day?
+                </Text>
               </Text>
 
-              <View className="flex-row gap-2.5 mb-4">
-                {['1', '2', '3', '4+'].map((item) => (
+              <View className="flex-row gap-2.5">
+                {['1', '2', '3', '4+'].map(item => (
                   <Pill
                     key={item}
                     text={item}
@@ -79,38 +94,49 @@ export default function DietLifestyleScreen() {
               </View>
             </View>
 
-            {/* ACTIVITY */}
+            {/* ===== ACTIVITY CARD ===== */}
             <View className="bg-white rounded-[22px] p-4 mb-5">
-              <Text className="text-[18px] font-bold text-[#0b4ea2]">Daily Activity</Text>
-              <Text className="text-[14px] text-[#1f3c66] mt-2.5 mb-3">
-                How active are you during the day?
+              <Text className="mb-3">
+                <Text className="text-[18px] font-bold text-[#0b4ea2]">
+                  Daily Activity{'\n'}
+                </Text>
+                <Text className="text-[14px] text-[#1f3c66]">
+                  How active are you during the day?
+                </Text>
               </Text>
 
               <View className="flex-row flex-wrap gap-3">
-                {['Sedentary', 'Lightly active', 'Moderately', 'Very active'].map(
-                  (item) => (
-                    <ActivityBtn
-                      key={item}
-                      text={item}
-                      active={activity === item}
-                      onPress={() => setActivity(item)}
-                    />
-                  )
-                )}
+                {[
+                  'Sedentary',
+                  'Lightly active',
+                  'Moderately',
+                  'Very active',
+                ].map(item => (
+                  <ActivityBtn
+                    key={item}
+                    text={item}
+                    active={activity === item}
+                    onPress={() => setActivity(item)}
+                  />
+                ))}
               </View>
             </View>
 
-            {/* CTA */}
+            {/* ===== CTA ===== */}
             <TouchableOpacity
               className="flex-row items-center justify-center bg-[#1fa2ff] py-3.5 rounded-[30px] gap-1.5 mt-2.5"
-              onPress={() => router.push('/assessment/next-step')}
+              onPress={() => router.push('/foodpreferance')}
             >
-              <Text className="text-white text-[16px] font-semibold">Next</Text>
+              <Text className="text-white text-[16px] font-semibold">
+                Next Step
+              </Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
 
+            {/* ===== FOOTER NOTE ===== */}
             <Text className="text-center text-[12px] text-[#1f3c66] mt-3">
-              Your body's needs are unique. This helps us know you better.
+              Your body's needs are unique.{'\n'}
+              This helps us know you better.
             </Text>
           </ScrollView>
         </SafeAreaView>
@@ -119,7 +145,7 @@ export default function DietLifestyleScreen() {
   );
 }
 
-/* ---------- COMPONENTS ---------- */
+/* ================= COMPONENTS ================= */
 
 type OptionButtonProps = {
   text: string;
@@ -130,10 +156,17 @@ type OptionButtonProps = {
 function SelectCard({ text, active, onPress }: OptionButtonProps) {
   return (
     <TouchableOpacity
-      className={`flex-1 py-[18px] rounded-[14px] items-center ${active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'}`}
+      className={`flex-1 py-[18px] rounded-[14px] items-center ${
+        active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'
+      }`}
       onPress={onPress}
+      activeOpacity={0.9}
     >
-      <Text className={`text-[13px] font-semibold ${active ? 'text-white' : 'text-[#0b4ea2]'}`}>
+      <Text
+        className={`text-[13px] font-semibold ${
+          active ? 'text-white' : 'text-[#0b4ea2]'
+        }`}
+      >
         {text}
       </Text>
     </TouchableOpacity>
@@ -143,10 +176,17 @@ function SelectCard({ text, active, onPress }: OptionButtonProps) {
 function Pill({ text, active, onPress }: OptionButtonProps) {
   return (
     <TouchableOpacity
-      className={`px-4 py-2 rounded-[20px] ${active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'}`}
+      className={`px-4 py-2 rounded-[20px] ${
+        active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'
+      }`}
       onPress={onPress}
+      activeOpacity={0.9}
     >
-      <Text className={`font-semibold ${active ? 'text-white' : 'text-[#0b4ea2]'}`}>
+      <Text
+        className={`font-semibold ${
+          active ? 'text-white' : 'text-[#0b4ea2]'
+        }`}
+      >
         {text}
       </Text>
     </TouchableOpacity>
@@ -156,10 +196,17 @@ function Pill({ text, active, onPress }: OptionButtonProps) {
 function ActivityBtn({ text, active, onPress }: OptionButtonProps) {
   return (
     <TouchableOpacity
-      className={`w-[48%] py-3.5 rounded-[22px] items-center ${active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'}`}
+      className={`w-[48%] py-3.5 rounded-[22px] items-center ${
+        active ? 'bg-[#1fa2ff]' : 'bg-[#eef5ff]'
+      }`}
       onPress={onPress}
+      activeOpacity={0.9}
     >
-      <Text className={`text-[14px] font-semibold ${active ? 'text-white' : 'text-[#0b4ea2]'}`}>
+      <Text
+        className={`text-[14px] font-semibold ${
+          active ? 'text-white' : 'text-[#0b4ea2]'
+        }`}
+      >
         {text}
       </Text>
     </TouchableOpacity>
