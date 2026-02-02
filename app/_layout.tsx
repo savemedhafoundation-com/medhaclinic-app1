@@ -21,6 +21,7 @@ export default function RootLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="dietscreen" />
       <Stack.Screen name="foodpreferance"/>
+      <Stack.Screen name="healthassessment"/>
       <Stack.Screen name="process"/>
       <Stack.Screen name="certification"/>
       <Stack.Screen name="dashboard"/>

@@ -1,12 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-<<<<<<< HEAD
 import SvgHeader from '../../components/Clipperbg';
 import BottomNav from '../../components/BottomNav';
 
-=======
 import type { ComponentProps } from 'react';
->>>>>>> 111639f13e382132a3008a4220d05771f458d764
 import {
   Image,
   ScrollView,
@@ -16,57 +13,49 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-<<<<<<< HEAD
 const HEADER_HEIGHT = 220;
 const logo = require('../../assets/images/medha_logo.png');
-=======
-import bg from '../../assets/images/headerbar.png';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
-type InfoCardProps = {
+type AssessmentCardProps = {
   icon: IoniconName;
   title: string;
   desc: string;
-  route: string;
+  onPress: () => void;
 };
->>>>>>> 111639f13e382132a3008a4220d05771f458d764
 
 export default function HealthAssessmentIntro() {
   return (
     <View className="flex-1 bg-[#f5f6f8]">
-<<<<<<< HEAD
-
       {/* ===== FIXED HEADER / APP BAR ===== */}
-  <View className="absolute top-0 left-0 right-0 z-10">
-  <SvgHeader />
+      <View className="absolute top-0 left-0 right-0 z-10">
+        <SvgHeader />
 
-  <SafeAreaView className="absolute top-0 w-full">
-    <View className="h-14 justify-center mt-4">
+        <SafeAreaView className="absolute top-0 w-full">
+          <View className="h-14 justify-center mt-4">
+            {/* LEFT + RIGHT ICONS */}
+            <View className="absolute left-4 right-4 flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
 
-      {/* LEFT + RIGHT ICONS */}
-      <View className="absolute left-4 right-4 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={26} color="#fff" />
-        </TouchableOpacity>
+              <TouchableOpacity>
+                <Ionicons name="menu" size={26} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity>
-          <Ionicons name="menu" size={26} color="#fff" />
-        </TouchableOpacity>
+            {/* CENTER LOGO */}
+            <View className="items-center">
+              <Image
+                source={logo}
+                className="w-[150px] h-[100px]"
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        </SafeAreaView>
       </View>
-
-      {/* CENTER LOGO */}
-      <View className="items-center">
-        <Image
-          source={logo}
-          className="w-[150px] h-[100px]"
-          resizeMode="contain"
-        />
-      </View>
-
-    </View>
-  </SafeAreaView>
-</View>
 
       {/* ===== SCROLL VIEW (SCROLLS UNDER HEADER) ===== */}
       <ScrollView
@@ -86,7 +75,7 @@ export default function HealthAssessmentIntro() {
 
         {/* Title */}
         <Text className="text-[34px] font-bold text-[#0b4ea2]">
-          Let’s Get started
+          Let's Get started
         </Text>
 
         <Text className="text-[16px] text-[#1f3c66] mt-2 mb-6">
@@ -116,14 +105,14 @@ export default function HealthAssessmentIntro() {
           icon="heart"
           title="Daily Immunity Checkup"
           desc="Know your daily health reports"
-          onPress={() => router.push('immunity/dailyimmunity')}
+          onPress={() => router.push('/immunity/dailyimmunity')}
         />
 
         <AssessmentCard
           icon="calendar"
           title="Weekly Immunity Checkup"
           desc="Know your weekly health reports"
-          onPress={() => router.push('immunity/weeklyimmunity')}
+          onPress={() => router.push('/immunity/weeklyimmunity')}
         />
 
         {/* Info */}
@@ -152,88 +141,18 @@ export default function HealthAssessmentIntro() {
           <Ionicons name="chevron-forward" size={22} color="#fff" />
         </TouchableOpacity>
       </ScrollView>
-        <View className="absolute bottom-0 left-0 right-0">
-    <BottomNav />
-  </View>
-=======
-      <View className="h-[220px]">
-        <ImageBackground source={bg} className="w-full h-[220px] justify-end" resizeMode="cover">
-          <View className="flex-row items-center justify-between px-4 pb-5">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-white text-[20px]">←</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
+
+      {/* Bottom Navigation */}
+      <View className="absolute bottom-0 left-0 right-0">
+        <BottomNav />
       </View>
-
-      <View className="flex-1">
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View className="p-[30px] pb-[170px]">
-            <Text className="text-[32px] font-bold text-[#0b4ea2] mt-4">
-              Let’s Get started
-            </Text>
-            <Text className="text-[16px] text-[#1f3c66] mt-3.5 mb-5">
-              Please tell us a bit about yourself so we can guide your health journey.
-            </Text>
-
-            <Text className="text-[14px] text-[#0b4ea2] mb-1.5">Step 1 of 2</Text>
-            <View className="h-[6px] bg-[#d6e6ff] rounded-[3px] mb-6">
-              <View className="w-1/2 h-[6px] bg-[#0b4ea2] rounded-[3px]" />
-            </View>
-
-            <InfoCard
-              icon="person"
-              title="Basic Details"
-              desc="Know your Health abilities"
-              route="/healthassessment"
-            />
-
-            <InfoCard
-              icon="restaurant"
-              title="Diet & Lifestyle"
-              desc="Eating habits & daily activity"
-              route="/dietscreen"
-            />
-
-            <InfoCard
-              icon="nutrition"
-              title="Your Food Preferences"
-              desc="Vegetarian, non-vegetarian or mixed"
-              route="/healthassessment/food-preferences"
-            />
-
-            <InfoCard
-              icon="medkit"
-              title="Medical History"
-              desc="Existing medical conditions"
-              route="/healthassessment/medical-history"
-            />
-
-            <Text className="text-center text-[13px] text-[#1f3c66] mt-5">
-              All fields are optional, but more information means better care for you. Your details
-              will remain confidential.
-            </Text>
-
-            <TouchableOpacity>
-              <Text className="text-center text-[#0b4ea2] mt-2">Skip for now</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="mt-5 flex-row self-center items-center bg-[#1fa2ff] px-10 py-[14px] rounded-[30px] gap-2">
-              <Text className="text-white text-[16px] font-semibold">Next</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
->>>>>>> 111639f13e382132a3008a4220d05771f458d764
     </View>
   );
 }
 
-<<<<<<< HEAD
-/* ================= CARD ================= */
+/* ================= CARD COMPONENT ================= */
 
-function AssessmentCard({ icon, title, desc, onPress }) {
+function AssessmentCard({ icon, title, desc, onPress }: AssessmentCardProps) {
   return (
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} className="mb-4">
       <View
@@ -263,26 +182,6 @@ function AssessmentCard({ icon, title, desc, onPress }) {
             Get Started
           </Text>
         </View>
-=======
-function InfoCard({ icon, title, desc, route }: InfoCardProps) {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      className="flex-row items-center bg-[#0b4ea2] rounded-[26px] p-4 mb-[14px]"
-      onPress={() => router.push(route)}
-    >
-      <View className="w-[44px] h-[44px] rounded-[22px] bg-white items-center justify-center mr-[14px]">
-        <Ionicons name={icon} size={22} color="#0b4ea2" />
-      </View>
-
-      <View className="flex-1">
-        <Text className="text-white text-[16px] font-semibold">{title}</Text>
-        <Text className="text-[#d6ecff] text-[13px] mt-1">{desc}</Text>
-      </View>
-
-      <View className="bg-[#1fa2ff] px-[14px] py-[6px] rounded-[14px] ml-[10px]">
-        <Text className="text-white text-[12px]">Know More</Text>
->>>>>>> 111639f13e382132a3008a4220d05771f458d764
       </View>
     </TouchableOpacity>
   );
