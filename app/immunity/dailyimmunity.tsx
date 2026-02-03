@@ -11,7 +11,8 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import SvgSpeedometer from '../../components/Svgspeedometer';
 import SvgHeader from '../../components/Clipperbg';
-
+import { Animated } from 'react-native';
+import { useRef } from 'react';
 /* ================= ASSETS ================= */
 const emojiLow = require('../../assets/images/low.png');
 const emojiNormal = require('../../assets/images/normal.png');
@@ -134,15 +135,15 @@ export default function TodayImmunityCheck() {
         {QUESTIONS.map((q, i) => (
           <View
             key={i}
-            className="bg-white border border-[#bfe2ff] rounded-[18px] px-4 py-3 mb-4"
+            className="bg-white border border-[#bfe2ff] rounded-[18px] px-4 py-6 mb-6"
           >
-            <View className="flex-row items-center mb-3">
+            <View className="flex-row items-center mb-10">
               <Ionicons
                 name="checkmark-circle"
                 size={18}
                 color="#1fa2ff"
               />
-              <Text className="ml-2 text-[15px] font-semibold text-[#0b4ea2]">
+              <Text className="ml-2 text-[20px] font-semibold text-[#0b4ea2]">
                 {q.label}
               </Text>
             </View>
@@ -209,14 +210,43 @@ export default function TodayImmunityCheck() {
 
 /* ================= EMOJI ================= */
 function Emoji({ img, label, active, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    // 🔥 ALWAYS animate on tap
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 2.3,
+        duration: 170,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // then update parent state
+    onPress();
+  };
+
   return (
     <TouchableOpacity
-      onPress={onPress}
-      className="items-center w-[90px]"
+      onPress={handlePress}
       activeOpacity={0.85}
+      className="items-center w-[90px]"
     >
-      <Image source={img} className="w-10 h-10 mb-1" resizeMode="contain" />
+      {/* Animated Emoji */}
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Image
+          source={img}
+          className="w-10 h-10 mb-1"
+          resizeMode="contain"
+        />
+      </Animated.View>
 
+      {/* Label */}
       <View
         className={`px-4 py-[4px] rounded-full ${
           active ? 'bg-[#1fa2ff]' : 'bg-transparent'

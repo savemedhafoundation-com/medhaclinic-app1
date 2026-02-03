@@ -108,7 +108,7 @@ export default function ProcessPage() {
   };
 
   const selectOption = (qIndex, score, oIndex) => {
-    animateScale(qIndex, oIndex);
+         (qIndex, oIndex);
     setAnswers(prev => ({
       ...prev,
       [qIndex]: score,

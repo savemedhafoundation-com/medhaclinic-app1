@@ -155,6 +155,7 @@ export default function WeeklyImmunityCheck() {
           <Text className="text-white text-[18px] font-semibold">
             Prepare Status Report
           </Text>
+          onPress={() => router.push("certification/weekly")}
         </TouchableOpacity>
       </ScrollView>
     </View>

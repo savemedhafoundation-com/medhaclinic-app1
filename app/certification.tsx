@@ -8,7 +8,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
- 
+import { CgProfile } from "react-icons/cg";
+
 // Assets
 import logo from '../assets/images/medha_logo.png';
 import checkIcon from '../assets/images/check.png';
@@ -103,9 +104,7 @@ export default function CertificatePage() {
         <Text className="text-gray-700 text-[16px] leading-7">
           This certifies that {patientName} is in excellent
           health condition, having achieved a Health Score
-          of {health.toFixed(1)}/10 and an Immunity Score of{' '}
-          {immunity.toFixed(1)}/10 based on comprehensive
-          assessments.
+          of {health.toFixed(1)}/10.
         </Text>
       </View>
 

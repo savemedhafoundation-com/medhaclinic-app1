@@ -14,13 +14,13 @@ export default function SvgHeader() {
   return (
     <Svg
       width="100%"
-      height={190}
+      height={170}
       viewBox="0 0 393 190"
       preserveAspectRatio="none"
     >
       <Defs>
         <LinearGradient
-          id="paint0_linear"
+          id="paint0_linear"    
           x1="383"
           y1="86.5"
           x2="432"
