@@ -40,13 +40,13 @@ export default function InformationScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0B3A6E]">
-      <ImageBackground source={bg} className="flex-1" resizeMode="cover">
+    <SafeAreaView className="flex-2 bg-[#0B3A6E]">
+      <ImageBackground source={bg} className="flex-2" resizeMode="cover">
         {/* ================= MAIN CONTENT ================= */}
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View className="p-5 pb-[60px]">
+          <View className="p-5 pb-[70px]">
             {/* ================= HEADER ================= */}
-            <View className="flex-row justify-between items-center mb-[76px] mt-[70px] relative">
+            <View className="flex-row justify-between items-center mb-[86px] mt-[70px] relative">
               <View className="absolute left-0 right-0 items-center">
                 <Image source={logo} className="w-[254px] h-[254px]" resizeMode="contain" />
               </View>
@@ -57,7 +57,7 @@ export default function InformationScreen() {
               Welcome to{`\n`}Medha Clinic
             </Text>
 
-            <Text className="text-[#E0F2FE] text-[14px] mb-[18px]">
+            <Text className="text-[#E0F2FE] text-[14px] mb-[28px]">
               We are here to understand your body and guide recovery naturally.
             </Text>
 

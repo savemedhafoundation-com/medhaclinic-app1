@@ -1,23 +1,39 @@
 import { Ionicons } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
 import { TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
 
   const tabs = [
-    { icon: 'home', route: '/testscreennav' },
+    { icon: 'home', route: '/(tabs)/dashboard' },
     { icon: 'stats-chart', route: '/stats' },
     { icon: 'information-circle', route: '/info' },
     { icon: 'person', route: '/profile' },
   ];
 
   return (
-    <View className="absolute bottom-[70px] w-full items-center">
-      <View
-        className="flex-row justify-between w-[90%] bg-[rgba(20,40,90,0.85)] py-[14px] px-[22px] rounded-[40px]"
-        style={{ elevation: 8 }}
+    <View className="absolute bottom-[70px] w-full items-center z-20">
+      {/* 🌿 Extra Rounded Gradient Container */}
+      <LinearGradient
+        colors={['#16a34a', '#22c55e', '#4ade80']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          width: '92%',
+          paddingVertical: 16,
+          paddingHorizontal: 26,
+          borderRadius: 999,          // 🔥 fully pill-shaped
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          elevation: 12,
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 6 },
+        }}
       >
         {tabs.map(tab => {
           const isActive = pathname === tab.route;
@@ -25,20 +41,28 @@ export default function BottomNav() {
           return (
             <TouchableOpacity
               key={tab.route}
-              className={`w-11 h-11 rounded-full items-center justify-center ${isActive ? 'bg-[#0EA5E9]' : ''}`}
               onPress={() => router.replace(tab.route)}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 999,      // 🔥 round icon buttons
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: isActive
+                  ? 'rgba(255,255,255,0.25)'
+                  : 'transparent',
+              }}
             >
               <Ionicons
                 name={tab.icon as any}
-                size={22}
-                color={isActive ? '#fff' : '#A0AEC0'}
+                size={24}
+                color="#ffffff"
               />
             </TouchableOpacity>
           );
         })}
-      </View>
+      </LinearGradient>
     </View>
   );
 }
-

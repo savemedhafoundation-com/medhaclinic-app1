@@ -26,9 +26,12 @@ type RadioProps = {
   onPress: () => void;
 };
 
-/* ---------- MAIN SCREEN ---------- */
+/* ---------- ASSETS ---------- */
+
 import commonimg from '../assets/images/common_bgpage.png';
 import medha from '../assets/images/medha_logo.png';
+
+/* ---------- MAIN SCREEN ---------- */
 
 export default function SignupScreen() {
   const [gender, setGender] = useState<string | null>(null);
@@ -37,13 +40,13 @@ export default function SignupScreen() {
   return (
     <ImageBackground source={commonimg} className="flex-1" resizeMode="cover">
       <LinearGradient
-        colors={['rgba(0,90,160,0.55)', 'rgba(0,40,90,0.55)']}
+        colors={['rgba(33,230,46,0.35)', 'rgba(27,156,113,0.35)']}
         style={{ flex: 1 }}
       >
         <SafeAreaView style={{ flex: 1 }}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 30 }}
           >
             {/* LOGO */}
             <View className="items-center mt-5">
@@ -52,19 +55,26 @@ export default function SignupScreen() {
                 className="w-[180px] h-[60px]"
                 resizeMode="contain"
               />
-              <Text className="text-[#EAF2FF] text-[13px] mt-1">Restoring Life Naturally</Text>
+              <Text className="text-[#EAF2FF] text-[15px] mt-1">
+                Restoring Life Naturally
+              </Text>
             </View>
 
-            <Text className="text-white text-[22px] font-semibold mt-[30px] ml-5">
+            {/* TITLE */}
+            <Text className="text-white text-[24px] font-bold mt-8 ml-5">
               Basic Information
             </Text>
 
             {/* FORM CARD */}
-            <View className="m-5 p-5 rounded-[22px] bg-[rgba(255,255,255,0.14)] border border-[rgba(255,255,255,0.25)]">
+            <View className="m-5 p-5 rounded-[24px] bg-[rgba(255,255,255,0.14)] border border-[rgba(255,255,255,0.25)]">
+              
               <Input label="Full Name" placeholder="Enter your full name" />
 
-              <Text className="text-white text-[14px] mb-1.5 mt-3">Gender</Text>
-              <View className="flex-row gap-[18px]">
+              {/* GENDER */}
+              <Text className="text-white text-[18px] font-semibold mb-2 mt-5">
+                Gender
+              </Text>
+              <View className="flex-row gap-5">
                 <Radio
                   text="Male"
                   selected={gender === 'Male'}
@@ -82,12 +92,14 @@ export default function SignupScreen() {
                 />
               </View>
 
-              <View className="flex-row gap-3">
+              {/* AGE / WEIGHT */}
+              <View className="flex-row gap-4 mt-5">
                 <Input small label="Age" placeholder="Years" />
                 <Input small label="Weight" placeholder="Kg" />
               </View>
 
-              <Text className="text-white text-[14px] mb-1.5 mt-3">
+              {/* PURPOSE */}
+              <Text className="text-white text-[18px] font-semibold mb-2 mt-5">
                 Purpose of assessment
               </Text>
               <Radio
@@ -101,23 +113,25 @@ export default function SignupScreen() {
                 onPress={() => setPurpose('preventive')}
               />
 
-              <Input label="Full Address" placeholder="Select one" />
+              {/* OTHER INPUTS */}
+              <Input label="Full Address" placeholder="Enter your address" />
               <Input label="Email Address" placeholder="example@gmail.com" />
               <Input label="Mobile Number" placeholder="+91 Phone number" />
               <Input label="OTP Verification" placeholder="Enter OTP" />
             </View>
 
             {/* CTA */}
-           <TouchableOpacity
-             className="mx-5 mt-2.5 h-14 rounded-full bg-[#1DA1F2] items-center justify-center"
-             onPress={() => router.push('/(tabs)/dashboard')}>
-             <Text className="text-white text-[16px] font-semibold">
-               Save Details
-             </Text>
-           </TouchableOpacity>
+            <TouchableOpacity
+              className="mx-5 mt-2.5 h-14 rounded-full bg-[#1DA1F2] items-center justify-center"
+              onPress={() => router.push('/(tabs)/dashboard')}
+            >
+              <Text className="text-white text-[20px] font-semibold">
+                Save Details
+              </Text>
+            </TouchableOpacity>
 
             {/* FOOTER */}
-            <Text className="text-[#D6E6FF] text-[12px] text-center mt-2 px-[30px]">
+            <Text className="text-[#D6E6FF] text-[18px] text-center mt-4 px-8">
               Your information is confidential and used only for your health
               guidance
             </Text>
@@ -133,11 +147,21 @@ export default function SignupScreen() {
 function Input({ label, placeholder, small }: InputProps) {
   return (
     <View style={{ flex: small ? 1 : undefined }}>
-      <Text className="text-white text-[14px] mb-1.5 mt-3">{label}</Text>
+      <Text className="text-white text-[18px] font-semibold mb-2 mt-4">
+        {label}
+      </Text>
+
       <TextInput
         placeholder={placeholder}
         placeholderTextColor="#D6E6FF"
-        className={`rounded-[14px] px-4 bg-[rgba(255,255,255,0.25)] text-white text-[15px] ${small ? 'h-11' : 'h-12'}`}
+        className={`
+          rounded-[16px]
+          px-4
+          bg-[rgba(255,255,255,0.25)]
+          text-white
+          text-[20px]
+          ${small ? 'h-12' : 'h-14'}
+        `}
       />
     </View>
   );
@@ -148,16 +172,25 @@ function Input({ label, placeholder, small }: InputProps) {
 function Radio({ text, selected, onPress }: RadioProps) {
   return (
     <TouchableOpacity
-      className="flex-row items-center my-1.5"
+      className="flex-row items-center my-2"
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
       <View
-        className={`w-[18px] h-[18px] rounded-[9px] border-2 items-center justify-center mr-2 ${selected ? 'border-[#1DA1F2]' : 'border-white'}`}
+        className={`
+          w-[22px] h-[22px] rounded-[11px] border-2
+          items-center justify-center mr-3
+          ${selected ? 'border-[#1DA1F2]' : 'border-white'}
+        `}
       >
-        {selected && <View className="w-2 h-2 rounded-full bg-[#1DA1F2]" />}
+        {selected && (
+          <View className="w-3 h-3 rounded-full bg-[#1DA1F2]" />
+        )}
       </View>
-      <Text className="text-white text-[14px]">{text}</Text>
+
+      <Text className="text-white text-[18px]">
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 }

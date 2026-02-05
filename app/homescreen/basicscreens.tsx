@@ -47,11 +47,11 @@ export default function HealthAssessmentIntro() {
 
             {/* CENTER LOGO */}
             <View className="items-center">
-              <Image
+              {/* <Image
                 source={logo}
                 className="w-[150px] h-[100px]"
                 resizeMode="contain"
-              />
+              /> */}
             </View>
           </View>
         </SafeAreaView>

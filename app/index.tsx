@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useRef } from 'react';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Dimensions,
@@ -15,8 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import bgimage from '../assets/images/bg_pattern.png';
-
-import { router } from 'expo-router';
 import family from '../assets/images/family.png';
 import medha from '../assets/images/medha_logo.png';
 
@@ -28,98 +26,153 @@ const BUTTON_HEIGHT = 56;
 const KNOB_SIZE = 44;
 const PADDING = 8;
 
-// max distance knob can travel
 const MAX_TRANSLATE = BUTTON_WIDTH - KNOB_SIZE - PADDING * 2;
-
-// how far user must swipe to trigger
 const TRIGGER_AT = MAX_TRANSLATE * 0.75;
 
-export default function WelcomeScreen() {
-  const navigation = useNavigation();
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
+export default function WelcomeScreen() {
   const translateX = useRef(new Animated.Value(0)).current;
+  const trackProgress = useRef(new Animated.Value(0)).current;
+  const hintX = useRef(new Animated.Value(0)).current;
+  const hintOpacity = useRef(new Animated.Value(1)).current;
+  const hintLoop = useRef<Animated.CompositeAnimation | null>(null);
   const isNavigating = useRef(false);
+
+  // 🌊 Ripple animation values
+  const ripple1 = useRef(new Animated.Value(0)).current;
+  const ripple2 = useRef(new Animated.Value(0)).current;
+  const ripple3 = useRef(new Animated.Value(0)).current;
+
+  const startHint = () => {
+    if (hintLoop.current) return;
+    hintLoop.current = Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(hintX, { toValue: 6, duration: 500, useNativeDriver: true }),
+          Animated.timing(hintX, { toValue: 0, duration: 500, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(hintOpacity, { toValue: 0.7, duration: 500, useNativeDriver: true }),
+          Animated.timing(hintOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    hintLoop.current.start();
+  };
+
+  const stopHint = () => {
+    hintLoop.current?.stop();
+    hintLoop.current = null;
+    hintX.setValue(0);
+    hintOpacity.setValue(1);
+  };
+
+  // 🌊 Start ripple effect
+  const startRipple = () => {
+    const createRipple = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 2000,
+            delay: delay,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    };
+
+    createRipple(ripple1, 0).start();
+    createRipple(ripple2, 666).start();
+    createRipple(ripple3, 1333).start();
+  };
+
+  useEffect(() => {
+    startHint();
+    startRipple();
+    return () => {
+      stopHint();
+      ripple1.stopAnimation();
+      ripple2.stopAnimation();
+      ripple3.stopAnimation();
+    };
+  }, []);
 
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-
-        onPanResponderMove: (
-          _: GestureResponderEvent,
-          gesture: PanResponderGestureState
-        ) => {
+        onPanResponderGrant: () => stopHint(),
+        onPanResponderMove: (_: GestureResponderEvent, gesture: PanResponderGestureState) => {
           if (isNavigating.current) return;
-
           const dx = Math.max(0, Math.min(gesture.dx, MAX_TRANSLATE));
           translateX.setValue(dx);
+          trackProgress.setValue(dx / MAX_TRANSLATE);
         },
-
-        onPanResponderRelease: (
-          _: GestureResponderEvent,
-          gesture: PanResponderGestureState
-        ) => {
+        onPanResponderRelease: (_: GestureResponderEvent, gesture: PanResponderGestureState) => {
           if (isNavigating.current) return;
-
           const dx = Math.max(0, Math.min(gesture.dx, MAX_TRANSLATE));
-          const shouldNavigate = dx >= TRIGGER_AT;
-
-          if (shouldNavigate) {
+          if (dx >= TRIGGER_AT) {
             isNavigating.current = true;
-
-            Animated.timing(translateX, {
-              toValue: MAX_TRANSLATE,
-              duration: 180,
-              useNativeDriver: true,
-            }).start(() => {
-              try {
-                // IMPORTANT: Make sure "Home" matches your navigator screen name exactly.
-                router.replace('/Loginscreen');
-              } catch (e) {
-                // if navigation fails, allow retry and reset
-                isNavigating.current = false;         
-                Animated.spring(translateX, {
-                  toValue: 0,
-                  useNativeDriver: true,
-                }).start();
-              }
-            });
+            Animated.parallel([
+              Animated.timing(translateX, { toValue: MAX_TRANSLATE, duration: 180, useNativeDriver: true }),
+              Animated.timing(trackProgress, { toValue: 1, duration: 180, useNativeDriver: false }),
+            ]).start(() => router.replace('/Loginscreen'));
           } else {
-            Animated.spring(translateX, {
-              toValue: 0,
-              useNativeDriver: true,
-              friction: 7,
-              tension: 90,
-            }).start();
+            Animated.parallel([
+              Animated.spring(translateX, { toValue: 0, friction: 7, tension: 90, useNativeDriver: true }),
+              Animated.timing(trackProgress, { toValue: 0, duration: 200, useNativeDriver: false }),
+            ]).start(startHint);
           }
         },
       }),
-    [navigation, translateX]
+    []
   );
 
- return (
-  <ImageBackground source={bgimage} className="flex-1" resizeMode="cover">
-    <LinearGradient
-      colors={[
-        'rgba(60, 149, 204, 0.75)',
-        'rgba(27,79,156,0.75)',
-      ]}
+  const trackStartColor = trackProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(255,255,255,0.18)', 'rgba(24,200,120,0.85)'],
+  });
+
+  const trackEndColor = trackProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(255,255,255,0.18)', 'rgba(12,160,95,0.85)'],
+  });
+
+  // 🌊 Ripple interpolation
+  const rippleScale1 = ripple1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] });
+  const rippleOpacity1 = ripple1.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0] });
+  const rippleScale2 = ripple2.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] });
+  const rippleOpacity2 = ripple2.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0] });
+  const rippleScale3 = ripple3.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] });
+  const rippleOpacity3 = ripple3.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0] });
+
+  return (
+    <ImageBackground source={bgimage} className="flex-1" resizeMode="cover">
+      <LinearGradient 
+        colors={['rgba(33,230,46,0.35)', 'rgba(27,156,113,0.35)']}
+      
+      
       style={{ flex: 1 }}
-    >
-      <SafeAreaView
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          paddingVertical: isSmallDevice ? 24 : 20,
-        }}
+      
+      
       >
-        {/* LOGO */}
-        <View
-          className="items-center"
-          style={{ marginTop: isSmallDevice ? 10 : 1 }}
+        <SafeAreaView
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            paddingVertical: isSmallDevice ? 24 : 20,
+          }}
         >
+          {/* LOGO */}
           <Image
             source={medha}
             style={{
@@ -128,82 +181,117 @@ export default function WelcomeScreen() {
             }}
             resizeMode="contain"
           />
-        </View>
 
-        {/* CENTER IMAGE */}
-        <View className="items-center">
-          <View
-            className="items-center justify-center"
-            style={{
-              width: width * 0.65,
-              height: width * 0.65,
-              borderRadius: 999,
-              backgroundColor: 'rgba(255,255,255,0.18)',
-            }}
-          >
-            <View
-              className="items-center justify-center"
+          {/* CENTER IMAGE WITH RIPPLE EFFECT */}
+          <View style={{ width: width * 0.65, height: width * 0.65, alignItems: 'center', justifyContent: 'center' }}>
+            {/* 🌊 Ripple Rings */}
+            <Animated.View
               style={{
+                position: 'absolute',
                 width: width * 0.52,
                 height: width * 0.52,
                 borderRadius: 999,
-                backgroundColor: 'rgba(255,255,255,0.28)',
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                transform: [{ scale: rippleScale1 }],
+                opacity: rippleOpacity1,
               }}
-            >
-              <Image
-                source={family}
-                style={{
-                  width: width * 0.42,
-                  height: width * 0.42,
-                  borderRadius: 999,
-                }}
-              />
-            </View>
-          </View>
-        </View>
+            />
+            <Animated.View
+              style={{
+                position: 'absolute',
+                width: width * 0.52,
+                height: width * 0.52,
+                borderRadius: 999,
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                transform: [{ scale: rippleScale2 }],
+                opacity: rippleOpacity2,
+              }}
+            />
+            <Animated.View
+              style={{
+                position: 'absolute',
+                width: width * 0.52,
+                height: width * 0.52,
+                borderRadius: 999,
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                transform: [{ scale: rippleScale3 }],
+                opacity: rippleOpacity3,
+              }}
+            />
 
-        {/* TEXT */}
-        <View className="items-center px-5">
-          <Text className="text-white text-[18px]">Welcome to</Text>
-          <Text className="text-white text-[30px] font-bold my-1">Medha Clinic</Text>
-          <Text className="text-[#EAF2FF] text-[15px] text-center">
-            Your Family's Health, Our Priority
-          </Text>
-        </View>
-
-        {/* SWIPE TRACK */}
-        <View
-          className="bg-[rgba(255,255,255,0.18)] px-2 justify-center overflow-hidden mb-5"
-          style={{
-            width: BUTTON_WIDTH,
-            height: BUTTON_HEIGHT,
-            borderRadius: BUTTON_HEIGHT / 2,
-          }}
-        >
-          <Text className="absolute self-center text-white text-[16px] font-medium opacity-95">
-            Swipe to Start
-          </Text>
-
-          <Animated.View
-            {...panResponder.panHandlers}
-            style={[
-              {
-                width: KNOB_SIZE,
-                height: KNOB_SIZE,
-                borderRadius: KNOB_SIZE / 2,
-                backgroundColor: '#0B3C78',
+            {/* Static Background Rings */}
+            <View
+              style={{
+                width: width * 0.65,
+                height: width * 0.65,
+                borderRadius: 999,
+                backgroundColor: 'rgba(255,255,255,0.18)',
                 alignItems: 'center',
                 justifyContent: 'center',
-              },
-              { transform: [{ translateX }] },
-            ]}
-          >
-            <Text className="text-white text-[26px] font-bold">{'>'}</Text>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
-  </ImageBackground>
-);
+              }}
+            >
+              <View
+                style={{
+                  width: width * 0.52,
+                  height: width * 0.52,
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(255,255,255,0.28)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Image
+                  source={family}
+                  style={{
+                    width: width * 0.42,
+                    height: width * 0.42,
+                    borderRadius: 999,
+                  }}
+                />
+              </View>
+            </View>
+          </View>
 
+          {/* TEXT */}
+          <View className="items-center px-5">
+            <Text className="text-white text-[18px]">Welcome to</Text>
+            <Text className="text-white text-[30px] font-bold my-1">Medha Clinic</Text>
+            <Text className="text-[#EAF2FF] text-[15px] text-center">Your Family&apos;s Health, Our Priority</Text>
+          </View>
+
+          {/* SWIPE TRACK */}
+          <AnimatedLinearGradient
+            colors={[trackStartColor, trackEndColor] as any}
+            style={{
+              width: BUTTON_WIDTH,
+              height: BUTTON_HEIGHT,
+              borderRadius: BUTTON_HEIGHT / 2,
+              paddingHorizontal: 8,
+              justifyContent: 'center',
+              overflow: 'hidden',
+              marginBottom: 10,
+            }}
+          >
+            <Text className="absolute self-center text-white text-[16px] font-medium">Swipe to Start</Text>
+            <Animated.View style={{ transform: [{ translateX: hintX }], opacity: hintOpacity }}>
+              <Animated.View
+                {...panResponder.panHandlers}
+                style={{
+                  width: KNOB_SIZE,
+                  height: KNOB_SIZE,
+                  borderRadius: KNOB_SIZE / 2,
+                  backgroundColor: '#1c6f15d1',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: [{ translateX }],
+                }}
+              >
+                <Text className="text-white text-[26px] font-bold">{'>'}</Text>
+              </Animated.View>
+            </Animated.View>
+          </AnimatedLinearGradient>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
+  );
 }
