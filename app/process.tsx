@@ -1,237 +1,370 @@
-import { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
   View,
-  Platform,
+  Text,
+  ScrollView,
+  Pressable,
+  Animated,
   ToastAndroid,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
-// Tick icon
-import tick from '../assets/images/doubletick.png';
+/* =======================
+   EMOJI ASSETS
+======================= */
+const EMOJI = {
+  veryGood: require('../assets/images/process_emoji/very-good.png'),
+  good: require('../assets/images/process_emoji/good.png'),
+  moderate: require('../assets/images/process_emoji/moderate.png'),
+  bad: require('../assets/images/process_emoji/bad.png'),
+  veryBad: require('../assets/images/process_emoji/very-bad.png'),
+};
 
-// Emoji assets - matching the image exactly
-import good from '../assets/images/low.png';           // Dark green - Good
-import veryGood from '../assets/images/normal.png';  // Light green - Very Good
-import normal from '../assets/images/very-low.png';       // Yellow - Normal/Moderate
-import bad from '../assets/images/high.png';             // Orange - Bad
-import veryBad from '../assets/images/very-high.png';    // Red - Very Bad
+/* =======================
+   SCORE MAP
+======================= */
+const SCORE_MAP = [10, 8, 6, 4, 2];
 
-/* ================= DATA ================= */
+type OptionType = {
+  source: any;
+  label: string;
+};
 
-const QUESTIONS = [
-  'Physical Energy',
-  'Appetite',
-  'Body Weight',
-  'Digestive Problems',
-  'Burning or Pain',
-  'Blood Pressure',
-  'Fever',
-  'Breathing Problem',
-  'Skin Health',
-  'Hair Problem',
-];
+type QuestionType = {
+  title: string;
+  options: OptionType[];
+};
 
-// Options matching image order: Good, Very Good, Normal, Bad, Very Bad
-const OPTIONS = [
-  { image: good, label: 'Good', score: 10 },        // Dark green
-  { image: veryGood, label: 'Very Good', score: 8 }, // Light green
-  { image: normal, label: 'Normal', score: 6 },      // Yellow
-  { image: bad, label: 'Bad', score: 4 },            // Orange
-  { image: veryBad, label: 'Very Bad', score: 2 },   // Red
-];
+/* =======================
+   ANIMATED EMOJI
+======================= */
+const AnimatedEmoji = ({
+  source,
+  scale,
+  onPress,
+}: {
+  source: any;
+  scale: Animated.Value;
+  onPress: () => void;
+}) => (
+  <Pressable onPress={onPress} hitSlop={12}>
+    <Animated.Image
+      source={source}
+      resizeMode="contain"
+      style={{
+        width: 44,
+        height: 44,
+        transform: [{ scale }],
+      }}
+    />
+  </Pressable>
+);
 
-/* ================= COMPONENT ================= */
+/* =======================
+   OPTION
+======================= */
+const Option = ({
+  source,
+  label,
+  selected,
+  scale,
+  onPress,
+}: {
+  source: any;
+  label: string;
+  selected: boolean;
+  scale: Animated.Value;
+  onPress: () => void;
+}) => (
+  <View className="flex-1 items-center">
+    <AnimatedEmoji source={source} scale={scale} onPress={onPress} />
 
-export default function ProcessPage() {
-  const router = useRouter();
-  const [answers, setAnswers] = useState({});
-  const scrollRef = useRef(null);
-  const questionRefs = useRef([]);
+    <Text className="text-sm text-gray-700 mt-2 text-center">
+      {label}
+    </Text>
 
-  /* ===== Progress ===== */
-  const completedCount = Object.keys(answers).length;
-  const progressPercent = Math.round((completedCount / QUESTIONS.length) * 100);
+    {selected && (
+      <View className="mt-2 bg-green-600 w-5 h-5 rounded-full items-center justify-center">
+        <View className="w-2.5 h-1.5 border-l-2 border-b-2 border-white rotate-[-45deg]" />
+      </View>
+    )}
+  </View>
+);
 
-  /* ===== Animation refs ===== */
+/* =======================
+   QUESTION
+======================= */
+const Question = ({
+  qIndex,
+  title,
+  options,
+  value,
+  onSelect,
+  scaleMap,
+  animateScale,
+}: {
+  qIndex: number;
+  title: string;
+  options: OptionType[];
+  value: number;
+  onSelect: (optionIndex: number) => void;
+  scaleMap: Animated.Value[][];
+  animateScale: (qIndex: number, oIndex: number) => void;
+}) => (
+  <View className="mb-8">
+    <Text className="text-lg font-semibold text-green-700 mb-4">
+      {title}
+    </Text>
+
+    <View className="flex-row">
+      {options.map((o, i) => (
+        <Option
+          key={`${title}-${i}`}
+          source={o.source}
+          label={o.label}
+          selected={value === i}
+          scale={scaleMap[qIndex][i]}
+          onPress={() => {
+            animateScale(qIndex, i);
+            onSelect(i);
+          }}
+        />
+      ))}
+    </View>
+  </View>
+);
+
+/* =======================
+   MAIN SCREEN
+======================= */
+export default function ProcessSection() {
+  const questions: QuestionType[] = useMemo(
+    () => [
+      {
+        title: '1. Physical Energy',
+        options: [
+          { source: EMOJI.veryGood, label: 'Very Good' },
+          { source: EMOJI.good, label: 'Good' },
+          { source: EMOJI.moderate, label: 'Moderate' },
+          { source: EMOJI.bad, label: 'Bad' },
+          { source: EMOJI.veryBad, label: 'Very Bad' },
+        ],
+      },
+      {
+        title: '2. Appetite',
+        options: [
+          { source: EMOJI.veryGood, label: 'Very Good' },
+          { source: EMOJI.good, label: 'Good' },
+          { source: EMOJI.moderate, label: 'Moderate' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '3. Body Weight',
+        options: [
+          { source: EMOJI.veryBad, label: 'Very Low' },
+          { source: EMOJI.bad, label: 'Low' },
+          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '4. Digestive Problems',
+        options: [
+          { source: EMOJI.veryGood, label: 'Very Good' },
+          { source: EMOJI.good, label: 'Good' },
+          { source: EMOJI.moderate, label: 'Moderate' },
+          { source: EMOJI.bad, label: 'Bad' },
+          { source: EMOJI.veryBad, label: 'Very Bad' },
+        ],
+      },
+      {
+        title: '5. Burning or Pain',
+        options: [
+          { source: EMOJI.veryGood, label: 'Very Good' },
+          { source: EMOJI.good, label: 'Good' },
+          { source: EMOJI.moderate, label: 'Moderate' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '6. Blood Pressure',
+        options: [
+          { source: EMOJI.moderate, label: 'Very Low' },
+          { source: EMOJI.good, label: 'Low' },
+          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '7. Fever',
+        options: [
+          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '8. Breathing Problem',
+        options: [
+          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '9. Skin Health',
+        options: [
+          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '10. Hair Problem',
+        options: [
+          { source: EMOJI.good, label: 'Very Low' },
+          { source: EMOJI.veryGood, label: 'Low' },
+          { source: EMOJI.moderate, label: 'Moderate' },
+          { source: EMOJI.bad, label: 'High' },
+          { source: EMOJI.veryBad, label: 'Very High' },
+        ],
+      },
+      {
+        title: '11. Sleep',
+        options: [
+          { source: EMOJI.good, label: '10 hr' },
+          { source: EMOJI.veryGood, label: '8 hr' },
+          { source: EMOJI.moderate, label: '6 hr' },
+          { source: EMOJI.bad, label: '4 hr' },
+          { source: EMOJI.veryBad, label: '2 hr' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const TOTAL = questions.length;
+  const [answers, setAnswers] = useState<number[]>(Array(TOTAL).fill(-1));
+  const [scores, setScores] = useState<number[]>(Array(TOTAL).fill(0));
+
   const scaleMap = useRef(
-    QUESTIONS.map(() => OPTIONS.map(() => new Animated.Value(1)))
+    questions.map(q => q.options.map(() => new Animated.Value(1)))
   ).current;
 
-  const animateScale = (qIndex, oIndex) => {
+  const animateScale = (qIndex: number, oIndex: number) => {
     Animated.sequence([
       Animated.timing(scaleMap[qIndex][oIndex], {
-        toValue: 1.15,
-        duration: 100,
+        toValue: 1.75,
+        duration: 170,
         useNativeDriver: true,
       }),
       Animated.timing(scaleMap[qIndex][oIndex], {
         toValue: 1,
-        duration: 100,
+        duration: 120,
         useNativeDriver: true,
       }),
     ]).start();
   };
 
-  const selectOption = (qIndex, score, oIndex) => {
-    animateScale(qIndex, oIndex);
-    setAnswers(prev => ({ ...prev, [qIndex]: score }));
+  const handleSelect = (qIndex: number, optionIndex: number) => {
+    setAnswers(prev => {
+      const next = [...prev];
+      next[qIndex] = optionIndex;
+      return next;
+    });
+
+    setScores(prev => {
+      const next = [...prev];
+      next[qIndex] = SCORE_MAP[optionIndex] ?? 0;
+      return next;
+    });
   };
 
-  /* ===== Submit ===== */
-  const submitAssessment = () => {
-    const firstUnanswered = QUESTIONS.findIndex((_, idx) => answers[idx] === undefined);
+  const calculateResult = () => {
+    const validScores = scores.filter(v => v > 0);
+    const avg =
+      validScores.reduce((a, b) => a + b, 0) / validScores.length;
 
-    if (firstUnanswered !== -1) {
-      scrollRef.current?.scrollTo({
-        y: questionRefs.current[firstUnanswered] ?? 0,
-        animated: true,
-      });
-      Alert.alert('Incomplete', 'Please answer all questions');
-      return;
-    }
+    let status = 'Needs Attention';
+    if (avg >= 8) status = 'Excellent';
+    else if (avg >= 6) status = 'Good';
+    else if (avg >= 4) status = 'Fair';
 
-    let total = 0;
-    for (let i = 0; i < QUESTIONS.length; i++) {
-      total += answers[i];
-    }
-    const healthScore = total / QUESTIONS.length;
-    const message = `Health Score: ${healthScore.toFixed(1)}/10`;
-
-    if (Platform.OS === 'android') {
-      ToastAndroid.showWithGravity(message, ToastAndroid.LONG, ToastAndroid.CENTER);
-    } else {
-      Alert.alert('Your Health Result', message);
-    }
-
-    setTimeout(() => {
-      router.push({
-        pathname: '/certification',
-        params: { healthScore: healthScore.toFixed(1) },
-      });
-    }, 1200);
+    ToastAndroid.show(
+      `Average Score: ${avg.toFixed(1)} (${status})`,
+      ToastAndroid.LONG
+    );
   };
+
+  const answeredCount = answers.filter(v => v !== -1).length;
+  const progress = Math.round((answeredCount / TOTAL) * 100);
 
   return (
-    <View className="flex-1 bg-white">
-      {/* ===== GREEN HEADER ===== */}
-      <LinearGradient colors={['#1DB306', '#0F8A0A']} className="pt-12 pb-6 px-4">
-        <View className="flex-row items-center mb-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-white text-2xl mr-2">{'<'}</Text>
-          </TouchableOpacity>
-          <Text className="text-white/90 text-[16px]">Let's Get Started</Text>
-        </View>
-        
-        <Text className="text-[#0B6E0B] text-[32px] font-bold">Process</Text>
-        <Text className="text-gray-700 text-[14px]">Answer the following questions</Text>
-        
-        {/* Progress Bar */}
-        <View className="mt-4 flex-row items-center">
-          <View className="flex-1 h-2.5 bg-white/30 rounded-full overflow-hidden mr-3">
-            <View style={{ width: `${progressPercent}%` }} className="h-full bg-[#0B6E0B] rounded-full" />
-          </View>
-          <Text className="text-[#0B6E0B] text-[16px] font-bold">{progressPercent}%</Text>
-        </View>
-      </LinearGradient>
+    <View className="flex-1 bg-white px-4 pt-6">
 
-      {/* ===== QUESTIONS ===== */}
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {QUESTIONS.map((question, idx) => (
-          <View
-            key={idx}
-            onLayout={e => (questionRefs.current[idx] = e.nativeEvent.layout.y)}
-            className="mb-8"
-          >
-            <Text className="text-[18px] font-semibold text-[#0B6E0B] mb-4">
-              {idx + 1}. {question}
-            </Text>
-
-            {/* Emoji Row - 5 options */}
-            <View className="flex-row justify-between items-start">
-              {OPTIONS.map((option, oIndex) => {
-                const selected = answers[idx] === option.score;
-
-                return (
-                  <TouchableOpacity
-                    key={option.label}
-                    onPress={() => selectOption(idx, option.score, oIndex)}
-                    activeOpacity={0.8}
-                    className="items-center"
-                    style={{ width: '18%' }}
-                  >
-                    {/* Emoji with animation */}
-                    <Animated.View
-                      style={{
-                        transform: [{ scale: scaleMap[idx][oIndex] }],
-                      }}
-                    >
-                      <Image
-                        source={option.image}
-                        style={{ width: 48, height: 48 }}
-                        resizeMode="contain"
-                      />
-                    </Animated.View>
-
-                    {/* Label below emoji */}
-                    <Text className="text-[11px] text-center text-gray-600 mt-2 leading-3">
-                      {option.label}
-                    </Text>
-
-                    {/* Checkmark when selected */}
-                    {selected && (
-                      <Image
-                        source={tick}
-                        style={{ width: 20, height: 20, marginTop: 4 }}
-                        resizeMode="contain"
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        ))}
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          onPress={submitAssessment}
-          className="bg-[#1DB306] py-4 rounded-full my-6 flex-row items-center justify-center self-center px-12"
-        >
-          <Text className="text-white font-bold text-[18px] mr-2">Submit</Text>
-          <Text className="text-white text-[20px]">{'>'}</Text>
-        </TouchableOpacity>
-
-        <Text className="text-gray-500 text-center text-[13px] mb-4">
-          You can pause and resume anytime
+      {/* Header */}
+      <View className="mb-5">
+        <Text className="text-base text-gray-500 mt-2 mb-2">
+          {'< Let’s Get Started'}
         </Text>
+        <Text className="text-3xl font-bold text-green-700">
+          Process
+        </Text>
+        <Text className="text-base text-gray-600 mt-1">
+          Answer the following questions
+        </Text>
+      </View>
+
+      {/* Progress */}
+      <View className="mb-5">
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 h-2 bg-green-100 rounded-full">
+            <View
+              className="h-2 bg-green-600 rounded-full"
+              style={{ width: `${progress}%` }}
+            />
+          </View>
+          <Text className="text-base font-semibold text-green-700">
+            {progress}%
+          </Text>
+        </View>
+      </View>
+
+      {/* Questions */}
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {questions.map((q, idx) => (
+          <Question
+            key={q.title}
+            qIndex={idx}
+            title={q.title}
+            options={q.options}
+            value={answers[idx]}
+            onSelect={(opt) => handleSelect(idx, opt)}
+            scaleMap={scaleMap}
+            animateScale={animateScale}
+          />
+        ))}
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#1DB306] flex-row justify-around py-4 px-6 rounded-t-3xl">
-        <TouchableOpacity className="items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-          <Text className="text-white text-[20px]">🏠</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-          <Text className="text-white text-[20px]">📊</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-          <Text className="text-white text-[20px]">💬</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-          <Text className="text-white text-[20px]">👤</Text>
-        </TouchableOpacity>
+      {/* Submit */}
+      <View className="mt-8 mb-14">
+        <Pressable
+          disabled={progress !== 100}
+          onPress={calculateResult}
+          className={`py-4 rounded-full ${
+            progress === 100 ? 'bg-green-600' : 'bg-green-300'
+          }`}
+        >
+          <Text className="text-lg font-semibold text-white text-center">
+            Submit
+          </Text>
+        </Pressable>
       </View>
+
     </View>
   );
 }

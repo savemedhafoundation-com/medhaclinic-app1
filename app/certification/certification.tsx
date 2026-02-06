@@ -11,12 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CgProfile } from "react-icons/cg";
 
 // Assets
-import logo from '../assets/images/medha_logo.png';
-import checkIcon from '../assets/images/check.png';
-import badge from '../assets/images/badge.png';
-import profile from '../assets/images/profile.png';
-import BottomNav from '../components/BottomNav';
-import SvgHeader from '../components/Clipperbg';
+import logo from '../../assets/images/medha_logo.png';
+import checkIcon from '../../assets/images/check.png';
+import badge from '../../assets/images/badge.png';
+import profile from '../../assets/images/profile.png';
+import BottomNav from '../../components/BottomNav';
+import SvgHeader from '../../components/Clipperbg';
 
 export default function CertificatePage() {
   const router = useRouter();

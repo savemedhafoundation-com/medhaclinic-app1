@@ -32,7 +32,7 @@ export default function HealthAssessmentIntro() {
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
 
-        <SafeAreaView className="absolute top-0 w-full">
+        <SafeAreaView className="absolute top-0 w-full" >
           <View className="h-14 justify-center mt-4">
             {/* LEFT + RIGHT ICONS */}
             <View className="absolute left-4 right-4 flex-row items-center justify-between">

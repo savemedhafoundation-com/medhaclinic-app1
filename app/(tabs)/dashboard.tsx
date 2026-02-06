@@ -30,6 +30,7 @@ type ActionCardProps = {
 type HelpCardProps = {
   icon: IoniconName;
   title: string;
+  onPress?: () => void;
 };
 
 type DisclaimerItemProps = {
@@ -40,15 +41,21 @@ export default function InformationScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView className="flex-2 bg-[#0B3A6E]">
-      <ImageBackground source={bg} className="flex-2" resizeMode="cover">
+    <SafeAreaView className="flex-1 bg-[#0B3A6E]">
+      <ImageBackground source={bg} className="flex-1" resizeMode="cover">
+
         {/* ================= MAIN CONTENT ================= */}
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View className="p-5 pb-[70px]">
+          <View className="p-5 pb-[80px]">
+
             {/* ================= HEADER ================= */}
             <View className="flex-row justify-between items-center mb-[86px] mt-[70px] relative">
               <View className="absolute left-0 right-0 items-center">
-                <Image source={logo} className="w-[254px] h-[254px]" resizeMode="contain" />
+                <Image
+                  source={logo}
+                  className="w-[254px] h-[254px]"
+                  resizeMode="contain"
+                />
               </View>
             </View>
 
@@ -94,10 +101,13 @@ export default function InformationScreen() {
               <HelpCard
                 icon="pulse-outline"
                 title="Understand What’s Happening Inside Your Body"
+                onPress={() => router.push('/analysis/stepanalyst')}
               />
+
               <HelpCard
                 icon="nutrition-outline"
                 title="Personalized Diet & Nutrition Guidance"
+                onPress={() => router.push('/help/diet-nutrition')}
               />
             </View>
 
@@ -127,6 +137,7 @@ export default function InformationScreen() {
               <TouchableOpacity
                 className="flex-row items-center bg-[#29B6F6] px-[42px] py-[14px] rounded-[30px] mt-[14px]"
                 activeOpacity={0.85}
+                onPress={() => router.push('/homescreen/basicscreens')}
                 style={{
                   shadowColor: '#29B6F6',
                   shadowOffset: { width: 0, height: 6 },
@@ -142,7 +153,7 @@ export default function InformationScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* 🔴 IMPORTANT SPACE so BottomNav doesn't overlap */}
+            {/* 🔴 Spacer so BottomNav doesn’t overlap */}
             <View className="h-[120px]" />
           </View>
         </ScrollView>
@@ -173,12 +184,22 @@ function ActionCard({ icon, title, subtitle, onPress }: ActionCardProps) {
   );
 }
 
-function HelpCard({ icon, title }: HelpCardProps) {
+function HelpCard({ icon, title, onPress }: HelpCardProps) {
   return (
-    <View className="bg-[#1976D2] rounded-[20px] p-4 w-[48%]">
-      <Ionicons name={icon} size={28} color="#FFFFFF" />
-      <Text className="text-white font-semibold text-[13px] mt-2">{title}</Text>
-    </View>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      className="bg-[#1976D2] rounded-[20px] p-4 w-[48%]"
+    >
+      <View className="flex-row justify-between items-center">
+        <Ionicons name={icon} size={28} color="#FFFFFF" />
+        <Ionicons name="chevron-forward" size={18} color="#BBDEFB" />
+      </View>
+
+      <Text className="text-white font-semibold text-[13px] mt-3">
+        {title}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
