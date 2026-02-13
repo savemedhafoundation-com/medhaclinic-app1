@@ -1,213 +1,192 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import type { ComponentProps } from 'react';
-
-import BottomNav from '../../components/BottomNav';
-
+import React from 'react';
 import {
-  Image,
-  ImageBackground,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
-// 🔹 ASSETS
-import bg from '../../assets/images/common_bgpage.png';
-import logo from '../../assets/images/medha_logo.png';
+const logo = require('../../assets/images/medha_logo.png');
+const bgImage = require('../../assets/images/dashbg.png');
 
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
-
-type ActionCardProps = {
-  icon: IoniconName;
-  title: string;
-  subtitle: string;
-  onPress?: () => void;
-};
-
-type HelpCardProps = {
-  icon: IoniconName;
-  title: string;
-  onPress?: () => void;
-};
-
-type DisclaimerItemProps = {
-  text: string;
-};
-
-export default function InformationScreen() {
-  const router = useRouter();
-
+export default function HomeScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-[#0B3A6E]">
-      <ImageBackground source={bg} className="flex-1" resizeMode="cover">
+    <ImageBackground source={bgImage} resizeMode="cover" className="flex-1">
+      {/* 🌿 Light global green overlay */}
 
-        {/* ================= MAIN CONTENT ================= */}
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View className="p-5 pb-[80px]">
+
+      <View className="flex-1 bg-[#0f3d12]/55">
+        <SafeAreaView className="flex-1">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 140 }}
+          >
 
             {/* ================= HEADER ================= */}
-            <View className="flex-row justify-between items-center mb-[86px] mt-[70px] relative">
-              <View className="absolute left-0 right-0 items-center">
-                <Image
-                  source={logo}
-                  className="w-[254px] h-[254px]"
-                  resizeMode="contain"
-                />
-              </View>
-            </View>
+{/* ================= HEADER ================= */}
+<LinearGradient
+  colors={[
+    'rgba(34,197,94,0.35)',
+    'rgba(22,163,74,0.25)',
+    'rgba(21,128,61,0.15)',
+  ]}
+  className="pb-8 items-center"
+>
 
-            {/* ================= TITLE ================= */}
-            <Text className="text-[30px] text-white font-bold mb-3">
-              Welcome to{`\n`}Medha Clinic
-            </Text>
+  {/* Top Bar */}
+  <View className="w-full flex-row items-center justify-between px-5">
+    <TouchableOpacity className="bg-white/25 p-2 rounded-full">
+      <Ionicons name="chevron-back" size={28} color="#fff" />
+    </TouchableOpacity>
+  </View>
 
-            <Text className="text-[#E0F2FE] text-[14px] mb-[28px]">
-              We are here to understand your body and guide recovery naturally.
-            </Text>
+  {/* Logo - pushed up */}
+  <View className="items-center -mt-2">
+    <Image
+      source={logo}
+      resizeMode="contain"
+    />
+  </View>
 
-            <Text className="text-white text-[16px] font-semibold mb-4">
-              What would you like to do today?
-            </Text>
+  {/* Centered Text */}
+  <View className="items-center px-8">
+    <Text className="text-white text-[34px] font-light text-center">
+      Welcome to
+    </Text>
+
+    <Text className="text-white text-[38px] font-bold text-center">
+      Medha Clinic
+    </Text>
+
+    <Text className="text-white/90 text-[16px] leading-[24px] text-center mt-3">
+      We are here to understand your body and guide recovery naturally
+    </Text>
+  </View>
+
+</LinearGradient>
+
 
             {/* ================= ACTION CARDS ================= */}
-            <ActionCard
-              icon="stats-chart-outline"
-              title="Start Health Assessment"
-              subtitle="Tell us about your body, lifestyle, and how you're feeling."
-              onPress={() => router.push('/homescreen/basicscreens')}
-            />
+            <View className="px-5 mt-6">
 
-            <ActionCard
-              icon="cloud-upload-outline"
-              title="Upload Medical Reports"
-              subtitle="PDF, Image, or Photo. You may continue without reports."
-            />
+              {/* Card 1 */}
+              <TouchableOpacity className="bg-[#1fa21f]/90 rounded-[26px] p-5 flex-row items-center mb-4"onPress={() => router.push('/homescreen/basicscreens')}>
+                <View className="bg-white p-3 rounded-xl mr-4">
+                  <Ionicons name="stats-chart" size={24} color="#16a34a" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white text-[20px] font-bold">
+                    Basic Health Assessment
+                  </Text>
+                  <Text className="text-white/80 text-[13px] mt-1">
+                    Tell us about your body, lifestyle, and how you’re feeling.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
+              </TouchableOpacity>
 
-            <ActionCard
-              icon="leaf-outline"
-              title="I Want to Understand Natural Immunotherapy"
-              subtitle="Learn how healing through natural immunity works."
-            />
-
-            {/* ================= HOW HELPS ================= */}
-            <Text className="text-white text-[18px] font-bold my-[18px]">
-              How Medha Clinic Helps :
-            </Text>
-
-            <View className="flex-row justify-between">
-              <HelpCard
-                icon="pulse-outline"
-                title="Understand What’s Happening Inside Your Body"
-                onPress={() => router.push('/analysis/stepanalyst')}
-              />
-
-              <HelpCard
-                icon="nutrition-outline"
-                title="Personalized Diet & Nutrition Guidance"
-                onPress={() => router.push('/help/diet-nutrition')}
-              />
-            </View>
-
-            {/* ================= DISCLAIMER ================= */}
-            <View className="bg-[rgba(0,0,0,0.25)] rounded-[18px] p-4 mt-[22px]">
-              <Text className="text-white font-bold mb-3">
-                What This App Does NOT Do
-              </Text>
-
-              <View className="flex-row justify-between">
-                <DisclaimerItem text="Replace emergency treatment" />
-                <DisclaimerItem text="Promise instant cure" />
-              </View>
-
-              <View className="flex-row justify-between">
-                <DisclaimerItem text="Use fear-based language" />
-                <DisclaimerItem text="Fake promises" />
-              </View>
-            </View>
-
-            {/* ================= START BUTTON ================= */}
-            <View className="mt-[30px] items-center">
-              <Text className="text-center text-[#E0F2FE]">
-                Begin by telling us about your body.
-              </Text>
-
-              <TouchableOpacity
-                className="flex-row items-center bg-[#29B6F6] px-[42px] py-[14px] rounded-[30px] mt-[14px]"
-                activeOpacity={0.85}
-                onPress={() => router.push('/homescreen/basicscreens')}
-                style={{
-                  shadowColor: '#29B6F6',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.45,
-                  shadowRadius: 12,
-                  elevation: 8,
-                }}
-              >
-                <Text className="text-white text-[16px] font-semibold mr-[6px]">
-                  Start
-                </Text>
-                <Ionicons name="arrow-forward-outline" size={22} color="#FFFFFF" />
+              {/* Card 2 */}
+                  <TouchableOpacity className="bg-[#1fa21f]/90 rounded-[26px] p-5 flex-row items-center mb-4"onPress={() => router.push('/homescreen/basicscreens')}>
+                <View className="bg-white p-3 rounded-xl mr-4">
+                  <Ionicons name="stats-chart" size={24} color="#16a34a" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white text-[20px] font-bold">
+                    Moderate Health Assessment                  </Text>
+                  <Text className="text-white/80 text-[13px] mt-1">
+                    Tell us about your body, lifestyle, and how you’re feeling.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
+              </TouchableOpacity>
+       <TouchableOpacity className="bg-[#1fa21f]/90 rounded-[26px] p-5 flex-row items-center mb-4"onPress={() => router.push('/homescreen/basicscreens')}>
+                <View className="bg-white p-3 rounded-xl mr-4">
+                  <Ionicons name="stats-chart" size={24} color="#16a34a" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white text-[20px] font-bold">
+                    Critical Health Assessment
+                  </Text>
+                  <Text className="text-white/80 text-[13px] mt-1">
+                    Tell us about your body, lifestyle, and how you’re feeling.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
+              </TouchableOpacity>
+              {/* Card 3 */}
+              <TouchableOpacity className="bg-[#1fa21f]/90 rounded-[26px] p-5 flex-row items-center">
+                <View className="bg-white p-3 rounded-xl mr-4">
+                  <Ionicons name="leaf" size={24} color="#16a34a" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white text-[20px] font-bold">
+                    Natural Immunotherapy
+                  </Text>
+                  <Text className="text-white/80 text-[13px] mt-1">
+                    Learn how healing through natural immunity works.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
 
-            {/* 🔴 Spacer so BottomNav doesn’t overlap */}
-            <View className="h-[120px]" />
-          </View>
-        </ScrollView>
+            {/* ================= HOW MEDHA HELPS ================= */}
+            <View className="px-5 mt-12">
+              <Text className="text-white text-[26px] font-bold mb-5">
+                How Medha Clinic Helps :
+              </Text>
+<TouchableOpacity onPress={() => router.push('/analysis/stepanalyst')}>
+              <View className="flex-row justify-between">
+                <View className="bg-white/20 rounded-[18px] p-4 w-[48%]">
+                  <Ionicons name="pulse" size={28} color="#eaffea" />
+                  <Text className="text-white font-semibold mt-3">
+                    Understand What’s Happening Inside Your Body
+                  </Text>
+                </View>
+                <View className="bg-white/20 rounded-[18px] p-4 w-[48%]">
+                  <Ionicons name="nutrition" size={28} color="#eaffea" />
+                  <Text className="text-white font-semibold mt-3">
+                    Personalized Diet & Nutrition Guidance
+                  </Text>
+                </View>
+              </View>
+              </TouchableOpacity>
 
-        {/* ================= BOTTOM NAV ================= */}
-        <BottomNav />
-      </ImageBackground>
-    </SafeAreaView>
-  );
-}
+            </View>
 
-/* ================= SUB COMPONENTS ================= */
+            {/* ================= WHAT APP DOES NOT DO ================= */}
+            <View className="px-5 mt-10">
+              <View className="border border-white/30 rounded-[18px] p-4">
+                <Text className="text-white text-[18px] font-bold mb-4">
+                  What This App Does NOT Do
+                </Text>
 
-function ActionCard({ icon, title, subtitle, onPress }: ActionCardProps) {
-  return (
-    <TouchableOpacity
-      className="flex-row items-center bg-[#1E88E5] rounded-[24px] p-4 mb-[14px]"
-      activeOpacity={0.9}
-      onPress={onPress}
-    >
-      <Ionicons name={icon} size={26} color="#FFFFFF" />
-      <View className="flex-1 ml-[14px]">
-        <Text className="text-white text-[16px] font-semibold">{title}</Text>
-        <Text className="text-[#D0E8FF] text-[12px] mt-1">{subtitle}</Text>
+                {[
+                  'Replace emergency treatment',
+                  'Promise instant cure',
+                  'Use fear-based language',
+                  'Fake promises',
+                ].map((item, index) => (
+                  <View key={index} className="flex-row items-center mb-2">
+                    <Ionicons name="close-circle" size={18} color="#f87171" />
+                    <Text className="text-white ml-2">{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* ================= CTA ================= */}
+  
+
+          </ScrollView>
+        </SafeAreaView>
       </View>
-      <Ionicons name="chevron-forward-outline" size={22} color="#FFFFFF" />
-    </TouchableOpacity>
-  );
-}
-
-function HelpCard({ icon, title, onPress }: HelpCardProps) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.85}
-      className="bg-[#1976D2] rounded-[20px] p-4 w-[48%]"
-    >
-      <View className="flex-row justify-between items-center">
-        <Ionicons name={icon} size={28} color="#FFFFFF" />
-        <Ionicons name="chevron-forward" size={18} color="#BBDEFB" />
-      </View>
-
-      <Text className="text-white font-semibold text-[13px] mt-3">
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-function DisclaimerItem({ text }: DisclaimerItemProps) {
-  return (
-    <View className="flex-row items-center w-[48%] mb-[18px]">
-      <Ionicons name="close-circle" size={16} color="#FF5252" />
-      <Text className="text-[#E5F0FF] text-[12px] ml-1.5">{text}</Text>
-    </View>
+    </ImageBackground>
   );
 }

@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import bg from '../assets/images/diet_lifestyle_bg.png';
+import bg from '../assets/images/dashbg.png';
 import logo from '../assets/images/medha_logo.png';
+import SvgHeader from '../components/Clipperbg';
 
 export default function DietLifestyleScreen() {
   const [eating, setEating] = useState('Moderate');

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import bg from '../assets/images/headerbar.png';
+import bg from '../assets/images/dashbg.png';
 
 const veg = require('../assets/images/veg.png');
 const nonveg = require('../assets/images/nonveg.png');

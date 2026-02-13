@@ -6,14 +6,18 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import Svg, { Path, Circle } from "react-native-svg";
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 /* ================= CONFIG ================= */
 const MAX = 10;
 const START_ANGLE = -180;
 const END_ANGLE = 0;
-const GAP = 3;
-const DONUT_THICKNESS = 48;
+
+const OUTER_STROKE = 20;
+const BASE_ARC_STROKE = 14;     // secondary arc width
+const PIVOT_RADIUS = 14;        // center circle radius
+const BASE_ARC_OFFSET = 21;      // distance from pivot
+
 /* ================= HELPERS ================= */
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(v, max));
@@ -26,63 +30,64 @@ function polar(cx: number, cy: number, r: number, angle: number) {
   };
 }
 
-function arcPath(cx: number, cy: number, r: number) {
-  const start = polar(cx, cy, r, START_ANGLE);
-  const end = polar(cx, cy, r, END_ANGLE);
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 0 1 ${end.x} ${end.y}`;
-}
+function arcSegment(
+  cx: number,
+  cy: number,
+  r: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const start = polar(cx, cy, r, startAngle);
+  const end = polar(cx, cy, r, endAngle);
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+  return `M ${start.x} ${start.y}
+          A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+}
 
 /* ================= COMPONENT ================= */
 export default function SvgSpeedometer({
   score = 0,
-  size = 220,
+  size = 240,
 }: {
   score?: number;
   size?: number;
 }) {
-  const value = clamp(Number(score) || 0, 0, MAX);
+  const value = clamp(score, 0, MAX);
 
   const width = size;
-  const height = width / 2 + 24;
+  const height = size / 2 + 28;
   const cx = width / 2;
   const cy = height;
-  const radius = (width - 28) / 2;
 
-  const NEEDLE_LENGTH = radius - 10;
-  const ARC_LENGTH = Math.PI * radius;
+  const outerRadius = (width - 32) / 2;
 
+  /* 🔑 Secondary arc now sits at needle SOURCE */
+  const baseArcRadius = PIVOT_RADIUS + BASE_ARC_OFFSET;
+
+  /* 🔑 Longer needle */
+  const NEEDLE_LENGTH = outerRadius - 12;
+
+  /* ===== NEEDLE ANIMATION ===== */
   const rotation = useRef(new Animated.Value(START_ANGLE)).current;
-  const arcProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const targetAngle =
+    const angle =
       START_ANGLE + (value / MAX) * (END_ANGLE - START_ANGLE);
 
-    const targetArc = (value / MAX) * ARC_LENGTH;
-
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(rotation, {
-          toValue: targetAngle + 8,
-          duration: 450,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.spring(rotation, {
-          toValue: targetAngle,
-          stiffness: 120,
-          damping: 10,
-          mass: 0.6,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.timing(arcProgress, {
-        toValue: targetArc,
-        duration: 900,
+    Animated.sequence([
+      Animated.timing(rotation, {
+        toValue: angle + 6,
+        duration: 300,
         easing: Easing.out(Easing.ease),
-        useNativeDriver: false,
+        useNativeDriver: true,
+      }),
+      Animated.spring(rotation, {
+        toValue: angle,
+        stiffness: 120,
+        damping: 10,
+        mass: 0.6,
+        useNativeDriver: true,
       }),
     ]).start();
   }, [value]);
@@ -94,50 +99,45 @@ export default function SvgSpeedometer({
 
   return (
     <View style={styles.container}>
-      <View style={{ width, height: height + 20 }}>
-        <Svg width={width} height={height + 20}>
-          {/* ===== SEMI-DONUT (INNER REDUCED) ===== */}
-          <Path
-            d={`
-              M ${cx - radius} ${cy}
-              A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}
-              L ${cx + radius - DONUT_THICKNESS} ${cy}
-              A ${radius - DONUT_THICKNESS} ${radius - DONUT_THICKNESS} 0 1 0 ${cx - radius + DONUT_THICKNESS} ${cy}
-              Z
-            `}
-            fill="#CBEAFF"
-          />
+      <View style={{ width, height: height + 34 }}>
+        <Svg width={width} height={height + 34}>
+          {/* ===== GRADIENT DEFINITION ===== */}
+          <Defs>
+            <LinearGradient id="rainbowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#DC2626" />
+              <Stop offset="25%" stopColor="#F97316" />
+              <Stop offset="50%" stopColor="#EAB308" />
+              <Stop offset="75%" stopColor="#84CC16" />
+              <Stop offset="100%" stopColor="#16A34A" />
+            </LinearGradient>
+          </Defs>
 
-          {/* Background arc */}
+          {/* ===== OUTER RAINBOW GRADIENT ARC ===== */}
           <Path
-            d={arcPath(cx, cy, radius)}
-            stroke="#D6E6F5"
-            strokeWidth={16}
+            d={arcSegment(cx, cy, outerRadius, START_ANGLE, END_ANGLE)}
+            stroke="url(#rainbowGradient)"
+            strokeWidth={OUTER_STROKE}
             fill="none"
             strokeLinecap="round"
           />
 
-          {/* Progress arc (with gap) */}
-          <AnimatedPath
-            d={arcPath(cx, cy, radius - GAP)}
-            stroke="#1E88E5"
-            strokeWidth={16}
+          {/* ===== BASE ARC (AT NEEDLE SOURCE) ===== */}
+          <Path
+            d={arcSegment(cx, cy, baseArcRadius, START_ANGLE, END_ANGLE)}
+            stroke="#86EFAC"
+            strokeWidth={BASE_ARC_STROKE}
             fill="none"
             strokeLinecap="round"
-            strokeDasharray={ARC_LENGTH}
-            strokeDashoffset={Animated.subtract(
-              ARC_LENGTH,
-              arcProgress
-            )}
           />
 
-          {/* Centre pivot */}
-          <Circle cx={cx} cy={cy} r={10} fill="#0B4F8A" />
+          {/* ===== CENTER PIVOT ===== */}
+          <Circle cx={cx} cy={cy} r={PIVOT_RADIUS} fill="#14532D" />
           <Circle cx={cx} cy={cy} r={4} fill="#FFFFFF" />
         </Svg>
 
-        {/* Needle (UNCHANGED) */}
+        {/* ===== LONG NEEDLE (CORRECTLY ALIGNED) ===== */}
         <Animated.View
+          pointerEvents="none"
           style={[
             styles.needlePivot,
             {
@@ -149,14 +149,18 @@ export default function SvgSpeedometer({
         >
           <View
             style={[
-              styles.triangleNeedle,
-              { borderLeftWidth: NEEDLE_LENGTH },
+              styles.needle,
+              {
+                borderLeftWidth: NEEDLE_LENGTH,
+                borderLeftColor: "#14532D",
+              },
             ]}
           />
         </Animated.View>
       </View>
 
-      <Text style={styles.score}>{value}/10</Text>
+      {/* ===== SCORE ===== */}
+      <Text style={styles.score}>{value.toFixed(2)}/10</Text>
     </View>
   );
 }
@@ -173,22 +177,22 @@ const styles = StyleSheet.create({
     height: 0,
   },
 
-  triangleNeedle: {
+  needle: {
     width: 0,
     height: 0,
     borderTopWidth: 6,
     borderBottomWidth: 6,
-    borderLeftWidth: 80,
     borderTopColor: "transparent",
     borderBottomColor: "transparent",
-    borderLeftColor: "#1E88E5",
+
+    /* 🔑 Base exactly at pivot */
     transform: [{ translateY: -6 }],
   },
 
   score: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#1E88E5",
+    color: "#14532D",
     marginTop: 8,
   },
 });

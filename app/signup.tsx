@@ -121,8 +121,7 @@ export default function SignupScreen() {
             </View>
 
             {/* CTA */}
-            <TouchableOpacity
-              className="mx-5 mt-2.5 h-14 rounded-full bg-[#1DA1F2] items-center justify-center"
+            <TouchableOpacity className="mx-5 mt-2.5 h-14 rounded-full bg-[#22c55e] items-center justify-center"
               onPress={() => router.push('/(tabs)/dashboard')}
             >
               <Text className="text-white text-[20px] font-semibold">

@@ -36,32 +36,38 @@ function getScore(
   type: 'HIGH_GOOD' | 'LOW_GOOD' | 'BALANCE',
   level: 'LOW' | 'NORMAL' | 'HIGH'
 ) {
-  if (type === 'HIGH_GOOD') return level === 'LOW' ? 1 : level === 'NORMAL' ? 2 : 3;
-  if (type === 'LOW_GOOD') return level === 'LOW' ? 3 : level === 'NORMAL' ? 2 : 1;
-  if (type === 'BALANCE') return level === 'NORMAL' ? 3 : 2;
-  return 0;
+  // LOW = 4, HIGH = 4, NORMAL = 10
+  return level === 'NORMAL' ? 10 : 4;
 }
 
 /* ================= MAIN ================= */
 export default function TodayImmunityCheck() {
-  const [answers, setAnswers] = useState<Record<number, 'LOW' | 'NORMAL' | 'HIGH'>>({});
+  const [answers, setAnswers] = useState<Record<number, 'LOW' | 'NORMAL' | 'HIGH'>>(
+    {}
+  );
+
+  const totalQuestions = QUESTIONS.length;
+  const answeredCount = Object.keys(answers).length;
+  const allAnswered = answeredCount === totalQuestions;
 
   const scores = Object.entries(answers).map(([i, v]) =>
     getScore(QUESTIONS[Number(i)].type, v)
   );
 
+  // Average range: 4 (worst) to 10 (best)
   const avg =
     scores.length === 0 ? 0 : scores.reduce((a, b) => a + b, 0) / scores.length;
 
-  const speedometerValue =
-    scores.length === 0 ? 0 : Math.round(2 + ((avg - 1) / 2) * 8);
+  // Speedometer shows the exact average value (updates in real-time)
+  const speedometerValue = Number(avg.toFixed(2));
 
+  // Updated immunity thresholds for new 4-10 range
   const immunityLabel =
     avg === 0
       ? ''
-      : avg < 1.8
+      : avg < 6
       ? 'Low Immunity'
-      : avg < 2.5
+      : avg < 8.5
       ? 'Medium Immunity'
       : 'High Immunity';
 
@@ -74,6 +80,7 @@ export default function TodayImmunityCheck() {
 
   return (
     <View className="flex-1 bg-[#f5f6f8]">
+      {/* HEADER */}
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
         <SafeAreaView className="absolute top-0 w-full">
@@ -88,17 +95,19 @@ export default function TodayImmunityCheck() {
         </SafeAreaView>
       </View>
 
+      {/* CONTENT */}
       <ScrollView
         className="px-4"
         contentContainerStyle={{ paddingTop: 250, paddingBottom: 140 }}
       >
         <Text className="text-[#0b4ea2] text-[24px] font-bold mb-1">
-          Today’s Immunity Check
+          Today's Immunity Check
         </Text>
         <Text className="text-[#1fa2ff] mb-4">
           Select what feels true for you:
         </Text>
 
+        {/* QUESTIONS */}
         {QUESTIONS.map((q, i) => (
           <View
             key={i}
@@ -112,7 +121,13 @@ export default function TodayImmunityCheck() {
               {(['LOW', 'NORMAL', 'HIGH'] as const).map(level => (
                 <Emoji
                   key={level}
-                  img={level === 'LOW' ? emojiLow : level === 'NORMAL' ? emojiNormal : emojiHigh}
+                  img={
+                    level === 'LOW'
+                      ? emojiLow
+                      : level === 'NORMAL'
+                      ? emojiNormal
+                      : emojiHigh
+                  }
                   label={level}
                   active={answers[i] === level}
                   onPress={() =>
@@ -124,25 +139,34 @@ export default function TodayImmunityCheck() {
           </View>
         ))}
 
+        {/* SPEEDOMETER - Shows exact average value with 2 decimals, updates real-time */}
         <SvgSpeedometer score={speedometerValue} />
 
         {immunityLabel !== '' && (
-          <Text className="text-center mt-2 text-[#0b4ea2] font-semibold">
+          <Text className="text-center mt-5 text-[#0b4ea2] font-semibold text-[16px]">
             {immunityLabel}
           </Text>
         )}
 
+        {/* CTA — ENABLED ONLY WHEN ALL ANSWERED */}
         <TouchableOpacity
+          disabled={!allAnswered}
           onPress={() =>
             router.push({
               pathname: 'certification/daily',
               params: { data: JSON.stringify(payload) },
             })
           }
-          className="mt-6 bg-[#1fa2ff] py-4 rounded-full items-center"
+          className={`mt-6 py-4 rounded-full items-center ${
+            allAnswered ? 'bg-[#16a34a]' : 'bg-[#bbf7d0]'
+          }`}
         >
-          <Text className="text-white text-[18px] font-semibold">
-            Get My Result
+          <Text className={`text-[18px] font-semibold ${
+            allAnswered ? 'text-white' : 'text-[#166534]'
+          }`}>
+            {allAnswered
+              ? 'Get My Result'
+              : `Get My Result (${answeredCount}/${totalQuestions})`}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -156,8 +180,16 @@ function Emoji({ img, label, active, onPress }) {
 
   const handlePress = () => {
     Animated.sequence([
-      Animated.timing(scale, { toValue: 1.6, duration: 150, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }),
+      Animated.timing(scale, {
+        toValue: 1.6,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
     ]).start();
     onPress();
   };
@@ -167,7 +199,12 @@ function Emoji({ img, label, active, onPress }) {
       <Animated.View style={{ transform: [{ scale }] }}>
         <Image source={img} className="w-10 h-10 mb-1" resizeMode="contain" />
       </Animated.View>
-      <View className={`px-4 py-1 rounded-full ${active ? 'bg-[#1fa2ff]' : ''}`}>
+
+      <View
+        className={`px-4 py-1 rounded-full ${
+          active ? 'bg-[#1fa2ff]' : ''
+        }`}
+      >
         <Text className={`${active ? 'text-white' : 'text-[#0b4ea2]'}`}>
           {label}
         </Text>

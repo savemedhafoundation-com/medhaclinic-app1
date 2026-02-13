@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import "../global.css";
+import { StackScreen } from "react-native-screens";
 // export default function RootLayout() {
 //   return (
 //     <Stack screenOptions={{ headerShown: false }}>
@@ -23,8 +24,12 @@ export default function RootLayout() {
       <Stack.Screen name="foodpreferance"/>
       <Stack.Screen name="healthassessment"/>
       <Stack.Screen name="process"/>
+       <Stack.Screen name="advice"/>
       <Stack.Screen name="assessmentcertification"/>
       <Stack.Screen name="dashboard"/>
+      <Stack.Screen name="boosterdiet/dietplan"/>
+
+      <Stack.Screen name="analysis/stepanalyst"/>
       <Stack.Screen name="certification/daily"/>
       <Stack.Screen name="immunity/dailyimmunity"/>
 

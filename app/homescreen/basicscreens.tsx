@@ -1,188 +1,137 @@
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import SvgHeader from '../../components/Clipperbg';
+import logo from '../../assets/images/medha_logo.png';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import BottomNav from '../../components/BottomNav';
 
-import type { ComponentProps } from 'react';
-import {
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+export default function GetStartedScreen() {
+  const CHECKUPS = [
+    {
+      title: "Daily Immunity Checkup",
+      sub: "Know your daily health reports",
+      route: "immunity/dailyimmunity",
+    },
+    {
+      title: "Weekly Immunity Checkup",
+      sub: "Know your weekly health reports",
+      route: "/weekly",
+    },
+    {
+      title: "Monthly Immunity Checkup",
+      sub: "Know your monthly health reports",
+      route: "/monthly",
+    },
+  ];
 
-const HEADER_HEIGHT = 220;
-const logo = require('../../assets/images/medha_logo.png');
-
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
-
-type AssessmentCardProps = {
-  icon: IoniconName;
-  title: string;
-  desc: string;
-  onPress: () => void;
-};
-
-export default function HealthAssessmentIntro() {
   return (
-    <View className="flex-1 bg-[#f5f6f8]">
-      {/* ===== FIXED HEADER / APP BAR ===== */}
+    <View className="flex-1 bg-gray-100">
+
+      {/* ===== HEADER ===== */}
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
 
-        <SafeAreaView className="absolute top-0 w-full" >
+        <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
-            {/* LEFT + RIGHT ICONS */}
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
               <TouchableOpacity onPress={() => router.back()}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
 
-              <TouchableOpacity>
-                <Ionicons name="menu" size={26} color="#fff" />
-              </TouchableOpacity>
+              <Ionicons name="menu" size={26} color="#fff" />
             </View>
 
-            {/* CENTER LOGO */}
             <View className="items-center">
-              {/* <Image
+              <Image
                 source={logo}
                 className="w-[150px] h-[100px]"
-                resizeMode="contain"
-              /> */}
+                contentFit="contain"
+              />
             </View>
           </View>
         </SafeAreaView>
       </View>
 
-      {/* ===== SCROLL VIEW (SCROLLS UNDER HEADER) ===== */}
+      {/* ===== CONTENT ===== */}
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        className="flex-1 px-6"
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 220,
+          paddingTop: 200,
+          paddingBottom: 140,
         }}
       >
-        {/* Spacer = header height */}
-        <View style={{ height: HEADER_HEIGHT }} />
-
-        {/* Breadcrumb */}
-        <Text className="text-gray-500 text-[14px] mb-1">
-          ‹ Health Assessment
+        {/* Section Title */}
+        <Text className="text-gray-500 text-base mb-2">
+          {'<'} Basic Health Assessment
         </Text>
 
-        {/* Title */}
-        <Text className="text-[34px] font-bold text-[#0b4ea2]">
-          Let's Get started
+        <Text className="text-green-700 text-3xl font-bold">
+          Let’s Get started
         </Text>
 
-        <Text className="text-[16px] text-[#1f3c66] mt-2 mb-6">
-          Please tell us a bit about yourself so we can guide
-          your health journey.
+        <Text className="text-gray-700 text-lg mt-3 leading-6">
+          Please tell us a bit about yourself so we can guide your health journey.
         </Text>
 
         {/* Progress */}
-        <View className="mb-8">
-          <View className="h-3 bg-[#d6e6ff] rounded-full overflow-hidden">
-            <View className="h-3 w-[50%] bg-[#0b4ea2] rounded-full" />
+        <View className="mt-6">
+          <View className="h-3 bg-green-200 rounded-full">
+            <View className="w-1/3 h-3 bg-green-600 rounded-full" />
           </View>
-          <Text className="text-[#0b4ea2] text-[14px] mt-2">
-            Step 1 of 2
+          <Text className="text-green-700 mt-2 font-medium">
+            Step 1 of 3
           </Text>
         </View>
 
-        {/* Cards */}
-        <AssessmentCard
-          icon="person"
-          title="Basic Health Assessment"
-          desc="Know your Health abilities"
-          onPress={() => router.push('/healthassessment')}
-        />
+        {/* ===== CARDS ===== */}
+        <View className="mt-8">
+          {CHECKUPS.map((item, index, arr) => (
+            <TouchableOpacity
+              key={index}
+              activeOpacity={0.85}
+              onPress={() => router.push(item.route)}
+              className={`bg-green-600 rounded-2xl p-5 flex-row items-center justify-between ${
+                index !== arr.length - 1 ? "mb-8" : ""
+              }`}
+            >
+              <View>
+                <Text className="text-white text-lg font-semibold">
+                  {item.title}
+                </Text>
+                <Text className="text-green-100 mt-1">
+                  {item.sub}
+                </Text>
+              </View>
 
-        <AssessmentCard
-          icon="heart"
-          title="Daily Immunity Checkup"
-          desc="Know your daily health reports"
-          onPress={() => router.push('/immunity/dailyimmunity')}
-        />
+              <View className="bg-white px-4 py-2 rounded-full">
+                <Text className="text-green-700 font-semibold">
+                  Get Started
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        <AssessmentCard
-          icon="calendar"
-          title="Weekly Immunity Checkup"
-          desc="Know your weekly health reports"
-          onPress={() => router.push('/immunity/weeklyimmunity')}
-        />
-
-        {/* Info */}
-        <View className="bg-white rounded-[24px] p-4 mt-6">
-          <Text className="text-center text-[14px] text-[#1f3c66] leading-6">
-            All fields are optional, but more information means
-            better care for you. Your details will remain
-            confidential.
+        {/* Info Box */}
+        <View className="bg-green-200 p-5 rounded-2xl mt-10">
+          <Text className="text-gray-800 text-center leading-6">
+            All fields are optional, but more information means better care for you.
+            Your details will remain confidential.
           </Text>
         </View>
 
-        {/* Actions */}
-        <TouchableOpacity className="mt-5">
-          <Text className="text-center text-[#0b4ea2] text-[15px]">
-            Skip for now
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="mt-4 bg-[#1fa2ff] py-4 rounded-full flex-row items-center justify-center gap-2"
-          onPress={() => router.push('/healthassessment')}
-        >
-          <Text className="text-white text-[18px] font-semibold">
-            Next
-          </Text>
-          <Ionicons name="chevron-forward" size={22} color="#fff" />
-        </TouchableOpacity>
+        {/* Skip */}
+        <Text className="text-center text-gray-600 text-lg mt-6">
+          Skip for now
+        </Text>
       </ScrollView>
+      <BottomNav />
 
-      {/* Bottom Navigation */}
-      <View className="absolute bottom-0 left-0 right-0">
-        <BottomNav />
-      </View>
+      {/* ===== BOTTOM NAV ===== */}
+    
     </View>
-  );
-}
-
-/* ================= CARD COMPONENT ================= */
-
-function AssessmentCard({ icon, title, desc, onPress }: AssessmentCardProps) {
-  return (
-    <TouchableOpacity activeOpacity={0.9} onPress={onPress} className="mb-4">
-      <View
-        className="bg-[#0b4ea2] px-4 py-5 flex-row items-center"
-        style={{
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 10,
-          borderBottomLeftRadius: 10,
-          borderBottomRightRadius: 20,
-        }}
-      >
-        <View className="w-12 h-12 rounded-full bg-white items-center justify-center mr-4">
-          <Ionicons name={icon} size={22} color="#0b4ea2" />
-        </View>
-
-        <View className="flex-1">
-          <Text className="text-white text-[18px] font-semibold">
-            {title}
-          </Text>
-          <Text className="text-[#d6ecff] text-[14px] mt-1">
-            {desc}
-          </Text>
-        </View>
-
-        <View className="bg-white px-4 py-2 rounded-full">
-          <Text className="text-[#0b4ea2] font-semibold text-[13px]">
-            Get Started
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
   );
 }

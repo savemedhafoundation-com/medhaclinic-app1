@@ -5,65 +5,63 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-// BACKGROUND + LOGO
-import bg from '../../assets/images/common_bgpage.png';
-import logo from '../../assets/images/medha_logo.png';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
+import { router } from 'expo-router';
 
-// IMAGES (use your assets)
+import SvgHeader from '../../components/Clipperbg';
+
+// IMAGES
 import digestionImg from '../../assets/images/analysis/digestion.png';
 import respiratoryImg from '../../assets/images/analysis/respiratory.png';
 import dietImg from '../../assets/images/analysis/diet.png';
 import supplementImg from '../../assets/images/analysis/supplements.png';
 import relaxImg from '../../assets/images/analysis/relaxation.png';
-import uploadImg from '../../assets/images/analysis/upload.png'; // optional (can remove)
 
 export default function AnalysisRecommendationScreen() {
-const { width: screenWidth } = useWindowDimensions();
+  const { width } = useWindowDimensions();
 
   return (
-    <ImageBackground source={bg} resizeMode="cover" className="flex-1">
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        {/* ================= TOP GREEN HEADER ONLY (LOGO) ================= */}
-        <View className="bg-green-600 pt-14 pb-16 px-5 relative">
-          {/* top nav */}
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity className="w-10 h-10 rounded-full bg-white/90 items-center justify-center">
-              <Ionicons name="chevron-back" size={22} color="#16a34a" />
-            </TouchableOpacity>
+    <View className="flex-1 bg-white">
+      {/* ================= HEADER ================= */}
+      <View className="absolute top-0 left-0 right-0 z-10">
+        <SvgHeader />
 
-            <View className="items-center">
-              <Image source={logo} className="w-44 h-32" resizeMode="contain" />
+        <SafeAreaView className="absolute top-0 w-full">
+          <View className="h-14 justify-center mt-4">
+            <View className="absolute left-4 right-4 flex-row justify-between">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity className="w-10 h-10 rounded-full bg-white/10 items-center justify-center">
-              <Ionicons name="menu" size={24} color="#fff" />
-            </TouchableOpacity>
           </View>
+        </SafeAreaView>
+      </View>
 
-          {/* fake wave: white overlay with big radius */}
-          <View className="absolute left-0 right-0 -bottom-10 h-20 bg-white rounded-t-[40px]" />
-        </View>
-
-        {/* ================= WHITE CONTENT AREA ================= */}
-        <View className="bg-white px-5 pt-10 pb-14">
-          {/* TITLE (on white, like screenshot) */}
-          <Text className="text-green-700 text-[30px] font-extrabold leading-[38px] text-center">
+      {/* ================= CONTENT ================= */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          marginTop: 200,
+          paddingBottom: 250,
+        }}
+      >
+        <View className="bg-white px-6 pt-8">
+          {/* TITLE */}
+          <Text className="text-green-700 text-[30px] font-extrabold text-center leading-[38px]">
             Step-by-Step{'\n'}Analysis &{'\n'}Recommendations
           </Text>
 
-          <Text className="text-gray-700 text-center mt-4 text-[15px] px-6 leading-5">
-            Based on what you shared, here{'\n'}is your personalized analysis.
+          <Text className="text-gray-700 text-center mt-4 text-[15px] leading-5">
+            Based on what you shared,{'\n'}here is your personalized analysis.
           </Text>
 
-          {/* PROGRESS (in white section) */}
+          {/* PROGRESS */}
           <View className="mt-6">
             <View className="h-3 bg-green-200 rounded-full overflow-hidden">
-              <View className="h-3 bg-green-600 w-[55%] rounded-full" />
+              <View className="h-3 bg-green-600 w-[55%]" />
             </View>
             <Text className="text-center text-gray-800 text-[13px] mt-2">
               Step 1 of 2
@@ -75,23 +73,21 @@ const { width: screenWidth } = useWindowDimensions();
             <Text className="text-green-700 text-[18px] font-bold">
               Your Body Needs Support In:
             </Text>
-            <TouchableOpacity>
-              <Text className="text-green-600 text-[15px] font-semibold">
-                See all
-              </Text>
-            </TouchableOpacity>
+            <Text className="text-green-600 font-semibold">
+              See all
+            </Text>
           </View>
 
-          {/* BIG SUPPORT CARD (with diagonal corner like screenshot) */}
+          {/* BIG CARD */}
           <View className="rounded-[26px] overflow-hidden mb-5">
-      <Image
-                  source={digestionImg}
-  style={{ width: screenWidth, height: 224 }}
-                  resizeMode="contain"
-                />
+            <Image
+              source={digestionImg}
+              style={{ width: '100%', height: 220 }}
+              resizeMode="contain"
+            />
           </View>
 
-          {/* MINI SUPPORT CARDS (2 like screenshot) */}
+          {/* MINI CARDS */}
           <View className="flex-row justify-between mb-8">
             <MiniSupportCard image={respiratoryImg} />
             <MiniSupportCard image={respiratoryImg} />
@@ -102,67 +98,58 @@ const { width: screenWidth } = useWindowDimensions();
             Recommended Activities:
           </Text>
 
+          {/* ✅ ROUTED CARD */}
           <ActivityCard
             image={dietImg}
             title="Daily Diet Swaps"
             subtitle="Foods and drinks to add or limit"
-            showRightArrow={false}
+            showRightArrow
+            onPress={() => router.push('/analysis/dailydietswaps')}
           />
 
           <ActivityCard
             image={supplementImg}
             title="Natural Supplements"
             subtitle="Gentle boosters for immunity & recovery"
-            showRightArrow={false}
           />
 
           <ActivityCard
             image={relaxImg}
             title="Relaxation Exercises"
-            subtitle="Easy, Calming, Practices for Stress"
+            subtitle="Easy, calming practices for stress"
             showRightArrow
           />
 
-          {/* UPLOAD CTA (green section like screenshot) */}
+          {/* CTA */}
           <View className="mt-10">
             <Text className="text-green-700 text-[22px] font-extrabold mb-4">
               Would you like more detailed plans?
             </Text>
 
-            <View className="bg-green-100 rounded-[24px] p-5 flex-row items-center">
-              <View className="w-14 h-14 bg-white rounded-2xl items-center justify-center mr-4">
-                {/* <Image
-                  source={uploadImg}
-                  className="w-9 h-9"
-                  resizeMode="contain"
-                /> */}
-              </View>
-
-              <View className="flex-1">
-                <Text className="text-gray-900 text-[14px] font-semibold leading-5">
-                  Our NIT system can analyze your medical reports and suggest a
-                  tailored Natural Immunotherapy plan.
-                </Text>
-              </View>
+            <View className="bg-green-100 rounded-[24px] p-5 flex-row">
+              <View className="w-14 h-14 bg-white rounded-2xl mr-4" />
+              <Text className="flex-1 text-gray-900 text-[14px] font-semibold">
+                Our NIT system can analyze your medical reports and suggest a
+                tailored Natural Immunotherapy plan.
+              </Text>
             </View>
 
             <TouchableOpacity className="bg-green-600 py-4 rounded-full items-center mt-5">
               <Text className="text-white text-[16px] font-bold">
-                Upload Medical Reports Now  →
+                Upload Medical Reports Now →
               </Text>
             </TouchableOpacity>
 
-            <Text className="text-center text-gray-700 text-[13px] mt-4 leading-5 px-3">
-              This step is optional. You can continue your journey with
-              customized diet & lifestyle guidance
+            <Text className="text-center text-gray-700 text-[13px] mt-4 px-3">
+              This step is optional. You can continue with customized diet &
+              lifestyle guidance.
             </Text>
           </View>
 
-          {/* bottom spacing */}
           <View className="h-10" />
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -172,44 +159,46 @@ function MiniSupportCard({ image }: { image: any }) {
   return (
     <TouchableOpacity className="w-[48%] rounded-[20px] overflow-hidden">
       <View className="bg-green-600 p-4 relative">
-        {/* diagonal accent */}
         <View className="absolute right-0 top-0 w-20 h-20 bg-green-400 rotate-45 translate-x-8 -translate-y-8" />
 
         <Image source={image} className="w-12 h-12" resizeMode="contain" />
 
-        <View className="flex-row justify-between items-start mt-2">
-          <View className="flex-1 pr-3">
-            <Text className="text-white text-[13px] font-extrabold">
-              Respiratory{'\n'}System
-            </Text>
-            <Text className="text-green-100 text-[11px] mt-1">
-              Boosting lung function{'\n'}oxygen flow
-            </Text>
-          </View>
+        <Text className="text-white text-[13px] font-extrabold mt-2">
+          Respiratory{'\n'}System
+        </Text>
 
-          <Ionicons name="chevron-forward" size={18} color="#eafff2" />
-        </View>
+        <Text className="text-green-100 text-[11px] mt-1">
+          Boosting lung function
+        </Text>
       </View>
     </TouchableOpacity>
   );
 }
 
+/* ================= ACTIVITY CARD ================= */
+
+type ActivityCardProps = {
+  image: any;
+  title: string;
+  subtitle: string;
+  showRightArrow?: boolean;
+  onPress?: () => void;
+};
+
 function ActivityCard({
   image,
   title,
   subtitle,
-  floatingRightImage,
   showRightArrow,
-}: {
-  image: any;
-  title: string;
-  subtitle: string;
-  floatingRightImage?: any;
-  showRightArrow?: boolean;
-}) {
+  onPress,
+}: ActivityCardProps) {
   return (
-    <TouchableOpacity className="bg-green-600 rounded-[24px] p-5 mb-4 flex-row items-center relative overflow-visible">
-      {/* left icon tile */}
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      disabled={!onPress}
+      className="bg-green-600 rounded-[24px] p-5 mb-4 flex-row items-center"
+    >
       <View className="w-[62px] h-[62px] bg-white rounded-[18px] items-center justify-center mr-4">
         <Image source={image} className="w-10 h-10" resizeMode="contain" />
       </View>
@@ -218,25 +207,14 @@ function ActivityCard({
         <Text className="text-white text-[17px] font-extrabold">
           {title}
         </Text>
-        <Text className="text-green-100 text-[13px] mt-1 leading-5">
+        <Text className="text-green-100 text-[13px] mt-1">
           {subtitle}
         </Text>
       </View>
 
-      {showRightArrow ? (
+      {showRightArrow && (
         <Ionicons name="chevron-forward" size={24} color="#fff" />
-      ) : null}
-
-      {/* floating right tile (Natural Supplements) */}
-      {floatingRightImage ? (
-        <View className="absolute right-4 top-[-18px] w-16 h-16 bg-white rounded-[18px] items-center justify-center shadow-lg">
-          <Image
-            source={floatingRightImage}
-            className="w-9 h-9"
-            resizeMode="contain"
-          />
-        </View>
-      ) : null}
+      )}
     </TouchableOpacity>
   );
 }

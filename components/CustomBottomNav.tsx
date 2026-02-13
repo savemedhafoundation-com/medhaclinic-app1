@@ -3,7 +3,7 @@ import { BlurView } from 'expo-blur';
 import { TouchableOpacity, View } from 'react-native';
 
 type Props = {
-  active: 'home' | 'assessment' | 'reports' | 'profile';
+  active: 'home' | 'assessment' | 'healthalert' | 'profile';
   onChange: (tab: Props['active']) => void;
 };
 
@@ -36,8 +36,8 @@ export default function BottomNav({ active, onChange }: Props) {
         />
         <NavItem
           icon="document-text"
-          active={active === 'reports'}
-          onPress={() => onChange('reports')}
+          active={active === 'healthalert'}
+          onPress={() => onChange('healthalert')}
         />
         <NavItem
           icon="person"

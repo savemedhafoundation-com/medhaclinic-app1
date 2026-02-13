@@ -3,61 +3,72 @@ import { usePathname, useRouter } from 'expo-router';
 import { TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+/* 🔹 Map routes → tabs correctly */
+function getActiveTab(pathname: string) {
+  if (pathname.startsWith('/(tabs)/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/(tabs)/stats')) return 'stats';
+  if (pathname.startsWith('/(tabs)/healthalert')) return 'healthalert';
+  if (pathname.startsWith('/(tabs)/profile')) return 'profile';
+  return '';
+}
+
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const activeTab = getActiveTab(pathname);
 
   const tabs = [
-    { icon: 'home', route: '/(tabs)/dashboard' },
-    { icon: 'stats-chart', route: '/stats' },
-    { icon: 'information-circle', route: '/info' },
-    { icon: 'person', route: '/profile' },
+    { key: 'dashboard', icon: 'home', route: '/(tabs)/dashboard' },
+    { key: 'stats', icon: 'stats-chart', route: '/(tabs)/stats' },
+    { key: 'healthalert', icon: 'information-circle', route: '/(tabs)/healthalert' },
+    { key: 'profile', icon: 'person', route: '/(tabs)/profile' },
   ];
 
   return (
-    <View className="absolute bottom-[70px] w-full items-center z-20">
-      {/* 🌿 Extra Rounded Gradient Container */}
+    <View
+      style={{
+        position: 'absolute',
+        bottom: 70,
+        width: '100%',
+        alignItems: 'center',
+        zIndex: 20,
+      }}
+    >
       <LinearGradient
         colors={['#16a34a', '#22c55e', '#4ade80']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={{
           width: '92%',
-          paddingVertical: 16,
-          paddingHorizontal: 26,
-          borderRadius: 999,          // 🔥 fully pill-shaped
+          paddingVertical: 14,
+          paddingHorizontal: 28,
+          borderRadius: 999,
           flexDirection: 'row',
           justifyContent: 'space-between',
           elevation: 12,
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 6 },
         }}
       >
         {tabs.map(tab => {
-          const isActive = pathname === tab.route;
+          const isActive = activeTab === tab.key;
 
           return (
             <TouchableOpacity
-              key={tab.route}
+              key={tab.key}
               onPress={() => router.replace(tab.route)}
               activeOpacity={0.85}
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 999,      // 🔥 round icon buttons
+                width: 46,
+                height: 46,
+                borderRadius: 999,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: isActive
-                  ? 'rgba(255,255,255,0.25)'
-                  : 'transparent',
+                backgroundColor: isActive ? '#ffffff' : 'transparent',
               }}
             >
               <Ionicons
                 name={tab.icon as any}
                 size={24}
-                color="#ffffff"
+                color={isActive ? '#252d29' : '#eaffea'}
               />
             </TouchableOpacity>
           );

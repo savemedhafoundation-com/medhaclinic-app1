@@ -12,11 +12,11 @@ import {
    EMOJI ASSETS
 ======================= */
 const EMOJI = {
-  veryGood: require('../assets/images/process_emoji/very-good.png'),
-  good: require('../assets/images/process_emoji/good.png'),
-  moderate: require('../assets/images/process_emoji/moderate.png'),
+  veryGood: require('../assets/images/process_emoji/normal.png'),
+  good: require('../assets/images/process_emoji/normal.png'),
+  moderate: require('../assets/images/process_emoji/normal.png'),
   bad: require('../assets/images/process_emoji/bad.png'),
-  veryBad: require('../assets/images/process_emoji/very-bad.png'),
+  veryBad: require('../assets/images/process_emoji/verybad.png'),
 };
 
 /* =======================
