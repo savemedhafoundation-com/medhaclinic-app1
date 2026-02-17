@@ -19,9 +19,8 @@ export default function BottomNav() {
 
   const tabs = [
     { key: 'dashboard', icon: 'home', route: '/(tabs)/dashboard' },
-    { key: 'stats', icon: 'stats-chart', route: '/(tabs)/stats' },
-    { key: 'healthalert', icon: 'information-circle', route: '/(tabs)/healthalert' },
-    { key: 'profile', icon: 'person', route: '/(tabs)/profile' },
+    { key: 'stats', icon: 'stats-chart', route: '/(tabs)/dashboard' },
+    { key: 'profile', icon: 'person', route: '/(tabs)/dashboard' },
   ];
 
   return (

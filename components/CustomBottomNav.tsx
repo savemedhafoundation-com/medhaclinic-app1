@@ -34,11 +34,7 @@ export default function BottomNav({ active, onChange }: Props) {
           active={active === 'assessment'}
           onPress={() => onChange('assessment')}
         />
-        <NavItem
-          icon="document-text"
-          active={active === 'healthalert'}
-          onPress={() => onChange('healthalert')}
-        />
+     
         <NavItem
           icon="person"
           active={active === 'profile'}
