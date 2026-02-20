@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
 import {
+  Alert,
   Dimensions,
   Image,
   ImageBackground,
@@ -9,63 +10,48 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import { useEffect } from 'react';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import backgroundimg from '../assets/images/common_bgpage.png';
 import medha from '../assets/images/medha_logo.png';
 import googleLogo from '../assets/images/google.png';
 
 const { width } = Dimensions.get('window');
 
-WebBrowser.maybeCompleteAuthSession();
-
 export default function LoginScreen() {
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '720727109835-5gdvd5th5pkt9hsl8a6925d9erv1hufg.apps.googleusercontent.com',
+    });
+  }, []);
 
-  // ✅ 1️⃣ Google Hook MUST be inside component
-  const [request, response, promptAsync] = Google.useAuthRequest({
-   androidClientId: '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3.apps.googleusercontent.com',
-
-      webClientId: '357939272957-iq3fatrek0v90f01uva7ic2803ciqshj.apps.googleusercontent.com',  });
-
-
-  // ✅ 2️⃣ useEffect must come AFTER hook
-  useEffect(() => {     
-
-    
-    if (response?.type !== 'success') return;
-
-    const authentication = response.authentication;
-    if (!authentication?.accessToken) return;
-
-    getUserInfo(authentication.accessToken);
-
-  }, [response]);
-
-  // ✅ 3️⃣ Function AFTER hooks
-  async function getUserInfo(token: string) {
+  async function handleGoogleSignIn() {
     try {
-      const res = await fetch(
-        'https://www.googleapis.com/userinfo/v2/me',
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-console.log('Android Client ID:', '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3.apps.googleusercontent.com');
-
-      const user = await res.json();
-      console.log(user);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const signInResult = await GoogleSignin.signIn();
+      if (!isSuccessResponse(signInResult)) return;
 
       router.replace('/(tabs)/dashboard');
-
     } catch (error) {
-      Alert.alert('Login failed', 'Unable to fetch Google user info.');
+      if (isErrorWithCode(error)) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+        if (error.code === statusCodes.IN_PROGRESS) return;
+        if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          Alert.alert('Google Play Services required');
+          return;
+        }
+      }
+      Alert.alert('Login failed', 'Unable to sign in with Google.');
     }
   }
 
-  // ✅ 4️⃣ UI
   return (
     <ImageBackground
       source={backgroundimg}
@@ -100,7 +86,6 @@ console.log('Android Client ID:', '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3
 
         {/* Login Card */}
         <View className="bg-[rgba(255,255,255,0.12)] rounded-[24px] p-6">
-
           <TextInput
             placeholder="Phone number or Email"
             placeholderTextColor="#cfe8ff"
@@ -128,10 +113,8 @@ console.log('Android Client ID:', '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3
 
           {/* Google Sign In */}
           <TouchableOpacity
-             onPress={() => promptAsync({ })}
-            disabled={!request}
-            className="bg-white py-3 rounded-full flex-row items-center 
-            justify-center mt-5 shadow-sm"
+            onPress={handleGoogleSignIn}
+            className="bg-white py-3 rounded-full flex-row items-center justify-center mt-5 shadow-sm"
           >
             <Image
               source={googleLogo}
@@ -164,7 +147,6 @@ console.log('Android Client ID:', '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3
             </Text>
           </Text>
         </View>
-
       </LinearGradient>
     </ImageBackground>
   );
