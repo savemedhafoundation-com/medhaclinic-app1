@@ -40,27 +40,30 @@ export default function HomeScreen() {
 >
 
   {/* Top Bar */}
-  <View className="w-full flex-row items-center justify-between px-5">
+  {/* <View className="w-full flex-row items-center justify-between px-5 pt-4">
     <TouchableOpacity className="bg-white/25 p-2 rounded-full">
       <Ionicons name="chevron-back" size={28} color="#fff" />
+      
     </TouchableOpacity>
-  </View>
+  
+  </View> */}
 
   {/* Logo - pushed up */}
   <View className="items-center -mt-2">
     <Image
       source={logo}
+      className="w-[260px] h-[150px]"
       resizeMode="contain"
     />
   </View>
 
   {/* Centered Text */}
   <View className="items-center px-8">
-    <Text className="text-white text-[34px] font-light text-center">
+    <Text className="text-white text-[24px] font-light text-center">
       Welcome to
     </Text>
 
-    <Text className="text-white text-[38px] font-bold text-center">
+    <Text className="text-white text-[35px] font-bold text-center">
       Medha Clinic
     </Text>
 
@@ -70,7 +73,6 @@ export default function HomeScreen() {
   </View>
 
 </LinearGradient>
-
 
             {/* ================= ACTION CARDS ================= */}
             <View className="px-5 mt-6">
@@ -137,7 +139,7 @@ export default function HomeScreen() {
             </View>
 
             {/* ================= HOW MEDHA HELPS ================= */}
-            <View className="px-5 mt-12">
+            {/* <View className="px-5 mt-12">
               <Text className="text-white text-[26px] font-bold mb-5">
                 How Medha Clinic Helps :
               </Text>
@@ -158,7 +160,7 @@ export default function HomeScreen() {
               </View>
               </TouchableOpacity>
 
-            </View>
+            </View> */}
 
             {/* ================= WHAT APP DOES NOT DO ================= */}
             <View className="px-5 mt-10">

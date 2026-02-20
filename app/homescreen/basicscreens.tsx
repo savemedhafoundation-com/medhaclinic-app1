@@ -14,16 +14,19 @@ export default function GetStartedScreen() {
       title: "Daily Immunity Checkup",
       sub: "Know your daily health reports",
       route: "immunity/dailyimmunity",
+      type: "daily",
     },
     {
-      title: "Weekly Immunity Checkup",
+      title: "Weekly Immunity Report",
       sub: "Know your weekly health reports",
-      route: "/weekly",
+      route: "immunity/dailyimmunity",
+      type: "report",
     },
     {
-      title: "Monthly Immunity Checkup",
+      title: "Monthly Immunity Report",
       sub: "Know your monthly health reports",
-      route: "/monthly",
+      route: "/immunity/dailyimmunity",
+      type: "report",
     },
   ];
 
@@ -106,9 +109,10 @@ export default function GetStartedScreen() {
                 </Text>
               </View>
 
+              {/* 🔥 Conditional Button Text */}
               <View className="bg-white px-4 py-2 rounded-full">
                 <Text className="text-green-700 font-semibold">
-                  Get Started
+                  {item.type === "daily" ? "Get Started" : "Get Report"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -128,10 +132,8 @@ export default function GetStartedScreen() {
           Skip for now
         </Text>
       </ScrollView>
-      <BottomNav />
 
-      {/* ===== BOTTOM NAV ===== */}
-    
+      <BottomNav />
     </View>
   );
 }

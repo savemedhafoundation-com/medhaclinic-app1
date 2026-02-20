@@ -11,11 +11,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useEffect } from 'react';
-
 import backgroundimg from '../assets/images/common_bgpage.png';
 import medha from '../assets/images/medha_logo.png';
 import googleLogo from '../assets/images/google.png';
@@ -28,12 +26,15 @@ export default function LoginScreen() {
 
   // ✅ 1️⃣ Google Hook MUST be inside component
   const [request, response, promptAsync] = Google.useAuthRequest({
-     clientId: '357939272957-iq3fatrek0v90f01uva7ic2803ciqshj.apps.googleusercontent.com',
-  });
+   androidClientId: '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3.apps.googleusercontent.com',
+
+      webClientId: '357939272957-iq3fatrek0v90f01uva7ic2803ciqshj.apps.googleusercontent.com',  });
 
 
   // ✅ 2️⃣ useEffect must come AFTER hook
-  useEffect(() => {
+  useEffect(() => {     
+
+    
     if (response?.type !== 'success') return;
 
     const authentication = response.authentication;
@@ -127,7 +128,7 @@ console.log('Android Client ID:', '357939272957-4ubgpt119siq7krhtmg884a5hr1rg4f3
 
           {/* Google Sign In */}
           <TouchableOpacity
-  onPress={() => promptAsync({ })}
+             onPress={() => promptAsync({ })}
             disabled={!request}
             className="bg-white py-3 rounded-full flex-row items-center 
             justify-center mt-5 shadow-sm"
