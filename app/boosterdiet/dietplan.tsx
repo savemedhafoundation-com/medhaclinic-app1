@@ -53,7 +53,7 @@ export default function BoosterDietScreen() {
         {/* ===== PART 1 DIET PLAN ===== */}
         <TouchableOpacity className="bg-green-600 mt-6 py-3 rounded-full items-center">
           <Text className="text-white font-semibold">
-            Part-1: Diet Plan (30 day)
+             Diet Plan (30 day)
           </Text>
         </TouchableOpacity>
 
@@ -161,7 +161,7 @@ export default function BoosterDietScreen() {
 {/* ===== BOOSTER SECTION WRAPPER ===== */}
      <TouchableOpacity className="bg-green-600 mt-6 py-3 rounded-full items-center">
           <Text className="text-white font-semibold">
-            Part-2: Booster Plan (30 day)
+             Booster Plan (30 day)
           </Text>
         </TouchableOpacity>
 <View className="bg-green-50 rounded-3xl mt-6 border border-green-200 overflow-hidden">

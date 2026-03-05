@@ -1,313 +1,323 @@
-// import React, { useState } from "react";
-// import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
-// import SvgHeader from "../../components/Clipperbg";
-// import { SafeAreaView } from "react-native-safe-area-context";
-
-// export default function DailyImmunityFirstThree() {
-//   const [answers, setAnswers] = useState({});
-
-//   const handleSelect = (question, value) => {
-//     setAnswers({ ...answers, [question]: value });
-//   };
-
-//   const OptionCard = ({ image, label, value, question }) => {
-//     const selected = answers[question] === value;
-
-//     return (
-//       <TouchableOpacity
-//         onPress={() => handleSelect(question, value)}
-//         className="items-center flex-1 px-2"
-//         activeOpacity={0.8}
-//       >
-//         {/* MUCH Larger Image */}
-//         <Image
-//           source={image}
-//           className="w-36 h-36"
-//           resizeMode="contain"
-//         />
-
-//         {/* Label */}
-//         <Text
-//           className={`text-base font-semibold mt-3 text-center ${
-//             selected ? "text-green-600" : "text-gray-700"
-//           }`}
-//         >
-//           {label}
-//         </Text>
-
-//         {/* Tick */}
-//         {selected && (
-//           <Ionicons
-//             name="checkmark-circle"
-//             size={28}
-//             color="#16a34a"
-//             style={{ marginTop: 8 }}
-//           />
-//         )}
-//       </TouchableOpacity>
-//     );
-//   };
-
-//   return (
-//     <SafeAreaView className="flex-1 bg-gray-100">
-      
-//       {/* Header */}
-//       <View className="relative">
-//         <SvgHeader />
-//         <View className="absolute top-10 left-0 right-0 items-center">
-//           <Text className="text-white text-xl font-bold">
-//             Daily Immunity Checkup
-//           </Text>
-//         </View>
-//       </View>
-
-//       <ScrollView
-//         className="flex-1 px-4 mt-8"
-//         showsVerticalScrollIndicator={false}
-//       >
-//         {/* 1 */}
-//         <Text className="text-lg font-bold text-green-700 mb-6">
-//           1. Physical Energy
-//         </Text>
-
-//         <View className="flex-row justify-between mb-14">
-//           <OptionCard
-//             question="energy"
-//             value="good"
-//             label="Good Energy"
-//             image={require("../../assets/images/immunity/physical1.png")}
-//           />
-//           <OptionCard
-//             question="energy"
-//             value="poor"
-//             label="Poor Energy"
-//             image={require("../../assets/images/immunity/physical2.png")}
-//           />
-//           <OptionCard
-//             question="energy"
-//             value="verypoor"
-//             label="Very Poor Energy"
-//             image={require("../../assets/images/immunity/physical3.png")}
-//           />
-//         </View>
-
-//         {/* 2 */}
-//         <Text className="text-lg font-bold text-green-700 mb-6">
-//           2. Appetite
-//         </Text>
-
-//         <View className="flex-row justify-between mb-14">
-//           <OptionCard
-//             question="appetite"
-//             value="good"
-//             label="Good Appetite"
-//             image={require("../../assets/images/immunity/appetite1.png")}
-//           />
-//           <OptionCard
-//             question="appetite"
-//             value="poor"
-//             label="Poor Appetite"
-//             image={require("../../assets/images/immunity/appetite2.png")}
-//           />
-//           <OptionCard
-//             question="appetite"
-//             value="verypoor"
-//             label="Very Poor Appetite"
-//             image={require("../../assets/images/immunity/appetite3.png")}
-//           />
-//         </View>
-
-//         {/* 3 */}
-//         <Text className="text-lg font-bold text-green-700 mb-6">
-//           3. Digestion Comfort
-//         </Text>
-
-//         <View className="flex-row justify-between mb-14">
-//           <OptionCard
-//             question="digestion"
-//             value="good"
-//             label="Good Digestion"
-//             image={require("../../assets/images/immunity/digestion1.png")}
-//           />
-//           <OptionCard
-//             question="digestion"
-//             value="poor"
-//             label="Poor Digestion"
-//             image={require("../../assets/images/immunity/digestion2.png")}
-//           />
-//           <OptionCard
-//             question="digestion"
-//             value="verypoor"
-//             label="Very Poor Digestion"
-//             image={require("../../assets/images/immunity/digestion4.png")}
-//           />
-//         </View>
-
-//         {/* 4 */}
-//         <Text className="text-lg font-bold text-green-700 mb-6">
-//           4. Burning / Pain
-//         </Text>
-
-//         <View className="flex-row justify-between mb-24">
-//           <OptionCard
-//             question="burning"
-//             value="none"
-//             label="No Burning"
-//             image={require("../../assets/images/immunity/burning1.png")}
-//           />
-//           <OptionCard
-//             question="burning"
-//             value="mild"
-//             label="Mild Burning"
-//             image={require("../../assets/images/immunity/burning2.png")}
-//           />
-//           <OptionCard
-//             question="burning"
-//             value="severe"
-//             label="Severe Burning"
-//             image={require("../../assets/images/immunity/burning3.png")}
-//           />
-//         </View>
-//       </ScrollView>
-//     </SafeAreaView>
-//   );
-// }
-import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useState, useEffect } from "react";
 import {
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
   View,
-  Animated,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useRef } from 'react';
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+} from "react-native-reanimated";
 import { router } from 'expo-router';
-import SvgSpeedometer from '../../components/Svgspeedometer';
-import SvgHeader from '../../components/Clipperbg';
 
-/* ================= ASSETS ================= */
-const emojiLow = require('../../assets/images/low.png');
-const emojiNormal = require('../../assets/images/normal.png');
-const emojiHigh = require('../../assets/images/high.png');
+import SvgHeader from "../../components/Clipperbg";
+import Speedometer from "../../components/Svgspeedometer";
 
-/* ================= QUESTIONS ================= */
-export const QUESTIONS = [
-  { label: 'Regular Bowel Movement', type: 'HIGH_GOOD' },
-  { label: 'Breathing Issues', type: 'LOW_GOOD' },
-  { label: 'Body Weight', type: 'BALANCE' },
-  { label: 'Digestion Problem', type: 'LOW_GOOD' },
-  { label: 'Fatigue', type: 'LOW_GOOD' },
-  { label: 'Appetite', type: 'HIGH_GOOD' },
-  { label: 'Refreshing Sleep', type: 'HIGH_GOOD' },
-  { label: 'Pain', type: 'LOW_GOOD' },
-  { label: 'Calm, Positive Mind', type: 'HIGH_GOOD' },
+// ---------------------- QUESTIONS ----------------------
+
+const QUESTIONS = [
+  {
+    id: "energy",
+    title: "Physical Energy",
+    options: [
+      { key: "good", label: "Good Energy", img: require("../../assets/images/immunity/physical1.png"), score: 10 },
+      { key: "poor", label: "Poor Energy", img: require("../../assets/images/immunity/physical2.png"), score: 6 },
+      { key: "verypoor", label: "Very Poor Energy", img: require("../../assets/images/immunity/physical3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "appetite",
+    title: "Appetite",
+    options: [
+      { key: "good", label: "Good Appetite", img: require("../../assets/images/immunity/appetite1.png"), score: 10 },
+      { key: "poor", label: "Poor Appetite", img: require("../../assets/images/immunity/appetite2.png"), score: 6 },
+      { key: "verypoor", label: "Very Poor Appetite", img: require("../../assets/images/immunity/appetite3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "digestion",
+    title: "Digestion Comfort",
+    options: [
+      { key: "good", label: "Good Digestion", img: require("../../assets/images/immunity/digestion1.png"), score: 10 },
+      { key: "poor", label: "Poor Digestion", img: require("../../assets/images/immunity/digestion2.png"), score: 6 },
+      { key: "verypoor", label: "Very Poor Digestion", img: require("../../assets/images/immunity/digestion3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "burning",
+    title: "Burning / Pain",
+    options: [
+      { key: "good", label: "Good Comfort", img: require("../../assets/images/immunity/burning1.png"), score: 10 },
+      { key: "poor", label: "Poor Pain", img: require("../../assets/images/immunity/burning2.png"), score: 6 },
+      { key: "verypoor", label: "Very Poor Pain", img: require("../../assets/images/immunity/burning3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "bloating",
+    title: "Bloating or Gas",
+    options: [
+      { key: "good", label: "Good Comfort", img: require("../../assets/images/immunity/bloating1.png"), score: 10 },
+      { key: "poor", label: "Poor Bloating", img: require("../../assets/images/immunity/bloating2.png"), score: 6 },
+      { key: "verypoor", label: "Severe Bloating", img: require("../../assets/images/immunity/bloating3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "pressure",
+    title: "Blood Pressure",
+    options: [
+      { key: "low", label: "Low", img: require("../../assets/images/immunity/pressure1.png"), score: 6 },
+      { key: "normal", label: "Normal", img: require("../../assets/images/immunity/pressure2.png"), score: 10 },
+      { key: "high", label: "High", img: require("../../assets/images/immunity/pressure3.png"), score: 6 },
+    ],
+  },
+  {
+    id: "swelling",
+    title: "Swelling",
+    options: [
+      { key: "none", label: "None", img: require("../../assets/images/immunity/swelling1.png"), score: 10 },
+      { key: "mild", label: "Mild Swelling", img: require("../../assets/images/immunity/swelling2.png"), score: 6 },
+      { key: "severe", label: "Severe Swelling", img: require("../../assets/images/immunity/swelling3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "fever",
+    title: "Fever",
+    options: [
+      { key: "none", label: "No Fever", img: require("../../assets/images/immunity/fever1.png"), score: 10 },
+      { key: "mild", label: "Moderate Fever", img: require("../../assets/images/immunity/fever2.png"), score: 6 },
+      { key: "high", label: "High Fever", img: require("../../assets/images/immunity/fever3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "infection",
+    title: "Infection",
+    options: [
+      { key: "none", label: "No Infection", img: require("../../assets/images/immunity/infection1.png"), score: 10 },
+      { key: "mild", label: "Mild Infection", img: require("../../assets/images/immunity/infection2.png"), score: 6 },
+      { key: "severe", label: "Severe Infection", img: require("../../assets/images/immunity/infection3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "breathing",
+    title: "Breathing Problem",
+    options: [
+      { key: "good", label: "Normal Breathing", img: require("../../assets/images/immunity/breathing1.png"), score: 10 },
+      { key: "poor", label: "Mild Difficulty", img: require("../../assets/images/immunity/breathing2.png"), score: 6 },
+      { key: "severe", label: "Severe Difficulty", img: require("../../assets/images/immunity/breathing3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "menstrual",
+    title: "Menstrual Regularity (Female)",
+    options: [
+      { key: "regular", label: "Regular", img: require("../../assets/images/immunity/menstural1.png"), score: 10 },
+      { key: "irregular", label: "Irregular", img: require("../../assets/images/immunity/menstural2.png"), score: 6 },
+      { key: "severe", label: "Severely Irregular", img: require("../../assets/images/immunity/menstural3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "libido",
+    title: "Libido Stability (Male)",
+    options: [
+      { key: "good", label: "Stable", img: require("../../assets/images/immunity/lipid1.png"), score: 10 },
+      { key: "poor", label: "Low Stability", img: require("../../assets/images/immunity/lipid2.png"), score: 6 },
+      { key: "verypoor", label: "Very Low Stability", img: require("../../assets/images/immunity/lipid2.png"), score: 3 },
+    ],
+  },
+  {
+    id: "hair",
+    title: "Hair Health",
+    options: [
+      { key: "strong", label: "Strong Hair", img: require("../../assets/images/immunity/hair1.png"), score: 10 },
+      { key: "dry", label: "Dry Hair", img: require("../../assets/images/immunity/hair2.png"), score: 6 },
+      { key: "damaged", label: "Damaged Hair", img: require("../../assets/images/immunity/hair3.png"), score: 3 },
+    ],
+  },
+  {
+    id: "sleep",
+    title: "Sleep Duration",
+    options: [
+      { key: "10h", label: "10 Hours or More", img: require("../../assets/images/immunity/sleep3.png"), score: 4 },
+      { key: "8h", label: "8 Hours", img: require("../../assets/images/immunity/sleep4.png"), score: 6 },
+      { key: "6h", label: "6 Hours", img: require("../../assets/images/immunity/sleep2.png"), score: 10 },
+      { key: "4h", label: "4 Hours", img: require("../../assets/images/immunity/sleep3.png"), score: 3 },
+    ],
+  },
 ];
 
-/* ================= SCORING ================= */
-function getScore(
-  type: 'HIGH_GOOD' | 'LOW_GOOD' | 'BALANCE',
-  level: 'LOW' | 'NORMAL' | 'HIGH'
-) {
-  if (level === 'NORMAL') return 10;
-  if (level === 'LOW') return 6;
-  if (level === 'HIGH') return 4;
-  return 0;
-}
+// ---------------------- RESULT HELPERS ----------------------
 
-/* ================= MAIN ================= */
-export default function TodayImmunityCheck() {
-  const [answers, setAnswers] = useState<
-    Record<number, 'LOW' | 'NORMAL' | 'HIGH'>
-  >({});
+const getImmunityLabel = (score: number) => {
+  if (score >= 8.5) return { label: "Excellent Immunity", color: "#15803d", icon: "shield-checkmark" };
+  if (score >= 7)   return { label: "Good Immunity",      color: "#16a34a", icon: "thumbs-up" };
+  if (score >= 5)   return { label: "Moderate Immunity",  color: "#ca8a04", icon: "alert-circle" };
+  return               { label: "Low Immunity",           color: "#dc2626", icon: "warning" };
+};
 
-  const totalQuestions = QUESTIONS.length;
-  const answeredCount = Object.keys(answers).length;
-  const allAnswered = answeredCount === totalQuestions;
+// ---------------------- ANIMATED OPTION ----------------------
 
-  const scores = Object.entries(answers).map(([i, v]) =>
-    getScore(QUESTIONS[Number(i)].type, v)
+const AnimatedOption = ({ opt, selected, onPress }: any) => {
+  const scale = useSharedValue(1);
+  const glow = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSpring(selected ? 1.15 : 1, { damping: 3, stiffness: 200 });
+    glow.value = withTiming(selected ? 1 : 0, { duration: 50 });
+  }, [selected]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const shadowOpacity = interpolate(glow.value, [0, 1], [0, 0.4]);
+    return {
+      transform: [{ scale: scale.value }],
+      shadowOpacity,
+      shadowRadius: selected ? 8 : 0,
+    };
+  });
+
+  return (
+    <TouchableOpacity onPress={onPress} className="flex-1 items-center px-1">
+      {opt.img && (
+        <Animated.View style={animatedStyle}>
+          <Image source={opt.img} style={{ width: 80, height: 80 }} resizeMode="contain" />
+        </Animated.View>
+      )}
+  <Text
+  style={{
+    color:
+      opt.score >= 9
+        ? "#16a34a"
+        : opt.score >= 6
+        ? "#ca8a04"
+        : "#dc2626",
+    fontWeight: "700",
+    marginTop: 4,
+    textAlign: "center",
+    fontSize: 13,
+  }}
+>
+  {opt.label}
+</Text>
+
+{selected && (
+  <View style={{ marginTop: 6 }}>
+    <Ionicons
+      name="checkmark-circle"
+      size={22}
+      color="#16a34a"
+    />
+  </View>
+)}
+    </TouchableOpacity>
   );
+};
 
-  const avg =
-    scores.length === 0
-      ? 0
-      : scores.reduce((a, b) => a + b, 0) / scores.length;
+// ---------------------- MAIN SCREEN ----------------------
 
-  const speedometerValue = Number(avg.toFixed(2));
+export default function DailyImmunityCheck() {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  const immunityLabel =
-    avg === 0
-      ? ''
-      : avg < 6
-      ? 'Low Immunity'
-      : avg < 8
-      ? 'Medium Immunity'
-      : 'High Immunity';
+  const totalAnswered = Object.keys(answers).length;
+  const progressPct = Math.round((totalAnswered / QUESTIONS.length) * 100);
 
-  const payload = {
-    answers,
-    avg,
-    speedometerValue,
-    immunityLabel,
+  const speedometerValue = useMemo(() => {
+    const scores: number[] = [];
+    for (const q of QUESTIONS) {
+      const picked = answers[q.id];
+      if (!picked) continue;
+      const opt = q.options.find(o => o.key === picked);
+      if (opt) scores.push(opt.score);
+    }
+    return scores.length
+      ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+      : 0;
+  }, [answers]);
+
+  // ---------------------- BUILD PAYLOAD ----------------------
+
+  const handleGetResult = () => {
+    if (totalAnswered === 0) {
+      Alert.alert("No Answers", "Please answer at least one question before viewing results.");
+      return;
+    }
+
+    // Build full payload: each question with id, title, selected key, label, and score
+    const payload = QUESTIONS.map((q) => {
+      const selectedKey = answers[q.id] ?? null;
+      const selectedOption = q.options.find(o => o.key === selectedKey) ?? null;
+
+      return {
+        id: q.id,
+        title: q.title,
+        selectedKey: selectedKey,
+        selectedLabel: selectedOption?.label ?? null,
+        score: selectedOption?.score ?? null,
+        answered: !!selectedKey,
+      };
+    });
+
+    const summary = {
+      totalQuestions: QUESTIONS.length,
+      totalAnswered,
+      averageScore: speedometerValue,
+      immunityLabel: getImmunityLabel(speedometerValue).label,
+      completionPercent: progressPct,
+      submittedAt: new Date().toISOString(),
+    };
+   const speedometer = {
+      score: speedometerValue,
+      outOf: 10,
+      label: getImmunityLabel(speedometerValue).label,
+      color: getImmunityLabel(speedometerValue).color,
+      icon: getImmunityLabel(speedometerValue).icon,
+      percentage: Math.round((speedometerValue / 10) * 100),
+    };
+ router.push({
+      pathname: 'certification/daily',
+      params: {
+        data: JSON.stringify(payload),
+        summary: JSON.stringify(summary),
+        speedometer: JSON.stringify(speedometer), // ✅ added
+      },
+    });
   };
 
   return (
-    <View className="flex-1 bg-[#f5f6f8]">
-      {/* HEADER */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 mt-4 justify-center">
-            <View className="absolute left-4 right-4 flex-row justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
-              <Ionicons name="menu" size={26} color="#fff" />
-            </View>
-          </View>
-        </SafeAreaView>
+    <SafeAreaView className="flex-1 bg-white">
+      <SvgHeader />
+      <Text className="text-2xl font-extrabold text-green-800 mx-5">
+        Daily Immunity Check
+      </Text>
+
+      {/* Progress */}
+      <View className="mt-4 mx-5">
+        <View className="h-2 bg-green-100 rounded-full overflow-hidden">
+          <View style={{ width: `${progressPct}%` }} className="h-2 bg-green-600" />
+        </View>
+        <Text className="text-right text-green-700 mt-1">{progressPct}%</Text>
       </View>
 
-      {/* CONTENT */}
-      <ScrollView
-        className="px-4"
-        contentContainerStyle={{ paddingTop: 250, paddingBottom: 140 }}
-      >
-        <Text className="text-[#0b4ea2] text-[24px] font-bold mb-1">
-          Today's Immunity Check
-        </Text>
-        <Text className="text-[#1fa2ff] mb-4">
-          Select what feels true for you:
-        </Text>
-
-        {/* QUESTIONS */}
-        {QUESTIONS.map((q, i) => (
-          <View
-            key={i}
-            className="bg-white border border-[#bfe2ff] rounded-[18px] px-4 py-6 mb-6"
-          >
-            <Text className="text-[20px] font-semibold text-[#0b4ea2] mb-8">
-              {q.label}
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+        {QUESTIONS.map((q, idx) => (
+          <View key={q.id} className="mt-6">
+            <Text className="font-bold text-green-800 mb-2">
+              {idx + 1}. {q.title}
             </Text>
-
             <View className="flex-row justify-between">
-              {(['NORMAL', 'LOW', 'HIGH'] as const).map(level => (
-                <Emoji
-                  key={level}
-                  img={
-                    level === 'LOW'
-                      ? emojiLow
-                      : level === 'NORMAL'
-                      ? emojiNormal
-                      : emojiHigh
-                  }
-                  label={level}
-                  active={answers[i] === level}
+              {q.options.map(opt => (
+                <AnimatedOption
+                  key={opt.key}
+                  opt={opt}
+                  selected={answers[q.id] === opt.key}
                   onPress={() =>
-                    setAnswers(prev => ({ ...prev, [i]: level }))
+                    setAnswers(prev => ({ ...prev, [q.id]: opt.key }))
                   }
                 />
               ))}
@@ -315,88 +325,34 @@ export default function TodayImmunityCheck() {
           </View>
         ))}
 
-        {/* SPEEDOMETER */}
-        <SvgSpeedometer score={speedometerValue} />
+        {/* Speedometer */}
+        <View className="mt-8">
+          <Speedometer score={speedometerValue} />
+        </View>
 
-        {immunityLabel !== '' && (
-          <Text className="text-center mt-5 text-[#0b4ea2] font-semibold text-[16px]">
-            {immunityLabel}
-          </Text>
-        )}
-
-        {/* CTA */}
+        {/* Get My Result Button */}
         <TouchableOpacity
-          disabled={!allAnswered}
-          onPress={() =>
-            router.push({
-              pathname: 'certification/daily',
-              params: { data: JSON.stringify(payload) },
-            })
-          }
-          className={`mt-6 py-4 rounded-full items-center ${
-            allAnswered ? 'bg-[#16a34a]' : 'bg-[#bbf7d0]'
-          }`}
+          onPress={handleGetResult}
+          className="mt-6 mx-4 bg-green-600 rounded-2xl py-4 items-center shadow-md"
+          style={{
+            shadowColor: "#16a34a",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 5,
+          }}
         >
-          <Text
-            className={`text-[18px] font-semibold ${
-              allAnswered ? 'text-white' : 'text-[#166534]'
-            }`}
-          >
-            {allAnswered
-              ? 'Get My Result'
-              : `Get My Result (${answeredCount}/${totalQuestions})`}
+          <View className="flex-row items-center">
+            <Ionicons name="analytics-outline" size={22} color="white" />
+            <Text className="text-white text-lg font-extrabold ml-2">
+              Get My Result
+            </Text>
+          </View>
+          <Text className="text-green-100 text-xs mt-1">
+            {totalAnswered} of {QUESTIONS.length} questions answered
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
-  );
-}
-
-/* ================= EMOJI ================= */
-function Emoji({
-  img,
-  label,
-  active,
-  onPress,
-}: {
-  img: any;
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 1.6,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onPress();
-  };
-
-  return (
-    <TouchableOpacity onPress={handlePress} className="items-center w-[90px]">
-      <Animated.View style={{ transform: [{ scale }] }}>
-        <Image source={img} className="w-10 h-10 mb-1" resizeMode="contain" />
-      </Animated.View>
-
-      <View
-        className={`px-4 py-1 rounded-full ${
-          active ? 'bg-[#1fa2ff]' : ''
-        }`}
-      >
-        <Text className={`${active ? 'text-white' : 'text-[#0b4ea2]'}`}>
-          {label}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    </SafeAreaView>
   );
 }

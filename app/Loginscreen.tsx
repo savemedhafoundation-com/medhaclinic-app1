@@ -25,32 +25,32 @@ import googleLogo from '../assets/images/google.png';
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId:
-        '720727109835-5gdvd5th5pkt9hsl8a6925d9erv1hufg.apps.googleusercontent.com',
-    });
-  }, []);
+  // useEffect(() => {
+  //   GoogleSignin.configure({
+  //     webClientId:
+  //       '720727109835-5gdvd5th5pkt9hsl8a6925d9erv1hufg.apps.googleusercontent.com',
+  //   });
+  // }, []);
 
-  async function handleGoogleSignIn() {
-    try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const signInResult = await GoogleSignin.signIn();
-      if (!isSuccessResponse(signInResult)) return;
+  // async function handleGoogleSignIn() {
+  //   try {
+  //     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  //     const signInResult = await GoogleSignin.signIn();
+  //     if (!isSuccessResponse(signInResult)) return;
 
-      router.replace('/(tabs)/dashboard');
-    } catch (error) {
-      if (isErrorWithCode(error)) {
-        if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
-        if (error.code === statusCodes.IN_PROGRESS) return;
-        if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          Alert.alert('Google Play Services required');
-          return;
-        }
-      }
-      Alert.alert('Login failed', 'Unable to sign in with Google.');
-    }
-  }
+  //     router.replace('/(tabs)/dashboard');
+  //   } catch (error) {
+  //     if (isErrorWithCode(error)) {
+  //       if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+  //       if (error.code === statusCodes.IN_PROGRESS) return;
+  //       if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+  //         Alert.alert('Google Play Services required');
+  //         return;
+  //       }
+  //     }
+  //     Alert.alert('Login failed', 'Unable to sign in with Google.');
+  //   }
+  // }
 
   return (
     <ImageBackground
@@ -112,19 +112,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           {/* Google Sign In */}
-          <TouchableOpacity
-            onPress={handleGoogleSignIn}
-            className="bg-white py-3 rounded-full flex-row items-center justify-center mt-5 shadow-sm"
-          >
-            <Image
-              source={googleLogo}
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-            <Text className="text-black text-base font-medium ml-3">
-              Continue with Google
-            </Text>
-          </TouchableOpacity>
+     
 
           <Text className="text-[#cfe8ff] text-center my-4">OR</Text>
 

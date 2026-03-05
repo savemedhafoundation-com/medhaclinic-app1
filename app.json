@@ -30,7 +30,7 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
+      "@react-native-google-signin/google-signin",
       [
         "expo-splash-screen",
         {
@@ -44,7 +44,7 @@
         }
       ],
       "expo-web-browser",
-      "@react-native-google-signin/google-signin"
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true,

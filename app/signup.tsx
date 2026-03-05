@@ -97,7 +97,9 @@ export default function SignupScreen() {
                 <Input small label="Age" placeholder="Years" />
                 <Input small label="Weight" placeholder="Kg" />
               </View>
-
+     <View className="flex-row gap-4 mt-5">
+                <Input small label="Height" placeholder="in cm" />
+              </View>
               {/* PURPOSE */}
               <Text className="text-white text-[18px] font-semibold mb-2 mt-5">
                 Purpose of assessment

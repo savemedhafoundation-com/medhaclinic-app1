@@ -19,7 +19,7 @@ export default function GetStartedScreen() {
     {
       title: "Weekly Immunity Report",
       sub: "Know your weekly health reports",
-      route: "immunity/dailyimmunity",
+      route: "report/weeklyreport",       // ✅ fixed
       type: "report",
     },
     {

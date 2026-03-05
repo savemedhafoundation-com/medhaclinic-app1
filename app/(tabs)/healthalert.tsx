@@ -6,9 +6,8 @@ import {
   TouchableOpacity,
   Switch,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SvgHeader from '../../components/Clipperbg';
+import SvgHeader from "../../components/Clipperbg";
 
 export default function HealthAlertsScreen() {
   const [notifications, setNotifications] = useState(true);
@@ -80,25 +79,17 @@ export default function HealthAlertsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-   <View className="absolute top-0 left-0 right-0 z-10">
+      {/* Header */}
+      <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
-        <SafeAreaView className="absolute top-0 w-full">
-          {/* <View className="h-14 mt-4 flex-row items-center justify-between px-4">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
-            <Ionicons name="menu" size={26} color="#fff" />
-          </View> */}
-        </SafeAreaView>
       </View>
-
 
       <ScrollView
         className="flex-1 px-4 pt-6"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 150, paddingBottom: 220 }}
       >
-        {/* Title Section */}
+        {/* Title */}
         <Text className="text-3xl font-bold text-green-700 text-center">
           Health Alerts
         </Text>
@@ -108,7 +99,7 @@ export default function HealthAlertsScreen() {
           {"\n"}Please update your status after doing so.
         </Text>
 
-        {/* Notification Toggle */}
+        {/* Toggle */}
         <View className="flex-row justify-between items-center mt-6">
           <Text className="text-green-700 text-lg font-semibold">
             Notification alerts enabled
@@ -122,11 +113,11 @@ export default function HealthAlertsScreen() {
           />
         </View>
 
-        {/* Meal Cards */}
+        {/* Meals */}
         <View className="mt-6">
           <MealCard
             title="Breakfast"
-            time="8.00 A.M"
+            time="8:00 A.M"
             status="Completed"
             note="*Please take your morning booster"
             completed
@@ -134,14 +125,14 @@ export default function HealthAlertsScreen() {
 
           <MealCard
             title="Lunch"
-            time="1.00 – 1.30 P.M"
+            time="1:00 – 1:30 P.M"
             status="Upcoming"
             note="*Please take your lunch booster"
           />
 
           <MealCard
             title="Dinner"
-            time="9.00 P.M"
+            time="9:00 P.M"
             status="Upcoming"
             note="*Please take your dinner booster"
           />
@@ -170,19 +161,15 @@ export default function HealthAlertsScreen() {
           </View>
         </View>
 
-        {/* Footer Info */}
         <Text className="text-center text-gray-800 mb-3">
           Your progress is saved for the Reports.
         </Text>
 
         <Text className="text-center text-gray-700 mb-16">
           Reports are kept confidential, securely stored,
-          {"\n"}and used only for your health guidance
+          {"\n"}and used only for your health guidance.
         </Text>
       </ScrollView>
-
-      {/* Bottom Navigation */}
- 
     </SafeAreaView>
   );
 }
