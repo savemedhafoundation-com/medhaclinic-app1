@@ -23,9 +23,11 @@ export default function RootLayout() {
       <Stack.Screen name="dietscreen" />
       <Stack.Screen name="foodpreferance"/>
       <Stack.Screen name="healthassessment"/>
+      <Stack.Screen name="report/weeklyreport"/>
       <Stack.Screen name="process"/>
        <Stack.Screen name="advice"/>
-      <Stack.Screen name="assessmentcertification"/>
+       <Stack.Screen name="immunity"/>
+      <Stack.Screen name="assessment/certificate"/>
       <Stack.Screen name="dashboard"/>
       <Stack.Screen name="boosterdiet/dietplan"/>
       <Stack.Screen name="boosterdiet/boosterplan"/>

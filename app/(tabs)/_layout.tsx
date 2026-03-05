@@ -7,9 +7,9 @@ export default function TabsLayout() {
     <View style={{ flex: 1 }}>
       {/* ✅ Stack MUST wrap Stack.Screen */}
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="dashboard" />
-        <Stack.Screen name="healthalert" />
-        <Stack.Screen name="advice" />
+        <Stack.Screen name="(tabs)/dashboard" />
+        <Stack.Screen name="(tabs)/healthalert" />
+        <Stack.Screen name="(tabs)/advice" />
         
       </Stack>
 

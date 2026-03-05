@@ -1,80 +1,141 @@
 import React from 'react';
-import { View, Image, useWindowDimensions } from 'react-native';
-import Svg, {
-  G,
-  Path,
-  Defs,
-  LinearGradient,
-  Stop,
-  ClipPath,
-  Rect,
-} from 'react-native-svg';
+import { useWindowDimensions, Image, View, StyleSheet } from 'react-native';
+import Svg, { Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 
-import logo from '../assets/images/medha_logo.png';
+interface Props {
+  height?: number;
+}
 
-export default function SvgHeader() {
+function SvgHeader({ height = 200 }: Props) {
   const { width } = useWindowDimensions();
+  const W = 842;
+  const H = 347;
 
-  const HEADER_HEIGHT = 190;
+  // ── Body: pixel-accurate wave from image scan ─────────────────────────
+  // Trough: x≈200,y=248 | Peak: x≈630,y=319 | Right end: x=836,y=255
+  const body = [
+    `M 0,0`,
+    `L ${W},0`,
+    `L ${W},255`,
+    `C 820,262 800,272 780,283`,
+    `C 760,293 740,301 720,308`,
+    `C 700,313 680,317 660,319`,
+    `C 640,319 620,319 600,318`,
+    `C 570,316 540,310 510,305`,
+    `C 480,299 450,291 420,282`,
+    `C 390,273 360,264 330,258`,
+    `C 300,253 270,250 240,248`,
+    `C 215,247 195,248 175,249`,
+    `C 150,251 125,255 100,261`,
+    `C 75,267 55,275 35,285`,
+    `C 20,292 10,298 0,304`,
+    'Z',
+  ].join(' ');
 
-  // Stable logo size (no growth)
-  const LOGO_WIDTH = Math.min(width * 0.5, 220);
-  const LOGO_HEIGHT = LOGO_WIDTH * 1.6;
+  // ── Wave edge path (same coords — guarantees zero gap) ────────────────
+  const wavePath = [
+    `M 0,304`,
+    `C 10,298 20,292 35,285`,
+    `C 55,275 75,267 100,261`,
+    `C 125,255 150,251 175,249`,
+    `C 195,248 215,247 240,248`,
+    `C 270,250 300,253 330,258`,
+    `C 360,264 390,273 420,282`,
+    `C 450,291 480,299 510,305`,
+    `C 540,310 570,316 600,318`,
+    `C 620,319 640,319 660,319`,
+    `C 680,317 700,313 720,308`,
+    `C 740,301 760,293 780,283`,
+    `C 800,272 820,262 ${W},255`,
+  ].join(' ');
 
   return (
-    <View
-      style={{
-        height: HEADER_HEIGHT,
-        width: '100%',
-        position: 'relative',
-      }}
-    >
-      {/* ========== SVG BACKGROUND ========== */}
+    <View style={{ width, height, backgroundColor: "transparent" }}>
       <Svg
-        width="100%"
-        height={HEADER_HEIGHT}
-        viewBox="0 0 393 250"
+        width={width}
+        height={height}
+        viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        style={{ position: 'absolute' }}
+        style={{ backgroundColor: 'transparent' }}
       >
         <Defs>
-          <LinearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#1fd35a" />
-            <Stop offset="100%" stopColor="#0f9f3a" />
+
+          {/* ── Body gradient: bright lime top → deep forest green bottom ── */}
+          <LinearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%"   stopColor="#30C418" stopOpacity="1" />
+            <Stop offset="30%"  stopColor="#27A815" stopOpacity="1" />
+            <Stop offset="60%"  stopColor="#18800E" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#0E5008" stopOpacity="1" />
           </LinearGradient>
-          <ClipPath id="clip0">
-            <Rect width="393" height="190" />
-          </ClipPath>
+
+          {/* ── Subtle left brightness overlay ── */}
+          <LinearGradient id="edgeLight" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0%"  stopColor="#49B636" stopOpacity="0.3" />
+            <Stop offset="8%"  stopColor="#30C418" stopOpacity="0"   />
+            <Stop offset="92%" stopColor="#30C418" stopOpacity="0"   />
+            <Stop offset="100%" stopColor="#28A010" stopOpacity="0.12" />
+          </LinearGradient>
+
+          {/* ── Stroke gradient 1: #1DB206 (brighter) fades out right ── */}
+          <LinearGradient id="stroke1" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0%"   stopColor="#1DB206" stopOpacity="1"   />
+            <Stop offset="40%"  stopColor="#1DB206" stopOpacity="1"   />
+            <Stop offset="75%"  stopColor="#1DB206" stopOpacity="0.4" />
+            <Stop offset="100%" stopColor="#1DB206" stopOpacity="0"   />
+          </LinearGradient>
+
+          {/* ── Stroke gradient 2: #1AA006 (deeper) fades out right ── */}
+          <LinearGradient id="stroke2" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0%"   stopColor="#1AA006" stopOpacity="1"   />
+            <Stop offset="40%"  stopColor="#1AA006" stopOpacity="1"   />
+            <Stop offset="75%"  stopColor="#1AA006" stopOpacity="0.4" />
+            <Stop offset="100%" stopColor="#1AA006" stopOpacity="0"   />
+          </LinearGradient>
+
         </Defs>
 
-        <G clipPath="url(#clip0)">
-          <Path
-            d="M0 0H393V186.507C393 186.507 364.75 153.676 307 176.337C249.25 198.997 245 159.515 209 176.337C173 193.158 152 145.594 98.25 176.337C44.5 207.079 0 176.337 0 176.337V0Z"
-            fill="url(#bgGradient)"
-          />
-        </G>
+        {/* ── Green body ── */}
+        <Path d={body} fill="url(#bodyGrad)" />
+
+        {/* ── Edge brightness ── */}
+        <Path d={body} fill="url(#edgeLight)" />
+
+        {/* ── Stroke layer 1: #1DB206 wide soft base ── */}
+        <Path
+          d={wavePath}
+          fill="none"
+          stroke="url(#stroke1)"
+          strokeWidth={10}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.7}
+        />
+
+        {/* ── Stroke layer 2: #1AA006 crisp thin top line ── */}
+        <Path
+          d={wavePath}
+          fill="none"
+          stroke="url(#stroke2)"
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={1}
+        />
+
       </Svg>
 
-      {/* ========== FLEX-CENTERED LOGO (KEY FIX) ========== */}
-      <View
-        style={{
-          position: 'absolute',
-          inset: 0,                 // top:0, bottom:0, left:0, right:0
-          justifyContent: 'center', // 🔥 vertical centering
-          alignItems: 'center',     // 🔥 horizontal centering
-          pointerEvents: 'none',
-        }}
-      >
-     <Image
-  source={logo}
-  resizeMode="contain"
-  style={{
-    width: LOGO_WIDTH,
-    height: LOGO_HEIGHT,
-    marginBottom: 50, // ✅ add margin bottom here
-  }}
-/>
+      {/* ── Medha Clinic Logo — centered ── */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Image
+            source={require('../assets/images/medha_logo.png')}
+            style={{ width: 160, height: 130 }}
+            resizeMode="none"
+          />
+        </View>
       </View>
     </View>
   );
 }
+
+export default SvgHeader;
