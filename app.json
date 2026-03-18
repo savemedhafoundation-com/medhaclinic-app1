@@ -9,19 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.medhaclinic",
+      "package": "com.medhaclinic.app",
       "googleServicesFile": "./google-services.json"
     },
     "web": {
@@ -30,6 +27,16 @@
       "bundler": "metro"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
       "@react-native-google-signin/google-signin",
       [
         "expo-splash-screen",
@@ -53,9 +60,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4f9b1e19-7355-496c-a501-77052fcb8505"
+        "projectId": "42762aa9-4b53-45a4-be08-31d263e40b7f"
       }
     },
-    "owner": "kabir_2512"
+    "owner": "kabirtmandal"
   }
 }

@@ -1,0 +1,62 @@
+# MedhaClinic app data model for Firebase Data Connect.
+# Firebase Auth remains the source of identity; app health data lives in Cloud SQL.
+
+type User @table {
+  id: String! @default(expr: "auth.uid")
+  name: String
+  email: String
+  photoUrl: String
+  provider: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  lastLoginAt: Timestamp
+}
+
+type PatientProfile @table(key: ["user"]) {
+  user: User!
+  gender: String
+  age: Int
+  weightKg: Float
+  heightCm: Float
+  purpose: String
+  address: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  # updatedAt is set explicitly via updatedAt_expr in every upsert mutation
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type DailyImmunitySubmission @table {
+  user: User!
+  # submittedDate stores the calendar date (no time) to enforce one submission per day
+  submittedDate: Date! @default(expr: "request.time")
+  physicalEnergy: Int
+  appetite: Int
+  digestionComfort: Int
+  burningPain: Int
+  bloatingGas: Int
+  bloodPressure: Int
+  swelling: Int
+  fever: Int
+  infection: Int
+  breathingProblem: Int
+  menstrualRegularity: Int
+  libidoStability: Int
+  hairHealth: Int
+  sleepHours: Int
+  immunityScore: Int!
+  immunityLevel: String!
+  submittedAt: Timestamp! @default(expr: "request.time")
+}
+
+# Composite key on (user, weekStart) prevents duplicate reports for the same week
+type WeeklyReport @table(key: ["user", "weekStart"]) {
+  user: User!
+  weekStart: Date!
+  weekEnd: Date!
+  overallCurrent: Float!
+  overallPrevious: Float
+  overallDelta: Float
+  trend: String!
+  summary: String
+  payload: Any
+  generatedAt: Timestamp! @default(expr: "request.time")
+}

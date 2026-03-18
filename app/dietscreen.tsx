@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import bg from '../assets/images/dashbg.png';
 import logo from '../assets/images/medha_logo.png';
-import SvgHeader from '../components/Clipperbg';
 
 export default function DietLifestyleScreen() {
   const [eating, setEating] = useState('Moderate');
@@ -58,7 +57,7 @@ export default function DietLifestyleScreen() {
             {/* ===== EATING HABITS CARD ===== */}
             <View className="bg-white rounded-[22px] p-4 mb-5">
               <Text className="mb-3">
-                <Text className="text-[18px] font-bold text-[#0b4ea2]">
+                <Text className="text-[18px] font-bold text-[#0b4ea2]"> 
                   Eating Habits{'\n'}
                 </Text>
                 <Text className="text-[14px] text-[#1f3c66]">
@@ -136,7 +135,7 @@ export default function DietLifestyleScreen() {
 
             {/* ===== FOOTER NOTE ===== */}
             <Text className="text-center text-[12px] text-[#1f3c66] mt-3">
-              Your body's needs are unique.{'\n'}
+              Your body&apos;s needs are unique.{'\n'}
               This helps us know you better.
             </Text>
           </ScrollView>

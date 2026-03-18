@@ -45,7 +45,7 @@ export default function CertificateScreen() {
 
       <TouchableOpacity
         className="mt-8 bg-[#0B4F8A] py-4 rounded-[30px] items-center"
-        onPress={() => router.push('/dashboard')}
+        onPress={() => router.push('/(tabs)/dashboard')}
       >
         <Text className="text-white font-semibold text-[16px]">Go to Dashboard</Text>
       </TouchableOpacity>

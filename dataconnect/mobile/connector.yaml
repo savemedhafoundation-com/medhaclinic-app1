@@ -1,0 +1,5 @@
+connectorId: mobile
+generate:
+  javascriptSdk:
+    - outputDir: ../../firebase/dataconnect-generated
+      package: "@dataconnect/generated"
