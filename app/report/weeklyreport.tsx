@@ -1,107 +1,178 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import SvgHeader from "../../components/Clipperbg";
+import {
+  buildAndStoreWeeklyReport,
+  type WeeklyReportStatus,
+} from "../../services/medhaDataConnect";
 
-// ─── HEALTH SCORE DATA ───────────────────────────────────────────────────────
+// ---------------- HELPERS ----------------
 
-const HEALTH_SCORES = [
-  {
-    id: "energy",
-    label: "Physical Energy",
-    score: 8.2,
-    status: "Good",
-    statusColor: "#ca8a04",
-    description: "Your energy levels are improved and you feel more refreshed.",
-    delta: "+0.3 from last week",
-    icon: require("../../assets/images/immunity/physical1.png"),
-    iconBg: "#fef9c3",
-  },
-  {
-    id: "digestion",
-    label: "Digestive Health",
-    score: 8.3,
-    status: "Excellent",
-    statusColor: "#16a34a",
-    description: "Your energy levels are improved and you feel more refreshed.",
-    delta: "+0.9 from last week",
-    icon: require("../../assets/images/report/digestive1.png"),
-    iconBg: "#dcfce7",
-  },
-  {
-    id: "cardio",
-    label: "Cardiovascular",
-    score: 8.2,
-    status: "Stable",
+const getStatusMeta = (score: number) => {
+  if (score >= 8.5) {
+    return {
+      status: "Excellent",
+      statusColor: "#16a34a",
+      iconBg: "#dcfce7",
+    };
+  }
+  if (score >= 7) {
+    return {
+      status: "Strong",
+      statusColor: "#15803d",
+      iconBg: "#dcfce7",
+    };
+  }
+  if (score >= 5) {
+    return {
+      status: "Good",
+      statusColor: "#ca8a04",
+      iconBg: "#fef9c3",
+    };
+  }
+  if (score >= 3) {
+    return {
+      status: "Needs Attention",
+      statusColor: "#2563eb",
+      iconBg: "#dbeafe",
+    };
+  }
+  return {
+    status: "Critical",
     statusColor: "#dc2626",
-    description: "Your cardiovascular health remained stable.",
-    delta: "+0.1 from last week",
-    icon: require("../../assets/images/report/cardiology1.png"),
     iconBg: "#fee2e2",
-  },
-  {
-    id: "immune",
-    label: "Immune Response",
-    score: 9.1,
-    status: "Strong",
-    statusColor: "#16a34a",
-    description: "High immune function with great resilience.",
-    delta: "+0.3 from last week",
-    icon: require("../../assets/images/report/protection1.png"),
-    iconBg: "#dcfce7",
-  },
-  {
-    id: "respiratory",
-    label: "Respiratory",
-    score: 6.1,
-    status: "Needs Attention",
-    statusColor: "#2563eb",
-    description: "Slight decline in respiratory health this month.",
-    delta: "+0.1 from last week",
-    icon: require("../../assets/images/report/respiratory1.png"),
-    iconBg: "#dbeafe",
-  },
-  {
-    id: "hormonal",
-    label: "Hormonal Health",
-    score: 8.0,
-    status: "Good",
-    statusColor: "#ca8a04",
-    description: "Hormonal level stayed regular and balanced.",
-    delta: "+0.3 from last week",
-    icon: require("../../assets/images/report/hexagon1.png"),
-    iconBg: "#fef9c3",
-  },
-];
+  };
+};
 
-// ─── SCORE BADGE ─────────────────────────────────────────────────────────────
+const formatDelta = (difference: number) => {
+  if (difference > 0) return `+${difference.toFixed(1)} from last week`;
+  if (difference < 0) return `${difference.toFixed(1)} from last week`;
+  return `0.0 from last week`;
+};
+
+const getArrowIcon = (trend: string) => {
+  if (trend === "up") return "arrow-up";
+  if (trend === "down") return "arrow-down";
+  return "remove";
+};
+
+const getArrowColor = (trend: string) => {
+  if (trend === "up") return "#16a34a";
+  if (trend === "down") return "#dc2626";
+  return "#6b7280";
+};
+
+const getScoreDescription = (label: string, score: number, trend: string) => {
+  const trendText =
+    trend === "up"
+      ? "showed improvement."
+      : trend === "down"
+      ? "showed decline."
+      : "remained stable.";
+
+  switch (label) {
+    case "Physical Energy":
+      return `Your physical energy ${trendText}`;
+    case "Digestive Health":
+      return `Your digestive condition ${trendText}`;
+    case "Cardiovascular":
+      return `Your cardiovascular health ${trendText}`;
+    case "Immune Response":
+      return `Your immune response ${trendText}`;
+    case "Respiratory":
+      return `Your respiratory condition ${trendText}`;
+    case "Hormonal Health":
+      return `Your hormonal balance ${trendText}`;
+    default:
+      return `Current score is ${score}.`;
+  }
+};
+
+const getOverallInsight = (overallTrend: string) => {
+  if (overallTrend === "up") {
+    return "Clear overall progress is visible this week. Keep maintaining your routine and consistency.";
+  }
+  if (overallTrend === "down") {
+    return "Some core areas declined this week. More consistency, hydration, rest, and symptom tracking are recommended.";
+  }
+  return "Your overall health pattern remained stable this week. Continue your present routine.";
+};
+
+const getImprovementInsight = (lowestScoreLabel: string) => {
+  return `${lowestScoreLabel} needs the most attention this week. Focus on better daily routine, hydration, sleep, and consistent follow-up.`;
+};
+
+// ---------------- ICON MAP ----------------
+
+const iconMap: Record<string, any> = {
+  energyLevels: require("../../assets/images/immunity/physical1.png"),
+  digestiveHealth: require("../../assets/images/report/digestive1.png"),
+  cardiovascular: require("../../assets/images/report/cardiology1.png"),
+  immuneResponse: require("../../assets/images/report/protection1.png"),
+  respiratory: require("../../assets/images/report/respiratory1.png"),
+  hormonalHealth: require("../../assets/images/report/hexagon1.png"),
+};
+
+// ---------------- SCORE LABEL MAP ----------------
+
+const labelMap: Record<string, string> = {
+  energyLevels: "Physical Energy",
+  digestiveHealth: "Digestive Health",
+  cardiovascular: "Cardiovascular",
+  immuneResponse: "Immune Response",
+  respiratory: "Respiratory",
+  hormonalHealth: "Hormonal Health",
+};
+
+// ---------------- TYPES ----------------
+
+type ScoreDifferenceItem = {
+  current: number;
+  previous: number;
+  difference: number;
+  trend: "up" | "down" | "same";
+};
+
+// ---------------- SCORE BADGE ----------------
 
 const ScoreBadge = ({ score, bg }: { score: number; bg: string }) => (
   <View
-    style={{ backgroundColor: bg, borderRadius: 999, minWidth: 32, height: 32 }}
+    style={{
+      backgroundColor: bg,
+      borderRadius: 999,
+      minWidth: 34,
+      height: 34,
+    }}
     className="items-center justify-center px-2 absolute -bottom-2 -right-2 shadow-sm"
   >
     <Text style={{ color: "#166534", fontSize: 11, fontWeight: "800" }}>
-      {score}
+      {score.toFixed(1)}
     </Text>
   </View>
 );
 
-// ─── HEALTH SCORE CARD ────────────────────────────────────────────────────────
+// ---------------- HEALTH CARD ----------------
 
-const HealthCard = ({ item }: { item: (typeof HEALTH_SCORES)[0] }) => (
+const HealthCard = ({ item }: { item: any }) => (
   <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex-1 mx-1 mb-3">
-    {/* Icon + title row */}
     <View className="flex-row items-center mb-2">
       <View
-        style={{ backgroundColor: item.iconBg, width: 48, height: 48, borderRadius: 24 }}
+        style={{
+          backgroundColor: item.iconBg,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+        }}
         className="items-center justify-center"
       >
         <Image
@@ -111,61 +182,158 @@ const HealthCard = ({ item }: { item: (typeof HEALTH_SCORES)[0] }) => (
         />
         <ScoreBadge score={item.score} bg={item.iconBg} />
       </View>
+
       <Text className="text-gray-800 font-bold text-[13px] ml-3 flex-1 leading-4">
         {item.label}
       </Text>
     </View>
 
-    {/* Status */}
-    <Text style={{ color: item.statusColor }} className="font-bold text-[14px] mb-1">
+    <Text
+      style={{ color: item.statusColor }}
+      className="font-bold text-[14px] mb-1"
+    >
       {item.status}
     </Text>
 
-    {/* Description */}
     <Text className="text-gray-500 text-[11px] leading-4 mb-2">
       {item.description}
     </Text>
 
-    {/* Delta */}
     <View className="flex-row items-center">
-      <Ionicons name="arrow-up" size={12} color="#16a34a" />
-      <Text className="text-green-700 text-[11px] ml-1 font-medium">
+      <Ionicons
+        name={getArrowIcon(item.trend)}
+        size={12}
+        color={getArrowColor(item.trend)}
+      />
+      <Text
+        style={{ color: getArrowColor(item.trend) }}
+        className="text-[11px] ml-1 font-medium"
+      >
         {item.delta}
       </Text>
     </View>
   </View>
 );
 
-// ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
+// ---------------- MAIN SCREEN ----------------
 
 export default function WeeklyReportStatus() {
-  return (
-    <SafeAreaView className="flex-1 bg-white">
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<WeeklyReportStatus | null>(null);
+  const [error, setError] = useState("");
 
-      {/* ── SVG Header ── */}
+  useEffect(() => {
+    fetchWeeklyReport();  
+  }, []);
+
+  const fetchWeeklyReport = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await buildAndStoreWeeklyReport();
+      setReportData(data);
+    } catch (err) {
+      console.log("Weekly report fetch error:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to load weekly report";
+      setError(message);
+      Alert.alert("Error", message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const healthScores = useMemo(() => {
+    if (!reportData?.scoreDifference) return [];
+
+    return (
+      Object.entries(reportData.scoreDifference) as Array<
+        [keyof typeof reportData.scoreDifference, ScoreDifferenceItem]
+      >
+    ).map(([key, item]) => {
+      const meta = getStatusMeta(item.current);
+
+      return {
+        id: String(key),
+        label: labelMap[String(key)] || String(key),
+        score: item.current,
+        status: meta.status,
+        statusColor: meta.statusColor,
+        description: getScoreDescription(
+          labelMap[String(key)],
+          item.current,
+          item.trend
+        ),
+        delta: formatDelta(item.difference),
+        trend: item.trend,
+        icon: iconMap[String(key)],
+        iconBg: meta.iconBg,
+      };
+    });
+  }, [reportData]);
+
+  const lowestScoreItem = useMemo(() => {
+    if (!healthScores.length) return null;
+    return [...healthScores].sort((a, b) => a.score - b.score)[0];
+  }, [healthScores]);
+
+  const overallStatusMeta = useMemo(() => {
+    if (!reportData?.overall) return null;
+    return getStatusMeta(reportData.overall.current);
+  }, [reportData]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#166534" />
+        <Text className="text-gray-600 mt-4 text-[15px]">
+          Loading weekly report...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !reportData) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
+        <Ionicons name="alert-circle-outline" size={48} color="#dc2626" />
+        <Text className="text-red-600 text-[18px] font-bold mt-4">
+          Failed to load report
+        </Text>
+        <Text className="text-gray-500 text-center mt-2">{error}</Text>
+
+        <TouchableOpacity
+          onPress={fetchWeeklyReport}
+          className="mt-6 bg-[#166534] px-6 py-3 rounded-full"
+        >
+          <Text className="text-white font-bold">Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  return (                  
+    <SafeAreaView className="flex-1 bg-white">
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
 
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
-         
-
               <Ionicons name="menu" size={26} color="#fff" />
             </View>
-
-     
           </View>
         </SafeAreaView>
       </View>
+
       <ScrollView
-             contentContainerStyle={{
+        contentContainerStyle={{
           paddingTop: 200,
           paddingBottom: 140,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Page Title ── */}
         <View className="px-5 mt-6">
           <Text className="text-[#166534] text-[32px] font-extrabold leading-9">
             Weekly Report{"\n"}Status
@@ -175,35 +343,40 @@ export default function WeeklyReportStatus() {
           </Text>
         </View>
 
-        {/* ── Patient Overview Card ── */}
         <View className="mx-5 mt-6 bg-[#166534] rounded-3xl p-5">
-          {/* Weekly Overview pill */}
           <View className="absolute top-4 right-4 bg-white rounded-full px-3 py-1">
             <Text className="text-[#166534] text-[11px] font-bold">
               Weekly Overview
             </Text>
           </View>
 
-          {/* Avatar + info */}
           <View className="flex-row items-center mt-2">
             <Image
               source={{ uri: "https://i.pravatar.cc/150?img=12" }}
-              style={{ width: 64, height: 64, borderRadius: 32, borderWidth: 2, borderColor: "#fff" }}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                borderWidth: 2,
+                borderColor: "#fff",
+              }}
             />
-            <View className="ml-4">
+            <View className="ml-4 flex-1">
               <Text className="text-white text-[20px] font-extrabold">
-                John Doe
+                Weekly Summary
               </Text>
-              <View className="flex-row mt-1">
-                <Text className="text-green-200 text-[13px]">Age – 27 yrs</Text>
-                <Text className="text-green-200 text-[13px] ml-3">Gender – Male</Text>
+              <View className="mt-1">
+                <Text className="text-green-200 text-[13px]">
+                  Current Overall Score – {reportData.overall.current.toFixed(1)}
+                </Text>
+                <Text className="text-green-200 text-[13px] mt-1">
+                  Previous Overall Score – {reportData.overall.previous.toFixed(1)}
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Stats row */}
           <View className="flex-row mt-4 gap-3">
-            {/* Days Tracked */}
             <View className="flex-1 bg-white rounded-2xl px-4 py-3 flex-row items-center">
               <Text className="text-[#166534] text-[22px] font-extrabold">7</Text>
               <Text className="text-gray-500 text-[11px] ml-2 leading-4">
@@ -211,62 +384,71 @@ export default function WeeklyReportStatus() {
               </Text>
             </View>
 
-            {/* Consistency */}
             <View className="flex-1 bg-white rounded-2xl px-4 py-3 flex-row items-center">
-              <Ionicons name="checkmark-circle" size={22} color="#16a34a" />
+              <Ionicons
+                name={getArrowIcon(reportData.overall.trend)}
+                size={22}
+                color={getArrowColor(reportData.overall.trend)}
+              />
               <View className="ml-2">
-                <Text className="text-[#166534] text-[16px] font-extrabold">96%</Text>
-                <Text className="text-gray-500 text-[11px]">Consistency</Text>
+                <Text
+                  style={{ color: overallStatusMeta?.statusColor || "#166534" }}
+                  className="text-[16px] font-extrabold"
+                >
+                  {reportData.overall.difference > 0 ? "+" : ""}
+                  {reportData.overall.difference.toFixed(1)}
+                </Text>
+                <Text className="text-gray-500 text-[11px]">Overall Change</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* ── Health Scores ── */}
         <View className="mx-4 mt-6 bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
-          {/* Header */}
           <View className="flex-row items-center mb-4">
             <Text className="text-gray-900 text-[20px] font-extrabold flex-1">
               Health Scores
             </Text>
             <View className="bg-gray-100 rounded-full px-3 py-1">
-              <Text className="text-gray-500 text-[12px] font-medium">Past 7 days</Text>
+              <Text className="text-gray-500 text-[12px] font-medium">
+                Past 7 days
+              </Text>
             </View>
           </View>
 
-          {/* 2-column grid */}
-          {Array.from({ length: Math.ceil(HEALTH_SCORES.length / 2) }).map((_, rowIdx) => (
-            <View key={rowIdx} className="flex-row">
-              {HEALTH_SCORES.slice(rowIdx * 2, rowIdx * 2 + 2).map((item) => (
-                <HealthCard key={item.id} item={item} />
-              ))}
-            </View>
-          ))}
+          {Array.from({ length: Math.ceil(healthScores.length / 2) }).map(
+            (_, rowIdx) => (
+              <View key={rowIdx} className="flex-row">
+                {healthScores
+                  .slice(rowIdx * 2, rowIdx * 2 + 2)
+                  .map((item) => (
+                    <HealthCard key={item.id} item={item} />
+                  ))}
+              </View>
+            )
+          )}
         </View>
 
-        {/* ── Key Insights ── */}
         <View className="mx-4 mt-5 bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <Text className="text-gray-900 text-[20px] font-extrabold mb-4">
             Key Insights
           </Text>
 
           <View className="flex-row gap-3">
-            {/* Overall Progress */}
             <View className="flex-1 bg-[#f0fdf4] rounded-2xl p-4">
               <View className="flex-row items-center mb-2">
                 <View className="bg-green-500 rounded-full w-6 h-6 items-center justify-center mr-2">
-                  <Ionicons name="arrow-up" size={14} color="#fff" />
+                  <Ionicons name="analytics" size={14} color="#fff" />
                 </View>
                 <Text className="text-green-700 font-bold text-[13px]">
                   Overall Progress
                 </Text>
               </View>
               <Text className="text-green-800 text-[12px] leading-5">
-                Clear progress shown in energy levels, physical comfort and digestive health. Keep up the consistency!
+                {getOverallInsight(reportData.overall.trend)}
               </Text>
             </View>
 
-            {/* Areas to Improve */}
             <View className="flex-1 bg-[#eff6ff] rounded-2xl p-4">
               <View className="flex-row items-center mb-2">
                 <View className="bg-red-500 rounded-full w-6 h-6 items-center justify-center mr-2">
@@ -277,18 +459,18 @@ export default function WeeklyReportStatus() {
                 </Text>
               </View>
               <Text className="text-blue-800 text-[12px] leading-5">
-                Your respiratory health slightly declined. Consider better air hygiene and staying hydrated.
+                {lowestScoreItem
+                  ? getImprovementInsight(lowestScoreItem.label)
+                  : "No weak area detected."}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* ── Motivational text ── */}
         <Text className="text-center text-gray-500 text-[14px] mt-6 font-medium">
-          Keep up the great work !
+          Keep tracking your progress every week!
         </Text>
 
-        {/* ── Download Button ── */}
         <TouchableOpacity
           activeOpacity={0.85}
           className="mx-6 mt-4 bg-[#166534] rounded-full py-4 items-center"
@@ -305,9 +487,6 @@ export default function WeeklyReportStatus() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* ── Bottom Navigation ── */}
-
     </SafeAreaView>
   );
 }

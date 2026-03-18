@@ -6,7 +6,7 @@ interface Props {
   height?: number;
 }
 
-function SvgHeader({ height = 200 }: Props) {
+function SvgHeader({ height = 180 }: Props) {
   const { width } = useWindowDimensions();
   const W = 842;
   const H = 347;
@@ -129,7 +129,7 @@ function SvgHeader({ height = 200 }: Props) {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Image
             source={require('../assets/images/medha_logo.png')}
-            style={{ width: 160, height: 130 }}
+            style={{ width: 160, height: 120 }}
             resizeMode="none"
           />
         </View>

@@ -13,7 +13,7 @@ export default function NextStepScreen() {
 
       <TouchableOpacity
         className="mt-6 bg-[#1fa2ff] py-3.5 rounded-[30px] items-center"
-        onPress={() => router.push('/dashboard')}
+        onPress={() => router.push('/(tabs)/dashboard')}
       >
         <Text className="text-white text-[16px] font-semibold">Continue</Text>
       </TouchableOpacity>

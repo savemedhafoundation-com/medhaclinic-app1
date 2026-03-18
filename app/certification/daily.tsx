@@ -146,7 +146,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
         <View className="px-5 mt-8">
           <Text className="text-[#166534] text-[30px] font-bold leading-[38px]">
             Daily Immunity Status
-          </Text>
+          </Text>         
           <Text className="text-[#166534] text-[30px] font-bold">Report</Text>
         </View>
 

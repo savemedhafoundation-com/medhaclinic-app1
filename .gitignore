@@ -1,43 +1,71 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# ─── Dependencies ────────────────────────────────────────────────────────────
 node_modules/
 
-# Expo
+# ─── Expo ────────────────────────────────────────────────────────────────────
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
+# ─── Metro bundler ───────────────────────────────────────────────────────────
 .metro-health-check*
 
-# debug
+# ─── TypeScript ──────────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── Secrets & local env  (keep .env.example in git) ────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Android – build output & local config ───────────────────────────────────
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/.cxx/
+
+# Gradle daemon logs written to project root
+.gradle-local/
+.gradle-local-build/
+
+# ─── Android – signing keys (never commit) ───────────────────────────────────
+*.jks
+*.keystore
+
+# ─── iOS ─────────────────────────────────────────────────────────────────────
+ios/
+*.p8
+*.p12
+*.mobileprovision
+
+# ─── Debug / log files ───────────────────────────────────────────────────────
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
+# ─── macOS ───────────────────────────────────────────────────────────────────
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# ─── Native misc ─────────────────────────────────────────────────────────────
+.kotlin/
+*.orig.*
+*.key
 
-# typescript
-*.tsbuildinfo
+# ─── IDE ─────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
 
+# ─── Expo export check artifacts ─────────────────────────────────────────────
+.expo-export-*/
+
+# ─── Build logs ──────────────────────────────────────────────────────────────
+*.log
+
+# ─── Windows system folders accidentally created in project root ──────────────
+Microsoft/
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
 app-example
-
-# generated native folders
-/ios
-/android

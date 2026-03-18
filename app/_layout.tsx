@@ -1,19 +1,59 @@
-import { Stack } from "expo-router";
-import "../global.css";
-import { StackScreen } from "react-native-screens";
-// export default function RootLayout() {
-//   return (
-//     <Stack screenOptions={{ headerShown: false }}>
-//       {/* Auth / Welcome screens */}
-//       <Stack.Screen name="Loginscreen" />
-//       <Stack.Screen name="signup" />
-//       <Stack.Screen name="index" />
-//      <Stack.Screen name="dashboard" />
-//  {/* Main App */}
-//     </Stack>
-//   );
-// }
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+
+import { AuthProvider, useAuth } from '../providers/AuthProvider';
+import '../global.css';
+
 export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  );
+}
+
+function RootNavigator() {
+  const { loading, user, needsProfile } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const firstSegment = segments[0];
+    const onLoginScreen = firstSegment === 'Loginscreen';
+    const onSignupScreen = firstSegment === 'signup';
+    const onWelcomeScreen = typeof firstSegment === 'undefined';
+
+    // Logged-out users can stay on the welcome screen and reach login via swipe.
+    if (!user && !onLoginScreen && !onWelcomeScreen) {
+      router.replace('/Loginscreen');
+      return;
+    }
+
+    // Logged in but health profile not completed -> force to signup
+    if (user && needsProfile && !onSignupScreen) {
+      router.replace('/signup');
+      return;
+    }
+
+    // Logged-in users should not stay on the welcome/login/signup flow.
+    if (user && !needsProfile && (onWelcomeScreen || onLoginScreen || onSignupScreen)) {
+      router.replace('/(tabs)/dashboard');
+    }
+  }, [loading, router, segments, user, needsProfile]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator color="#15803d" size="large" />
+      </View>
+    );
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
@@ -21,20 +61,16 @@ export default function RootLayout() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="dietscreen" />
-      <Stack.Screen name="foodpreferance"/>
-      <Stack.Screen name="healthassessment"/>
-      <Stack.Screen name="report/weeklyreport"/>
-      <Stack.Screen name="process"/>
-       <Stack.Screen name="advice"/>
-       <Stack.Screen name="immunity"/>
-      <Stack.Screen name="assessment/certificate"/>
-      <Stack.Screen name="dashboard"/>
-      <Stack.Screen name="boosterdiet/dietplan"/>
-      <Stack.Screen name="boosterdiet/boosterplan"/>
-      <Stack.Screen name="analysis/stepanalyst"/>
-      <Stack.Screen name="certification/daily"/>
-      <Stack.Screen name="immunity/dailyimmunity"/>
-
-          </Stack>
+      <Stack.Screen name="foodpreferance" />
+      <Stack.Screen name="healthassessment" />
+      <Stack.Screen name="report/weeklyreport" />
+      <Stack.Screen name="process" />
+      <Stack.Screen name="advice" />
+      <Stack.Screen name="assessment/certificate" />
+      <Stack.Screen name="boosterdiet/dietplan" />
+      <Stack.Screen name="analysis/stepanalyst" />
+      <Stack.Screen name="certification/daily" />
+      <Stack.Screen name="immunity/dailyimmunity" />
+    </Stack>
   );
 }

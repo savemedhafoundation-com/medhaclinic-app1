@@ -11,8 +11,6 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import SvgHeader from '../../components/Clipperbg';
 
-const logo = require('../../assets/images/medha_logo.png');
-
 /* ================= ASSETS ================= */
 const emojiLow = require('../../assets/images/low.png');
 const emojiNormal = require('../../assets/images/normal.png');
@@ -151,11 +149,13 @@ export default function WeeklyImmunityCheck() {
         })}
 
         {/* ACTION BUTTON */}
-        <TouchableOpacity className="mt-6 bg-[#1fa2ff] py-4 rounded-full items-center">
+        <TouchableOpacity
+          className="mt-6 bg-[#1fa2ff] py-4 rounded-full items-center"
+          onPress={() => router.push('/certification/weekly')}
+        >
           <Text className="text-white text-[18px] font-semibold">
             Prepare Status Report
           </Text>
-          onPress={() => router.push("certification/weekly")}
         </TouchableOpacity>
       </ScrollView>
     </View>

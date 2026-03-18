@@ -1,0 +1,108 @@
+mutation UpsertCurrentUser(
+  $name: String
+  $email: String
+  $photoUrl: String
+  $provider: String
+) @auth(level: USER) {
+  user_upsert(
+    data: {
+      id_expr: "auth.uid"
+      name: $name
+      email: $email
+      photoUrl: $photoUrl
+      provider: $provider
+      lastLoginAt_expr: "request.time"
+    }
+  )
+}
+
+mutation UpsertMyProfile(
+  $gender: String
+  $age: Int
+  $weightKg: Float
+  $heightCm: Float
+  $purpose: String
+  $address: String
+) @auth(level: USER) {
+  patientProfile_upsert(
+    data: {
+      userId_expr: "auth.uid"
+      gender: $gender
+      age: $age
+      weightKg: $weightKg
+      heightCm: $heightCm
+      purpose: $purpose
+      address: $address
+      updatedAt_expr: "request.time"
+    }
+  )
+}
+
+mutation SubmitDailyImmunity(
+  $physicalEnergy: Int
+  $appetite: Int
+  $digestionComfort: Int
+  $burningPain: Int
+  $bloatingGas: Int
+  $bloodPressure: Int
+  $swelling: Int
+  $fever: Int
+  $infection: Int
+  $breathingProblem: Int
+  $menstrualRegularity: Int
+  $libidoStability: Int
+  $hairHealth: Int
+  $sleepHours: Int
+  $immunityScore: Int!
+  $immunityLevel: String!
+) @auth(level: USER) {
+  dailyImmunitySubmission_insert(
+    data: {
+      userId_expr: "auth.uid"
+      submittedDate_expr: "request.time"
+      physicalEnergy: $physicalEnergy
+      appetite: $appetite
+      digestionComfort: $digestionComfort
+      burningPain: $burningPain
+      bloatingGas: $bloatingGas
+      bloodPressure: $bloodPressure
+      swelling: $swelling
+      fever: $fever
+      infection: $infection
+      breathingProblem: $breathingProblem
+      menstrualRegularity: $menstrualRegularity
+      libidoStability: $libidoStability
+      hairHealth: $hairHealth
+      sleepHours: $sleepHours
+      immunityScore: $immunityScore
+      immunityLevel: $immunityLevel
+    }
+  )
+}
+
+# Upsert prevents duplicate reports for the same week (keyed on user + weekStart)
+mutation CreateWeeklyReport(
+  $weekStart: Date!
+  $weekEnd: Date!
+  $overallCurrent: Float!
+  $overallPrevious: Float
+  $overallDelta: Float
+  $trend: String!
+  $summary: String
+  $payload: Any
+) @auth(level: USER) {
+  weeklyReport_upsert(
+    data: {
+      userId_expr: "auth.uid"
+      weekStart: $weekStart
+      weekEnd: $weekEnd
+      overallCurrent: $overallCurrent
+      overallPrevious: $overallPrevious
+      overallDelta: $overallDelta
+      trend: $trend
+      summary: $summary
+      payload: $payload
+      generatedAt_expr: "request.time"
+    }
+  )
+}

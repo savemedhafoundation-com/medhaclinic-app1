@@ -5,8 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  type ImageSourcePropType,
   Alert,
-  Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,13 +22,48 @@ import { router } from "expo-router";
 
 import SvgHeader from "../../components/Clipperbg";
 import Speedometer from "../../components/Svgspeedometer";
+import type { SubmitDailyImmunityVariables } from "../../firebase/dataConnect";
+import { saveDailyImmunitySubmission } from "../../services/medhaDataConnect";
 
-// ---------------------- API BASE URL ----------------------
-const API_BASE_URL =
- "http://192.168.29.104:3000";
+type QuestionId =
+  | "energy"
+  | "appetite"
+  | "digestion"
+  | "burning"
+  | "bloating"
+  | "pressure"
+  | "swelling"
+  | "fever"
+  | "infection"
+  | "breathing"
+  | "menstrual"
+  | "libido"
+  | "hair"
+  | "sleep";
+
+type QuestionOption = {
+  key: string;
+  label: string;
+  img: ImageSourcePropType;
+  score: number;
+};
+
+type Question = {
+  id: QuestionId;
+  title: string;
+  options: QuestionOption[];
+};
+
+type Answers = Partial<Record<QuestionId, string>>;
+
+type AnimatedOptionProps = {
+  opt: QuestionOption;
+  selected: boolean;
+  onPress: () => void;
+};
 
 // ---------------------- QUESTIONS ----------------------
-const QUESTIONS = [
+const QUESTIONS: Question[] = [
   {
     id: "energy",
     title: "Physical Energy",
@@ -60,7 +96,7 @@ const QUESTIONS = [
         key: "good",
         label: "Good Appetite",
         img: require("../../assets/images/immunity/appetite1.png"),
-        score: 10,
+        score: 10,         
       },
       {
         key: "poor",
@@ -372,22 +408,6 @@ const QUESTIONS = [
   },
 ];
 
-// ---------------------- TYPES ----------------------
-type OptionType = {
-  key: string;
-  label: string;
-  img?: any;
-  score: number;
-};
-
-type QuestionType = {
-  id: string;
-  title: string;
-  options: OptionType[];
-};
-
-type AnswersType = Record<string, string>;
-
 // ---------------------- RESULT HELPERS ----------------------
 const getImmunityLabel = (score: number) => {
   if (score >= 8.5) {
@@ -395,57 +415,56 @@ const getImmunityLabel = (score: number) => {
       label: "Excellent Immunity",
       color: "#15803d",
       icon: "shield-checkmark",
-      level: "excellent",
+      apiLevel: "high" as const,
     };
   }
-
   if (score >= 7) {
     return {
       label: "Good Immunity",
       color: "#16a34a",
       icon: "thumbs-up",
-      level: "good",
+      apiLevel: "good" as const,
     };
   }
-
   if (score >= 5) {
     return {
       label: "Moderate Immunity",
       color: "#ca8a04",
       icon: "alert-circle",
-      level: "medium",
+      apiLevel: "medium" as const,
     };
   }
-
   return {
     label: "Low Immunity",
     color: "#dc2626",
     icon: "warning",
-    level: "low",
+    apiLevel: "low" as const,
   };
 };
 
-const getScore = (questionId: string, answers: AnswersType): number => {
-  const question = QUESTIONS.find((q) => q.id === questionId);
-  if (!question) return 0;
-
-  const selectedKey = answers[questionId];
-  if (!selectedKey) return 0;
-
-  const selectedOption = question.options.find((opt) => opt.key === selectedKey);
-  return selectedOption ? selectedOption.score : 0;
+// ---------------------- MAP FRONTEND QUESTION IDS TO API KEYS ----------------------
+const API_FIELD_MAP: Record<
+  QuestionId,
+  Exclude<keyof SubmitDailyImmunityVariables, "immunityScore" | "immunityLevel">
+> = {
+  energy: "physicalEnergy",
+  appetite: "appetite",
+  digestion: "digestionComfort",
+  burning: "burningPain",
+  bloating: "bloatingGas",
+  pressure: "bloodPressure",
+  swelling: "swelling",
+  fever: "fever",
+  infection: "infection",
+  breathing: "breathingProblem",
+  menstrual: "menstrualRegularity",
+  libido: "libidoStability",
+  hair: "hairHealth",
+  sleep: "sleepHours",
 };
 
 // ---------------------- ANIMATED OPTION ----------------------
-const AnimatedOption = ({
-  opt,
-  selected,
-  onPress,
-}: {
-  opt: OptionType;
-  selected: boolean;
-  onPress: () => void;
-}) => {
+const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
   const scale = useSharedValue(1);
   const glow = useSharedValue(0);
 
@@ -454,12 +473,11 @@ const AnimatedOption = ({
       damping: 3,
       stiffness: 200,
     });
-    glow.value = withTiming(selected ? 1 : 0, { duration: 120 });
+    glow.value = withTiming(selected ? 1 : 0, { duration: 50 });
   }, [selected, scale, glow]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const shadowOpacity = interpolate(glow.value, [0, 1], [0, 0.4]);
-
     return {
       transform: [{ scale: scale.value }],
       shadowOpacity,
@@ -503,16 +521,16 @@ const AnimatedOption = ({
 
 // ---------------------- MAIN SCREEN ----------------------
 export default function DailyImmunityCheck() {
-  const [answers, setAnswers] = useState<AnswersType>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [answers, setAnswers] = useState<Answers>({});
+  const [loading, setLoading] = useState(false);
 
   const totalAnswered = Object.keys(answers).length;
   const progressPct = Math.round((totalAnswered / QUESTIONS.length) * 100);
 
   const speedometerValue = useMemo(() => {
-    const scores: number[] = [];
+    const scores = [];
 
-    for (const q of QUESTIONS as QuestionType[]) {
+    for (const q of QUESTIONS) {
       const picked = answers[q.id];
       if (!picked) continue;
 
@@ -522,39 +540,13 @@ export default function DailyImmunityCheck() {
 
     return scores.length
       ? Number(
-          (scores.reduce((total, score) => total + score, 0) / scores.length).toFixed(2)
+          (scores.reduce((total, value) => total + value, 0) / scores.length).toFixed(2)
         )
       : 0;
   }, [answers]);
 
-  const buildPostPayload = () => {
-    const immunityMeta = getImmunityLabel(speedometerValue);
-
-    return {
-      phone: 8565412389,
-
-      physicalEnergy: getScore("energy", answers),
-      appetite: getScore("appetite", answers),
-      digestionComfort: getScore("digestion", answers),
-      burningPain: getScore("burning", answers),
-      bloatingGas: getScore("bloating", answers),
-      bloodPressure: getScore("pressure", answers),
-      swelling: getScore("swelling", answers),
-      fever: getScore("fever", answers),
-      infection: getScore("infection", answers),
-      breathingProblem: getScore("breathing", answers),
-      menstrualRegularity: getScore("menstrual", answers),
-      libidoStability: getScore("libido", answers),
-      hairHealth: getScore("hair", answers),
-      sleepHours: getScore("sleep", answers),
-
-      immunityScore: speedometerValue,
-      immunityLevel: immunityMeta.level,
-    };
-  };
-
-  const buildResultPayload = () => {
-    const payload = (QUESTIONS as QuestionType[]).map((q) => {
+  const buildPayload = () => {
+    return QUESTIONS.map((q) => {
       const selectedKey = answers[q.id] ?? null;
       const selectedOption = q.options.find((o) => o.key === selectedKey) ?? null;
 
@@ -567,59 +559,35 @@ export default function DailyImmunityCheck() {
         answered: !!selectedKey,
       };
     });
+  };
+
+  const buildApiRequestBody = (): SubmitDailyImmunityVariables => {
+    const requestBody: Partial<SubmitDailyImmunityVariables> = {};
+
+    QUESTIONS.forEach((q) => {
+      const selectedKey = answers[q.id];
+      if (!selectedKey) return;
+
+      const selectedOption = q.options.find((o) => o.key === selectedKey);
+      if (!selectedOption) return;
+
+      const apiField = API_FIELD_MAP[q.id];
+      if (apiField) {
+        requestBody[apiField] = selectedOption.score;
+      }
+    });
 
     const immunityMeta = getImmunityLabel(speedometerValue);
 
-    const summary = {
-      totalQuestions: QUESTIONS.length,
-      totalAnswered,
-      averageScore: speedometerValue,
-      immunityLabel: immunityMeta.label,
-      completionPercent: progressPct,
-      submittedAt: new Date().toISOString(),
+    return {
+      ...requestBody,
+      immunityScore: Number(speedometerValue.toFixed(0)),
+      immunityLevel: immunityMeta.apiLevel,
     };
-
-    const speedometer = {
-      score: speedometerValue,
-      outOf: 10,
-      label: immunityMeta.label,
-      color: immunityMeta.color,
-      icon: immunityMeta.icon,
-      percentage: Math.round((speedometerValue / 10) * 100),
-    };
-
-    return { payload, summary, speedometer };
   };
 
-  const submitDailyImmunityCheck = async () => {
-    const postPayload = buildPostPayload();
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/daily-immunity-check`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(postPayload),
-    });
-
-    const contentType = response.headers.get("content-type");
-
-    let responseData: any = null;
-    if (contentType && contentType.includes("application/json")) {
-      responseData = await response.json();
-    } else {
-      responseData = await response.text();
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        typeof responseData === "string"
-          ? responseData
-          : responseData?.message || "Failed to submit daily immunity check"
-      );
-    }
-
-    return responseData;
+  const postImmunityData = async (requestBody: SubmitDailyImmunityVariables) => {
+    await saveDailyImmunitySubmission(requestBody);
   };
 
   const handleGetResult = async () => {
@@ -632,37 +600,86 @@ export default function DailyImmunityCheck() {
     }
 
     try {
-      setIsSubmitting(true);
+      setLoading(true);
 
-      const apiResponse = await submitDailyImmunityCheck();
-      console.log("Daily immunity saved:", apiResponse);
+      const payload = buildPayload();
 
-      const { payload, summary, speedometer } = buildResultPayload();
+      const summary = {
+        totalQuestions: QUESTIONS.length,
+        totalAnswered,
+        averageScore: speedometerValue,
+        immunityLabel: getImmunityLabel(speedometerValue).label,
+        completionPercent: progressPct,
+        submittedAt: new Date().toISOString(),
+      };
 
-      router.push({
-        pathname: "certification/daily",
-        params: {
-          data: JSON.stringify(payload),
-          summary: JSON.stringify(summary),
-          speedometer: JSON.stringify(speedometer),
-        },
-      });
-    } catch (error: any) {
-      console.log("Submit error:", error);
-      Alert.alert("Submission Failed", error?.message || "Something went wrong");
+      const speedometer = {
+        score: speedometerValue,
+        outOf: 10,
+        label: getImmunityLabel(speedometerValue).label,
+        color: getImmunityLabel(speedometerValue).color,
+        icon: getImmunityLabel(speedometerValue).icon,
+        percentage: Math.round((speedometerValue / 10) * 100),
+      };
+
+      const requestBody = buildApiRequestBody();
+
+      await postImmunityData(requestBody);
+
+      router.push(
+        {
+          pathname: "/certification/daily",
+          params: {
+            data: JSON.stringify(payload),
+            summary: JSON.stringify(summary),
+            speedometer: JSON.stringify(speedometer),
+            apiSaved: "true",
+          },
+        } as never
+      );
+    } catch (error) {
+      console.log("Data Connect daily immunity error:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while saving data.";
+      Alert.alert("Error", message);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <SvgHeader />
+          <View className="absolute top-0 left-0 right-0 z-10">
+        <SvgHeader />
 
-      <Text className="text-2xl font-extrabold text-green-800 mx-5">
+        <SafeAreaView className="absolute top-0 w-full">
+          <View className="h-14 justify-center mt-4">
+            <View className="absolute left-4 right-4 flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
+
+              <Ionicons name="menu" size={26} color="#fff" />
+            </View>
+
+         
+          </View>
+        </SafeAreaView>
+      </View>
+
+  
+
+      <ScrollView contentContainerStyle={{  paddingTop: 110,
+          paddingBottom: 60,
+          paddingHorizontal: 16,}}>
+
+
+            <Text className="text-2xl font-extrabold text-green-800 mx-5 mt-20">
         Daily Immunity Check
       </Text>
-
+  
       {/* Progress */}
       <View className="mt-4 mx-5">
         <View className="h-2 bg-green-100 rounded-full overflow-hidden">
@@ -673,8 +690,6 @@ export default function DailyImmunityCheck() {
         </View>
         <Text className="text-right text-green-700 mt-1">{progressPct}%</Text>
       </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
         {QUESTIONS.map((q, idx) => (
           <View key={q.id} className="mt-6">
             <Text className="font-bold text-green-800 mb-2">
@@ -704,37 +719,29 @@ export default function DailyImmunityCheck() {
           <Speedometer score={speedometerValue} />
         </View>
 
-        {/* Debug preview */}
-        <View className="mt-4 mx-4 p-4 rounded-2xl bg-green-50 border border-green-100">
-          <Text className="text-green-800 font-bold mb-2">Payload Preview</Text>
-          <Text className="text-xs text-green-700">
-            {JSON.stringify(buildPostPayload(), null, 2)}
-          </Text>
-        </View>
-
-        {/* Submit Button */}
+        {/* Button */}
         <TouchableOpacity
           onPress={handleGetResult}
-          disabled={isSubmitting}
-          className={`mt-6 mx-4 rounded-2xl py-4 items-center shadow-md ${
-            isSubmitting ? "bg-green-400" : "bg-green-600"
-          }`}
+          disabled={loading}
+          className="mt-6 mx-4 bg-green-600 rounded-2xl py-4 items-center shadow-md"
           style={{
             shadowColor: "#16a34a",
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.3,
             shadowRadius: 6,
             elevation: 5,
+            opacity: loading ? 0.7 : 1,
           }}
         >
           <View className="flex-row items-center">
-            <Ionicons
-              name={isSubmitting ? "cloud-upload-outline" : "analytics-outline"}
-              size={22}
-              color="white"
-            />
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Ionicons name="analytics-outline" size={22} color="white" />
+            )}
+
             <Text className="text-white text-lg font-extrabold ml-2">
-              {isSubmitting ? "Submitting..." : "Get My Result"}
+              {loading ? "Saving..." : "Get My Result"}
             </Text>
           </View>
 

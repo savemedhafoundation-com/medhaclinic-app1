@@ -1,0 +1,63 @@
+query GetCurrentUser @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    id
+    name
+    email
+    photoUrl
+    provider
+    createdAt
+    lastLoginAt
+    profile: patientProfile_on_user {
+      gender
+      age
+      weightKg
+      heightCm
+      purpose
+      address
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query GetMyDailyImmunityHistory @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    submissions: dailyImmunitySubmissions_on_user(orderBy: { submittedAt: DESC }) {
+      id
+      submittedDate
+      submittedAt
+      immunityScore
+      immunityLevel
+      physicalEnergy
+      appetite
+      digestionComfort
+      burningPain
+      bloatingGas
+      bloodPressure
+      swelling
+      fever
+      infection
+      breathingProblem
+      menstrualRegularity
+      libidoStability
+      hairHealth
+      sleepHours
+    }
+  }
+}
+
+query GetMyWeeklyReports @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    reports: weeklyReports_on_user(orderBy: { weekStart: DESC }) {
+      weekStart
+      weekEnd
+      overallCurrent
+      overallPrevious
+      overallDelta
+      trend
+      summary
+      payload
+      generatedAt
+    }
+  }
+}

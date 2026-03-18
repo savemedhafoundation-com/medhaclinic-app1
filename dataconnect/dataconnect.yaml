@@ -1,0 +1,13 @@
+specVersion: "v1"
+serviceId: medhaclinic-3ba87-service
+location: asia-south1
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: medhaclinic-3ba87-database
+      cloudSql:
+        instanceId: medhaclinic-3ba87-instance
+      # schemaValidation: "COMPATIBLE"
+connectorDirs:
+  - "./mobile"

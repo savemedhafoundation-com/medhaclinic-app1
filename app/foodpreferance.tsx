@@ -115,7 +115,7 @@ export default function FoodPreferencesScreen() {
 
         {/* ===== FOOTER NOTE ===== */}
         <Text className="text-center text-[12px] text-[#1f3c66] mt-3">
-          Your body's needs are unique.{'\n'}
+          Your body&apos;s needs are unique.{'\n'}
           This helps us know you better.
         </Text>
       </ScrollView>

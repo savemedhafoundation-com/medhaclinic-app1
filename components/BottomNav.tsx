@@ -6,7 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 /* 🔹 Map routes → tabs correctly */
 function getActiveTab(pathname: string) {
   if (pathname.startsWith('/(tabs)/dashboard')) return 'dashboard';
-  if (pathname.startsWith('/(tabs)/stats')) return 'stats';
   if (pathname.startsWith('/(tabs)/healthalert')) return 'healthalert';
   if (pathname.startsWith('/(tabs)/profile')) return 'profile';
   return '';
@@ -19,8 +18,8 @@ export default function BottomNav() {
 
   const tabs = [
     { key: 'dashboard', icon: 'home', route: '/(tabs)/dashboard' },
-    { key: 'stats', icon: 'stats-chart', route: '/(tabs)/healthalert' },
-    { key: 'profile', icon: 'person', route: '/(tabs)/dashboard' },
+    { key: 'healthalert', icon: 'stats-chart', route: '/(tabs)/healthalert' },
+    { key: 'profile', icon: 'person', route: '/(tabs)/profile' },
   ];
 
   return (
