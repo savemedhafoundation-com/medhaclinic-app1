@@ -1,4 +1,4 @@
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 
 import {
   GoogleAuthProvider,
@@ -51,6 +51,23 @@ export async function ensureDataConnectAuthReady(
   await modularUser.getIdToken();
 }
 
+export async function updateCurrentUserPhotoUrl(photoUrl: string) {
+  await auth.authStateReady();
+
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('Please sign in again before updating your profile photo.');
+  }
+
+  await updateProfile(currentUser, {
+    photoURL: photoUrl,
+  });
+  await currentUser.getIdToken(true);
+
+  return auth.currentUser as AppAuthUser;
+}
+
 export function subscribeToAuthChanges(
   callback: (user: AppAuthUser | null) => void
 ) {
@@ -69,9 +86,9 @@ export async function sendPhoneVerificationCode(
   phoneNumber: string,
   recaptchaContainerId = 'phone-recaptcha-container'
 ) {
+  // Do NOT call verifier.render() — invisible reCAPTCHA fires automatically
+  // inside signInWithPhoneNumber. Calling render() first causes the popup to appear.
   const verifier = getPhoneRecaptchaVerifier(recaptchaContainerId);
-  await verifier.render();
-
   const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
   return confirmation as AppPhoneConfirmation;
 }

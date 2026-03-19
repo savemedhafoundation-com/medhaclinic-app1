@@ -1,5 +1,6 @@
 import { getApp as getNativeApp } from '@react-native-firebase/app';
 import {
+  type FirebaseAuthTypes,
   GoogleAuthProvider as NativeGoogleAuthProvider,
   getAuth as getNativeAuth,
   onAuthStateChanged as onNativeAuthStateChanged,
@@ -7,6 +8,15 @@ import {
   signInWithPhoneNumber as signInWithNativePhoneNumber,
   signOut as signOutFromNativeAuth,
 } from '@react-native-firebase/auth';
+import {
+  deleteUser as deleteNativeUser,
+  getIdToken as getNativeIdToken,
+  getIdTokenResult as getNativeIdTokenResult,
+  reload as reloadNativeUser,
+  updateProfile as updateNativeProfile,
+} from '@react-native-firebase/auth/lib/modular';
+
+type NativeUser = FirebaseAuthTypes.User;
 import {
   GoogleAuthProvider,
   PhoneAuthProvider,
@@ -22,20 +32,188 @@ import { auth } from './firebaseConfig';
 
 const nativeAuth = getNativeAuth(getNativeApp());
 let pendingDataConnectAuthSync: Promise<void> | null = null;
+let lastKnownNativeUser: NativeUser | null = nativeAuth.currentUser;
+
+type NativeWrappedAppAuthUser = AppAuthUser & {
+  __nativeUser?: NativeUser;
+};
+
+function getFirebaseErrorCode(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    return error.code;
+  }
+
+  return null;
+}
+
+function isNoCurrentUserError(error: unknown) {
+  const errorCode = getFirebaseErrorCode(error);
+  return errorCode === 'auth/no-current-user' || errorCode === 'no-current-user';
+}
+
+function toAppAuthUser(nativeUser: NativeUser | null): NativeWrappedAppAuthUser | null {
+  if (!nativeUser) {
+    return null;
+  }
+
+  const appUser: NativeWrappedAppAuthUser = {
+    uid: nativeUser.uid,
+    displayName: nativeUser.displayName ?? null,
+    email: nativeUser.email ?? null,
+    phoneNumber: nativeUser.phoneNumber ?? null,
+    photoURL: nativeUser.photoURL ?? null,
+    getIdToken: (forceRefresh?: boolean) =>
+      getNativeIdToken(nativeUser, forceRefresh),
+  };
+
+  Object.defineProperty(appUser, '__nativeUser', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: nativeUser,
+  });
+
+  return appUser;
+}
+
+function unwrapNativeUser(currentUser?: AppAuthUser | null) {
+  return (currentUser as NativeWrappedAppAuthUser | null | undefined)?.__nativeUser ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Web SDK proxy injection
+// ---------------------------------------------------------------------------
+// Firebase DataConnect uses firebase/auth's auth.currentUser.getIdToken() to
+// authenticate requests. After native phone sign-in, the web SDK has no
+// current user because the OTP is one-time-use and can't be re-verified.
+//
+// Solution: inject a lightweight proxy User object into auth.currentUser that
+// delegates getIdToken() to the native user. Firebase SDK v9+ stores
+// currentUser as a plain class property on AuthImpl, so direct assignment
+// works cleanly. DataConnect then gets valid ID tokens from the already-
+// authenticated native session.
+// ---------------------------------------------------------------------------
+
+function buildProxyUser(nativeUser: NativeUser | null) {
+  if (!nativeUser) return null;
+
+  return {
+    uid: nativeUser.uid,
+    phoneNumber: nativeUser.phoneNumber ?? null,
+    displayName: nativeUser.displayName ?? null,
+    email: nativeUser.email ?? null,
+    photoURL: nativeUser.photoURL ?? null,
+    emailVerified: nativeUser.emailVerified ?? false,
+    isAnonymous: nativeUser.isAnonymous ?? false,
+    tenantId: null,
+    providerId: 'firebase',
+    metadata: {
+      creationTime: nativeUser.metadata?.creationTime ?? new Date().toUTCString(),
+      lastSignInTime: nativeUser.metadata?.lastSignInTime ?? new Date().toUTCString(),
+    },
+    providerData: (nativeUser.providerData ?? []).map((p) => ({
+      uid: p.uid ?? nativeUser.uid,
+      providerId: p.providerId ?? 'phone',
+      displayName: p.displayName ?? null,
+      email: p.email ?? null,
+      phoneNumber: p.phoneNumber ?? nativeUser.phoneNumber ?? null,
+      photoURL: p.photoURL ?? null,
+    })),
+    // getIdToken delegates to the native SDK which handles token refresh automatically
+    getIdToken: (forceRefresh?: boolean) =>
+      getNativeIdToken(nativeUser, forceRefresh ?? false),
+    getIdTokenResult: (forceRefresh?: boolean) =>
+      getNativeIdTokenResult(nativeUser, forceRefresh ?? false),
+    reload: () => reloadNativeUser(nativeUser),
+    toJSON: () => ({ uid: nativeUser.uid }),
+    delete: () => deleteNativeUser(nativeUser),
+  };
+}
+
+function setWebSdkCurrentUser(nextUser: unknown) {
+  const webAuth = auth as unknown as {
+    currentUser: unknown;
+    _currentUser?: unknown;
+  };
+
+  try {
+    webAuth.currentUser = nextUser;
+  } catch {
+    Object.defineProperty(webAuth, 'currentUser', {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: nextUser,
+    });
+  }
+
+  if ('_currentUser' in webAuth) {
+    webAuth._currentUser = nextUser;
+  }
+}
+
+function resolveNativeUserCandidate(currentUser?: AppAuthUser | null) {
+  return (
+    nativeAuth.currentUser ??
+    lastKnownNativeUser ??
+    unwrapNativeUser(currentUser) ??
+    null
+  );
+}
+
+/**
+ * Inject (or clear) a proxy User into the web Firebase SDK auth instance so
+ * that DataConnect and other web-SDK services can authenticate using the
+ * native user's ID token, without needing a separate web SDK sign-in.
+ */
+function syncWebSdkFromNativeUser(
+  nativeUser: NativeUser | null
+) {
+  try {
+    lastKnownNativeUser = nativeUser;
+    const webAuth = auth as unknown as { currentUser: unknown };
+
+    if (!nativeUser) {
+      setWebSdkCurrentUser(null);
+      return;
+    }
+
+    // Skip if the web SDK already has this user (Google auth signs in both SDKs)
+    const existingWebUser = webAuth.currentUser as { uid?: string } | null;
+    if (existingWebUser?.uid === nativeUser.uid) {
+      return;
+    }
+
+    setWebSdkCurrentUser(buildProxyUser(nativeUser));
+  } catch (injectError) {
+    // Non-fatal — DataConnect will fall back to ensureDataConnectAuthReady's
+    // native-user fallback path.
+    console.log('[AuthClient] Web SDK user proxy sync note:', injectError);
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 function trackDataConnectAuthSync<T>(work: () => Promise<T>) {
   const task = (async () => {
     const result = await work();
-    await auth.authStateReady();
-
-    if (auth.currentUser) {
-      await auth.currentUser.getIdToken();
-    }
+    await ensureDataConnectAuthReadyInternal(
+      (nativeAuth.currentUser ?? lastKnownNativeUser) as AppAuthUser | null,
+      false
+    );
 
     return result;
   })();
 
-  const pendingTask = task.then(() => undefined);
+  const pendingTask = task.then(
+    () => undefined,
+    () => undefined
+  );
   pendingDataConnectAuthSync = pendingTask;
 
   void pendingTask.finally(() => {
@@ -48,46 +226,101 @@ function trackDataConnectAuthSync<T>(work: () => Promise<T>) {
 }
 
 export function getCurrentAuthUser() {
-  return nativeAuth.currentUser as AppAuthUser | null;
+  return toAppAuthUser(nativeAuth.currentUser);
+}
+
+async function ensureDataConnectAuthReadyInternal(
+  currentUser?: AppAuthUser | null,
+  waitForPending = true
+) {
+  if (waitForPending && pendingDataConnectAuthSync) {
+    await pendingDataConnectAuthSync;
+  }
+
+  const expectedUid = currentUser?.uid ?? null;
+  await auth.authStateReady();
+
+  const modularUser = auth.currentUser;
+
+  if (modularUser && (!expectedUid || modularUser.uid === expectedUid)) {
+    try {
+      await modularUser.getIdToken();
+      return;
+    } catch (error) {
+      if (!isNoCurrentUserError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  const nativeUser = resolveNativeUserCandidate(currentUser);
+
+  if (nativeUser) {
+    if (expectedUid && nativeUser.uid !== expectedUid) {
+      throw new Error(
+        'Firebase app auth is still syncing with your signed-in user. Please try again.'
+      );
+    }
+
+    syncWebSdkFromNativeUser(nativeUser);
+
+    try {
+      await getNativeIdToken(nativeUser);
+      return;
+    } catch (error) {
+      if (!isNoCurrentUserError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  setWebSdkCurrentUser(null);
+  throw new Error(
+    'Firebase app auth session is unavailable. Please sign in again.'
+  );
 }
 
 export async function ensureDataConnectAuthReady(
   currentUser?: AppAuthUser | null
 ) {
-  if (pendingDataConnectAuthSync) {
-    await pendingDataConnectAuthSync;
+  await ensureDataConnectAuthReadyInternal(currentUser);
+}
+
+export async function updateCurrentUserPhotoUrl(photoUrl: string) {
+  const currentUser = nativeAuth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('Please sign in again before updating your profile photo.');
   }
 
-  await auth.authStateReady();
+  await updateNativeProfile(currentUser, {
+    photoURL: photoUrl,
+  });
+  await getNativeIdToken(currentUser, true);
+  lastKnownNativeUser = currentUser;
+  syncWebSdkFromNativeUser(currentUser);
 
-  const modularUser = auth.currentUser;
-
-  if (!modularUser) {
-    throw new Error(
-      'Firebase app auth session is unavailable. Please sign in again.'
-    );
-  }
-
-  if (currentUser && modularUser.uid !== currentUser.uid) {
-    throw new Error(
-      'Firebase app auth is still syncing with your signed-in user. Please try again.'
-    );
-  }
-
-  await modularUser.getIdToken();
+  return toAppAuthUser(currentUser)!;
 }
 
 export function subscribeToAuthChanges(
   callback: (user: AppAuthUser | null) => void
 ) {
   return onNativeAuthStateChanged(nativeAuth, user => {
-    if (!user && auth.currentUser) {
+    lastKnownNativeUser = user;
+
+    if (!user) {
+      // Native user signed out — clear the web SDK proxy and sign out web SDK
+      syncWebSdkFromNativeUser(null);
       void auth.signOut().catch(error => {
         console.log('Firebase JS sign-out sync error:', error);
       });
+    } else if (!auth.currentUser || (auth.currentUser as { uid?: string }).uid !== user.uid) {
+      // Native user changed and web SDK is out of sync — inject proxy
+      syncWebSdkFromNativeUser(user);
     }
 
-    callback(user as AppAuthUser | null);
+    callback(toAppAuthUser(user));
   });
 }
 
@@ -98,15 +331,19 @@ export async function signInWithGoogleIdToken(idToken: string) {
       nativeAuth,
       credential
     );
+    lastKnownNativeUser = userCredential.user;
 
     try {
       await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
     } catch (error) {
+      lastKnownNativeUser = null;
       await signOutFromNativeAuth(nativeAuth).catch(() => null);
       throw error;
     }
 
-    return userCredential as AppAuthUserCredential;
+    return {
+      user: toAppAuthUser(userCredential.user)!,
+    } satisfies AppAuthUserCredential;
   });
 }
 
@@ -122,35 +359,68 @@ export async function sendPhoneVerificationCode(
   return {
     async confirm(code: string) {
       return trackDataConnectAuthSync(async () => {
-        const userCredential = await confirmation.confirm(code);
+        const verificationId = confirmation.verificationId;
 
-        if (!confirmation.verificationId) {
-          await signOutFromNativeAuth(nativeAuth).catch(() => null);
+        if (!verificationId) {
+          throw new Error(
+            'Verification session is invalid. Please request a new OTP and try again.'
+          );
+        }
+
+        // Attempt both sign-ins concurrently. Native SDK uses device-level
+        // attestation; web SDK uses Firebase REST. If the web SDK fails
+        // (OTP already consumed by native), the proxy injection below recovers.
+        const webCredential = PhoneAuthProvider.credential(verificationId, code);
+
+        const [nativeResult, webResult] = await Promise.allSettled([
+          confirmation.confirm(code),
+          signInWithCredential(auth, webCredential),
+        ]);
+
+        if (nativeResult.status === 'rejected') {
+          // Native sign-in failed — roll back any partial web sign-in
+          await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
+          throw nativeResult.reason as Error;
+        }
+
+        const nativeCredential = nativeResult.value as
+          | FirebaseAuthTypes.UserCredential
+          | null;
+
+        if (!nativeCredential?.user) {
+          await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
           throw new Error(
             'Phone sign-in finished on the device, but the Firebase app session could not be synced. Please request a new OTP and try again.'
           );
         }
 
-        try {
-          const credential = PhoneAuthProvider.credential(
-            confirmation.verificationId,
-            code
+        if (webResult.status === 'rejected') {
+          // Web SDK couldn't sign in (OTP consumed by native SDK first).
+          // Inject a proxy user so DataConnect can still get valid tokens.
+          const webError = webResult.reason as { code?: string } | Error;
+          console.log(
+            '[AuthClient] Web SDK phone auth sync note — injecting proxy user:',
+            (webError as { code?: string }).code ?? webError
           );
-          await signInWithCredential(auth, credential);
-        } catch (error) {
-          await signOutFromNativeAuth(nativeAuth).catch(() => null);
-          throw error;
+          lastKnownNativeUser = nativeCredential.user;
+          syncWebSdkFromNativeUser(
+            nativeAuth.currentUser ?? nativeCredential.user
+          );
         }
 
-        return userCredential as AppAuthUserCredential;
+        return {
+          user: toAppAuthUser(nativeCredential.user)!,
+        } satisfies AppAuthUserCredential;
       });
     },
   } satisfies AppPhoneConfirmation;
 }
 
 export async function signOutFromAuth() {
+  syncWebSdkFromNativeUser(null);
   await Promise.allSettled([signOutFromNativeAuth(nativeAuth), auth.signOut()]);
   pendingDataConnectAuthSync = null;
+  lastKnownNativeUser = null;
 }
 
 export function resetPhoneAuthFlow() {

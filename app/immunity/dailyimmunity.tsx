@@ -23,6 +23,7 @@ import { router } from "expo-router";
 import SvgHeader from "../../components/Clipperbg";
 import Speedometer from "../../components/Svgspeedometer";
 import type { SubmitDailyImmunityVariables } from "../../firebase/dataConnect";
+import { useAuth } from "../../providers/AuthProvider";
 import { saveDailyImmunitySubmission } from "../../services/medhaDataConnect";
 
 type QuestionId =
@@ -521,6 +522,7 @@ const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
 
 // ---------------------- MAIN SCREEN ----------------------
 export default function DailyImmunityCheck() {
+  const { user } = useAuth();
   const [answers, setAnswers] = useState<Answers>({});
   const [loading, setLoading] = useState(false);
 
@@ -587,7 +589,7 @@ export default function DailyImmunityCheck() {
   };
 
   const postImmunityData = async (requestBody: SubmitDailyImmunityVariables) => {
-    await saveDailyImmunitySubmission(requestBody);
+    await saveDailyImmunitySubmission(requestBody, user);
   };
 
   const handleGetResult = async () => {

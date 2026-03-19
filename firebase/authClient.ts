@@ -12,6 +12,7 @@ type AuthClientModule = {
   ensureDataConnectAuthReady: (
     currentUser?: AppAuthUser | null
   ) => Promise<void>;
+  updateCurrentUserPhotoUrl: (photoUrl: string) => Promise<AppAuthUser>;
   subscribeToAuthChanges: (
     callback: (user: AppAuthUser | null) => void
   ) => () => void;
@@ -32,6 +33,7 @@ const authClient: AuthClientModule =
 export const getCurrentAuthUser = authClient.getCurrentAuthUser;
 export const ensureDataConnectAuthReady =
   authClient.ensureDataConnectAuthReady;
+export const updateCurrentUserPhotoUrl = authClient.updateCurrentUserPhotoUrl;
 export const subscribeToAuthChanges = authClient.subscribeToAuthChanges;
 export const signInWithGoogleIdToken = authClient.signInWithGoogleIdToken;
 export const sendPhoneVerificationCode = authClient.sendPhoneVerificationCode;

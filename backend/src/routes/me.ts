@@ -16,6 +16,9 @@ const profileSchema = z.object({
   purpose: z.string().trim().min(1).optional(),
   address: z.string().trim().min(1).optional(),
 });
+const photoSchema = z.object({
+  photoUrl: z.string().trim().url(),
+});
 
 meRouter.use('*', requireAuth);
 
@@ -74,6 +77,36 @@ meRouter.put('/profile', async c => {
     success: true,
     message: 'Profile updated successfully.',
     data: profile,
+  });
+});
+
+meRouter.put('/photo', async c => {
+  const dbUser = c.get('dbUser');
+  const body = await c.req.json();
+  const parsed = photoSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json(
+      {
+        success: false,
+        message: 'Invalid photo payload.',
+        errors: parsed.error.flatten(),
+      },
+      400
+    );
+  }
+
+  const user = await prisma.user.update({
+    where: { id: dbUser.id },
+    data: {
+      photoUrl: parsed.data.photoUrl,
+    },
+  });
+
+  return c.json({
+    success: true,
+    message: 'Profile photo updated successfully.',
+    data: user,
   });
 });
 

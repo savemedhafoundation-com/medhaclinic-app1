@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -39,6 +40,8 @@ const COLORS = {
 // Base design width — all fixed values are authored at this width
 const BASE_W = 390;
 const BASE_H = 844;
+const OTP_LENGTH = 6;
+const RESEND_INTERVAL_SECONDS = 60;
 
 function s(size: number, w: number) {
   const factor = Math.min(Math.max(w / BASE_W, 0.72), 1.25);
@@ -71,6 +74,16 @@ function normalizePhoneInput(value: string) {
   return digits.slice(0, 10);
 }
 
+function normalizeOtpInput(value: string) {
+  return value.replace(/\D/g, '').slice(0, OTP_LENGTH);
+}
+
+function formatCountdown(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
 export default function LoginScreen() {
   const {
     confirmPhoneVerificationCode,
@@ -84,10 +97,39 @@ export default function LoginScreen() {
   const [verificationCode, setVerificationCode] = useState('');
   const [phoneBusy, setPhoneBusy] = useState(false);
   const phoneInputRef = useRef<TextInput>(null);
+  const wasVerificationPendingRef = useRef(false);
 
   const { width, height } = useWindowDimensions();
   const styles = makeStyles(width, height);
   const cardWidth = Math.min(width - s(48, width), 440);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    if (phoneVerificationPending) {
+      phoneInputRef.current?.focus();
+    } else {
+      setResendCountdown(0);
+
+      if (wasVerificationPendingRef.current) {
+        setVerificationCode('');
+        phoneInputRef.current?.focus();
+      }
+    }
+
+    wasVerificationPendingRef.current = phoneVerificationPending;
+  }, [phoneVerificationPending]);
+
+  useEffect(() => {
+    if (!phoneVerificationPending || resendCountdown <= 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setResendCountdown(currentValue => currentValue - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [phoneVerificationPending, resendCountdown]);
 
   async function handleGoogleSignIn() {
     try {
@@ -106,12 +148,16 @@ export default function LoginScreen() {
     }
   }
 
-  async function handleSendOtp() {
+  async function requestOtp(isResend = false) {
     try {
       setPhoneBusy(true);
       setVerificationCode('');
       await sendPhoneVerificationCode(phoneNumber);
-      Alert.alert('OTP Sent', 'We sent a verification code to your phone.');
+      setResendCountdown(RESEND_INTERVAL_SECONDS);
+      Alert.alert(
+        isResend ? 'OTP Resent' : 'OTP Sent',
+        `We sent a verification code to +91 ${phoneNumber}.`
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to send OTP right now.';
@@ -119,6 +165,10 @@ export default function LoginScreen() {
     } finally {
       setPhoneBusy(false);
     }
+  }
+
+  async function handleSendOtp() {
+    await requestOtp();
   }
 
   async function handleVerifyOtp() {
@@ -160,6 +210,18 @@ export default function LoginScreen() {
     setPhoneNumber(normalizePhoneInput(value));
   }
 
+  function handleOtpInputChange(value: string) {
+    setVerificationCode(normalizeOtpInput(value));
+  }
+
+  async function handleResendOtp() {
+    if (resendCountdown > 0 || actionBusy) {
+      return;
+    }
+
+    await requestOtp(true);
+  }
+
   const primaryAction = phoneVerificationPending
     ? handleVerifyOtp
     : handleSendOtp;
@@ -170,8 +232,18 @@ export default function LoginScreen() {
     : 'Enter mobile number';
   const inputKeyboardType = phoneVerificationPending ? 'number-pad' : 'phone-pad';
   const inputAutoComplete = phoneVerificationPending ? 'sms-otp' : 'tel';
-  const inputMaxLength = phoneVerificationPending ? 6 : 10;
+  const inputMaxLength = phoneVerificationPending ? OTP_LENGTH : 10;
   const actionBusy = phoneBusy || signingIn;
+  const phoneInputComplete = phoneNumber.length === 10;
+  const otpInputComplete = verificationCode.length === OTP_LENGTH;
+  const primaryDisabled =
+    actionBusy ||
+    (phoneVerificationPending ? !otpInputComplete : !phoneInputComplete);
+  const resendDisabled = actionBusy || resendCountdown > 0;
+  const resendLabel =
+    resendCountdown > 0
+      ? `Resend OTP in ${formatCountdown(resendCountdown)}`
+      : 'Resend OTP';
 
   return (
     <View style={styles.screen}>
@@ -196,7 +268,7 @@ export default function LoginScreen() {
       <View style={styles.bottomGlow} />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
       >
         <ScrollView
@@ -247,7 +319,7 @@ export default function LoginScreen() {
                   maxLength={inputMaxLength}
                   onChangeText={
                     phoneVerificationPending
-                      ? setVerificationCode
+                      ? handleOtpInputChange
                       : handlePhoneInputChange
                   }
                   onSubmitEditing={primaryAction}
@@ -261,14 +333,38 @@ export default function LoginScreen() {
                 />
               </View>
 
+              {phoneVerificationPending ? (
+                <View style={styles.otpMetaBlock}>
+                  <Text style={styles.otpMetaText}>
+                    Enter the 6-digit OTP sent to +91 {phoneNumber}
+                  </Text>
+
+                  <TouchableOpacity
+                    activeOpacity={0.86}
+                    disabled={resendDisabled}
+                    onPress={() => void handleResendOtp()}
+                    style={styles.otpMetaAction}
+                  >
+                    <Text
+                      style={[
+                        styles.otpMetaActionText,
+                        resendDisabled && styles.otpMetaActionTextDisabled,
+                      ]}
+                    >
+                      {resendLabel}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+
               <TouchableOpacity
                 activeOpacity={0.9}
-                disabled={actionBusy}
-                onPress={primaryAction}
+                disabled={primaryDisabled}
+                onPress={() => void primaryAction()}
                 style={[
                   styles.primaryButton,
                   styles.primaryButtonAfterInput,
-                  actionBusy && styles.disabledButton,
+                  primaryDisabled && styles.disabledButton,
                 ]}
               >
                 <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
@@ -335,7 +431,8 @@ export default function LoginScreen() {
 }
 
 function makeStyles(width: number, height: number) {
-  const isSmall = width < 360;
+  const isSmall = width < 360;   // e.g. older Android budget phones (< 360 dp)
+  const isLarge = width >= 412;  // e.g. Galaxy S22 Ultra, Pixel 7 Pro, iPhone 14 Pro Max
   const logoW = s(226, width);
   const logoH = s(82, width);
 
@@ -402,29 +499,29 @@ function makeStyles(width: number, height: number) {
     },
     heroBlock: {
       alignItems: 'center',
-      marginTop: sv(isSmall ? 32 : 52, height),
+      marginTop: sv(isSmall ? 28 : isLarge ? 56 : 48, height),
     },
     heroLead: {
       color: COLORS.white,
-      fontSize: s(isSmall ? 32 : 42, width),
+      fontSize: s(isSmall ? 30 : isLarge ? 46 : 40, width),
       fontWeight: '300',
-      lineHeight: s(isSmall ? 38 : 48, width),
+      lineHeight: s(isSmall ? 36 : isLarge ? 52 : 46, width),
       textAlign: 'center',
     },
     heroTitle: {
       color: COLORS.white,
-      fontSize: s(isSmall ? 40 : 52, width),
+      fontSize: s(isSmall ? 38 : isLarge ? 56 : 50, width),
       fontWeight: '800',
-      lineHeight: s(isSmall ? 46 : 58, width),
+      lineHeight: s(isSmall ? 44 : isLarge ? 62 : 56, width),
       textAlign: 'center',
       marginTop: s(8, width),
     },
     heroSubtitle: {
       color: COLORS.white,
-      fontSize: s(isSmall ? 14 : 18, width),
+      fontSize: s(isSmall ? 13 : isLarge ? 19 : 16, width),
       fontWeight: '400',
       textAlign: 'center',
-      marginTop: sv(isSmall ? 16 : 24, height),
+      marginTop: sv(isSmall ? 14 : isLarge ? 26 : 20, height),
     },
     card: {
       alignSelf: 'center',
@@ -534,6 +631,29 @@ function makeStyles(width: number, height: number) {
       color: COLORS.white,
       fontSize: s(isSmall ? 13 : 16, width),
       fontWeight: '600',
+    },
+    otpMetaBlock: {
+      marginTop: sv(12, height),
+      alignItems: 'center',
+    },
+    otpMetaText: {
+      color: COLORS.muted,
+      fontSize: s(isSmall ? 12 : 14, width),
+      fontWeight: '500',
+      textAlign: 'center',
+      lineHeight: s(isSmall ? 18 : 20, width),
+    },
+    otpMetaAction: {
+      marginTop: sv(10, height),
+    },
+    otpMetaActionText: {
+      color: COLORS.white,
+      fontSize: s(isSmall ? 13 : 15, width),
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    otpMetaActionTextDisabled: {
+      color: 'rgba(255,255,255,0.7)',
     },
     signUpRow: {
       alignItems: 'center',

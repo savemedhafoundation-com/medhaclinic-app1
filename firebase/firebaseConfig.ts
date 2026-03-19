@@ -9,6 +9,7 @@ import {
   signInWithCredential,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
 function readExpoEnv(name: string) {
@@ -75,6 +76,12 @@ function createAuth() {
 }
 
 export const auth = createAuth();
+export const storage = getStorage(
+  firebaseApp,
+  firebaseConfig.storageBucket.startsWith('gs://')
+    ? firebaseConfig.storageBucket
+    : `gs://${firebaseConfig.storageBucket}`
+);
 export {
   AsyncStorage,
   GoogleAuthProvider,
