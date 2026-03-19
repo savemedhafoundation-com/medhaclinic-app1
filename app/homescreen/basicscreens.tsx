@@ -127,10 +127,6 @@ export default function GetStartedScreen() {
           </Text>
         </View>
 
-        {/* Skip */}
-        <Text className="text-center text-gray-600 text-lg mt-6">
-          Skip for now
-        </Text>
       </ScrollView>
 
       <BottomNav />

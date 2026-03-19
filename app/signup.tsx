@@ -4,6 +4,8 @@ import { useState } from 'react';
 import {
   Image,
   ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -19,6 +21,43 @@ import medha from '../assets/images/medha_logo.png';
 import { useAuth } from '../providers/AuthProvider';
 import { saveHealthProfile } from '../services/medhaDataConnect';
 
+async function getStoredUserData() {
+  try {
+    const rawValue = await AsyncStorage.getItem('medha_user');
+
+    if (!rawValue) {
+      return {};
+    }
+
+    const parsed = JSON.parse(rawValue) as Record<string, unknown>;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    console.log('Failed to read cached user details:', error);
+    return {};
+  }
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+type HeightUnit = 'cm' | 'inch';
+
+function formatNormalizedNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function normalizeHeightToCm(value: string, unit: HeightUnit) {
+  const parsedHeight = Number.parseFloat(value);
+
+  if (!Number.isFinite(parsedHeight) || parsedHeight <= 0) {
+    throw new Error('Enter a valid height.');
+  }
+
+  const heightInCm = unit === 'inch' ? parsedHeight * 2.54 : parsedHeight;
+  return formatNormalizedNumber(heightInCm);
+}
+
 export default function SignupScreen() {
 
   const { user, setNeedsProfile } = useAuth();
@@ -30,52 +69,110 @@ export default function SignupScreen() {
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
+  const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
 
   const saveUserData = async () => {
+    const trimmedFullName = fullName.trim();
+    const trimmedAge = age.trim();
+    const trimmedWeight = weight.trim();
+    const trimmedHeight = height.trim();
+    const trimmedAddress = address.trim();
+    const resolvedEmail = (email.trim() || user?.email || '').trim();
+    let normalizedHeightCm = '';
 
-    if (!fullName) {
-      Alert.alert("Error", "Name required");
+    if (!trimmedFullName) {
+      Alert.alert('Error', 'Full name is required');
+      return;
+    }
+
+    if (!trimmedAge) {
+      Alert.alert('Error', 'Age is required');
+      return;
+    }
+
+    if (!trimmedWeight) {
+      Alert.alert('Error', 'Weight is required');
+      return;
+    }
+
+    if (!trimmedHeight) {
+      Alert.alert('Error', 'Height is required');
       return;
     }
 
     try {
+      normalizedHeightCm = normalizeHeightToCm(trimmedHeight, heightUnit);
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Enter a valid height.'
+      );
+      return;
+    }
+
+    if (!trimmedAddress) {
+      Alert.alert('Error', 'Address is required');
+      return;
+    }
+
+    if (!resolvedEmail) {
+      Alert.alert('Error', 'Email address is required');
+      return;
+    }
+
+    if (!isValidEmail(resolvedEmail)) {
+      Alert.alert('Error', 'Enter a valid email address');
+      return;
+    }
+
+    try {
+      const existingUserData = await getStoredUserData();
 
       const userData = {
-        fullName,
+        ...existingUserData,
+        fullName: trimmedFullName,
         gender,
-        age,
-        weight,
-        height,
+        age: trimmedAge,
+        weight: trimmedWeight,
+        height: normalizedHeightCm,
+        heightUnit,
         purpose,
-        address,
-        email: email || user?.email || '',
+        address: trimmedAddress,
+        email: resolvedEmail,
+        profileCompleted: true,
       };
 
-      // Always persist locally for offline access
+      // Always persist locally first — works offline and is the source of truth
+      // for the auth routing logic (hasCachedHealthProfile).
       await AsyncStorage.setItem('medha_user', JSON.stringify(userData));
 
+      // Mark profile complete immediately so routing moves to dashboard.
+      setNeedsProfile(false);
+
+      // Sync to Firestore / DataConnect in the background — non-fatal.
+      // Phone-auth users on native may have an unsynced web SDK, which is OK.
       if (user) {
-        await saveHealthProfile({
-          fullName,
-          email: email || user.email || '',
+        saveHealthProfile({
+          fullName: trimmedFullName,
+          email: resolvedEmail,
           gender,
-          age,
-          weight,
-          height,
+          age: trimmedAge,
+          weight: trimmedWeight,
+          height: normalizedHeightCm,
           purpose,
-          address,
+          address: trimmedAddress,
+        }).catch(error => {
+          console.log('[Signup] Firestore sync note (non-fatal):', error);
         });
-        setNeedsProfile(false);
       }
 
-      Alert.alert("Success", "Details saved successfully");
       router.replace('/(tabs)/dashboard');
 
     } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "Failed to save data");
+      console.log('[Signup] Save error:', error);
+      Alert.alert('Error', 'Failed to save your details. Please try again.');
     }
 
   };
@@ -91,10 +188,19 @@ export default function SignupScreen() {
 
         <SafeAreaView style={{ flex: 1 }}>
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 30 }}
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
           >
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+              automaticallyAdjustKeyboardInsets
+              contentContainerStyle={{ paddingBottom: 140 }}
+            >
 
             {/* LOGO */}
 
@@ -123,7 +229,7 @@ export default function SignupScreen() {
             <View className="m-5 p-5 rounded-[24px] bg-[rgba(255,255,255,0.14)] border border-[rgba(255,255,255,0.25)]">
 
               <Input
-                label="Full Name"
+                label="Full Name *"
                 placeholder="Enter your full name"
                 value={fullName}
                 onChangeText={setFullName}
@@ -163,32 +269,53 @@ export default function SignupScreen() {
 
                 <Input
                   small
-                  label="Age"
+                  label="Age *"
                   placeholder="Years"
                   value={age}
                   onChangeText={setAge}
+                  keyboardType="numeric"
                 />
 
                 <Input
                   small
-                  label="Weight"
+                  label="Weight *"
                   placeholder="Kg"
                   value={weight}
                   onChangeText={setWeight}
+                  keyboardType="numeric"
                 />
 
               </View>
 
               {/* HEIGHT */}
 
-              <View className="flex-row gap-4 mt-5">
+              <Text className="text-white text-[18px] font-semibold mb-2 mt-5">
+                Height Unit
+              </Text>
+
+              <View className="flex-row gap-3">
+                <UnitChip
+                  label="cm"
+                  selected={heightUnit === 'cm'}
+                  onPress={() => setHeightUnit('cm')}
+                />
+
+                <UnitChip
+                  label="inch"
+                  selected={heightUnit === 'inch'}
+                  onPress={() => setHeightUnit('inch')}
+                />
+              </View>
+
+              <View className="flex-row gap-4 mt-4">
 
                 <Input
                   small
-                  label="Height"
-                  placeholder="in cm"
+                  label={`Height * (${heightUnit})`}
+                  placeholder={heightUnit === 'cm' ? 'Enter cm' : 'Enter inches'}
                   value={height}
                   onChangeText={setHeight}
+                  keyboardType="numeric"
                 />
 
               </View>
@@ -214,19 +341,24 @@ export default function SignupScreen() {
               {/* ADDRESS */}
 
               <Input
-                label="Full Address"
+                label="Full Address *"
                 placeholder="Enter your address"
                 value={address}
                 onChangeText={setAddress}
+                multiline
+                numberOfLines={3}
               />
 
               {/* EMAIL — pre-fill from Google if available */}
 
               <Input
-                label="Email Address"
+                label="Email Address *"
                 placeholder="example@gmail.com"
                 value={email || user?.email || ''}
                 onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
               />
 
             </View>
@@ -250,7 +382,9 @@ export default function SignupScreen() {
               Your information is confidential and used only for your health guidance
             </Text>
 
-          </ScrollView>
+            </ScrollView>
+
+          </KeyboardAvoidingView>
 
         </SafeAreaView>
 
@@ -263,7 +397,18 @@ export default function SignupScreen() {
 
 /* ---------- INPUT COMPONENT ---------- */
 
-function Input({ label, placeholder, small, value, onChangeText }: any) {
+function Input({
+  label,
+  placeholder,
+  small,
+  value,
+  onChangeText,
+  keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  multiline,
+  numberOfLines,
+}: any) {
 
   return (
 
@@ -278,13 +423,20 @@ function Input({ label, placeholder, small, value, onChangeText }: any) {
         placeholderTextColor="#D6E6FF"
         value={value}
         onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        textAlignVertical={multiline ? 'top' : 'center'}
         className={`
           rounded-[16px]
           px-4
+          py-3
           bg-[rgba(255,255,255,0.25)]
           text-white
           text-[20px]
-          ${small ? 'h-12' : 'h-14'}
+          ${multiline ? 'min-h-[110px]' : small ? 'h-12' : 'h-14'}
         `}
       />
 
@@ -322,6 +474,31 @@ function Radio({ text, selected, onPress }: any) {
 
       <Text className="text-white text-[18px]">
         {text}
+      </Text>
+
+    </TouchableOpacity>
+
+  );
+
+}
+
+function UnitChip({ label, selected, onPress }: any) {
+
+  return (
+
+    <TouchableOpacity
+      className={`
+        px-5 py-2.5 rounded-full border
+        ${selected ? 'bg-[#1DA1F2] border-[#1DA1F2]' : 'bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.35)]'}
+      `}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+
+      <Text
+        className={`${selected ? 'text-white' : 'text-[#EAF2FF]'} text-[16px] font-semibold`}
+      >
+        {label}
       </Text>
 
     </TouchableOpacity>

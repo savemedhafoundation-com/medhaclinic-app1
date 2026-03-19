@@ -1,9 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -16,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../providers/AuthProvider';
 import { getCurrentUserData } from '../services/medhaDataConnect';
+import { uploadCurrentUserProfilePhoto } from '../services/profilePhoto';
 
 type StoredUser = {
   fullName?: string;
@@ -259,9 +262,10 @@ function getNutritionSubtitle(purpose?: string | null) {
 }
 
 export default function ProfileScreen() {
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
   const [remoteUser, setRemoteUser] = useState<RemoteUser | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -312,8 +316,85 @@ export default function ProfileScreen() {
   function handleSettings() {
     Alert.alert('Settings', 'Settings options will be added next.');
   }
-  function handleEditPhoto() {
-    Alert.alert('Profile Photo', 'Photo editing will be added next.');
+
+  async function persistUploadedPhoto(photoUrl: string) {
+    let nextStoredUser: StoredUser = {
+      ...(storedUser ?? {}),
+      photoURL: photoUrl,
+    };
+
+    try {
+      const rawUser = await AsyncStorage.getItem('medha_user');
+
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser) as unknown;
+
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          nextStoredUser = {
+            ...(parsed as StoredUser),
+            ...nextStoredUser,
+            photoURL: photoUrl,
+          };
+        }
+      }
+
+      await AsyncStorage.setItem('medha_user', JSON.stringify(nextStoredUser));
+    } catch (error) {
+      console.log('Failed to cache uploaded photo locally:', error);
+    }
+
+    setStoredUser(nextStoredUser);
+    setRemoteUser(previous => ({
+      ...(previous ?? {}),
+      photoUrl,
+    }));
+  }
+
+  async function handleEditPhoto() {
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in again before changing your photo.');
+      return;
+    }
+
+    try {
+      setPhotoBusy(true);
+
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission required',
+          'Allow photo library access to upload a profile picture.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      const photoUrl = await uploadCurrentUserProfilePhoto(result.assets[0], user);
+      await persistUploadedPhoto(photoUrl);
+
+      Alert.alert('Profile photo updated', 'Your new profile photo has been saved.');
+    } catch (error) {
+      console.log('Profile photo upload failed:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not upload your profile photo. Please try again.';
+      Alert.alert('Upload failed', message);
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   function handleSupport() {
@@ -352,10 +433,13 @@ export default function ProfileScreen() {
     },
   ];
 
+  // Priority: user-entered local fullName → remote name → Firebase profile.name.
+  // Local fullName is preferred because it is the exact value entered in signup,
+  // while remote auth-derived names can briefly lag behind on native sync paths.
   const displayName =
+    storedUser?.fullName?.trim() ||
     remoteUser?.name?.trim() ||
     profile?.name ||
-    storedUser?.fullName?.trim() ||
     'MedhaClinic User';
   const displayEmail =
     remoteUser?.email?.trim() ||
@@ -416,8 +500,9 @@ export default function ProfileScreen() {
 
             <View style={styles.profileBlock}>
               <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={handleEditPhoto}
+                activeOpacity={photoBusy ? 1 : 0.9}
+                disabled={photoBusy}
+                onPress={() => void handleEditPhoto()}
                 style={styles.avatarTouch}
               >
                 <LinearGradient
@@ -434,12 +519,19 @@ export default function ProfileScreen() {
                 </LinearGradient>
 
                 <View style={styles.cameraBadge}>
-                  <Ionicons name="camera-outline" size={16} color="#334155" />
+                  {photoBusy ? (
+                    <ActivityIndicator size="small" color="#16A34A" />
+                  ) : (
+                    <Ionicons name="camera-outline" size={16} color="#334155" />
+                  )}
                 </View>
               </TouchableOpacity>
 
               <Text style={styles.profileName}>{displayName}</Text>
               <Text style={styles.profileEmail}>{displayEmail}</Text>
+              <Text style={styles.photoHint}>
+                {photoBusy ? 'Uploading photo...' : 'Tap photo to update'}
+              </Text>
 
               <View style={styles.lastLoginBadge}>
                 <Ionicons name="time-outline" size={14} color="#94A3B8" />
@@ -722,6 +814,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#64748B',
     marginTop: 6,
+    textAlign: 'center',
+  },
+  photoHint: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#16A34A',
+    marginTop: 8,
     textAlign: 'center',
   },
   lastLoginBadge: {

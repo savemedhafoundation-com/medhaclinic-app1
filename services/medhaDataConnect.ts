@@ -1,5 +1,22 @@
-import { ensureDataConnectAuthReady } from '../firebase/authClient';
+import { Platform } from 'react-native';
+
+import {
+  ensureDataConnectAuthReady,
+  getCurrentAuthUser,
+} from '../firebase/authClient';
 import type { AppAuthUser } from '../firebase/authClient.types';
+import {
+  type CreateWeeklyReportData,
+  type CreateWeeklyReportVariables,
+  connectorConfig,
+  type GetCurrentUserData,
+  type SubmitDailyImmunityData,
+  type UpsertMyProfileData,
+  type UpsertMyProfileVariables,
+  type UpsertCurrentUserData,
+  type UpsertCurrentUserVariables,
+} from '../firebase/dataconnect-generated';
+import { firebaseConfig } from '../firebase/firebaseConfig';
 
 import {
   createWeeklyReport,
@@ -179,12 +196,245 @@ function getAuthProvider(user: AppAuthUser) {
   return 'firebase';
 }
 
+function buildUpsertCurrentUserVariables(
+  user: AppAuthUser,
+  overrides: Partial<UpsertCurrentUserVariables> = {}
+): UpsertCurrentUserVariables {
+  return {
+    name:
+      overrides.name !== undefined ? overrides.name : user.displayName ?? undefined,
+    email:
+      overrides.email !== undefined ? overrides.email : user.email ?? undefined,
+    photoUrl:
+      overrides.photoUrl !== undefined
+        ? overrides.photoUrl
+        : user.photoURL ?? undefined,
+    provider:
+      overrides.provider !== undefined
+        ? overrides.provider
+        : getAuthProvider(user),
+  };
+}
+
+function getDataConnectConnectorPath() {
+  return `projects/${firebaseConfig.projectId}/locations/${connectorConfig.location}/services/${connectorConfig.service}/connectors/${connectorConfig.connector}`;
+}
+
+function getDataConnectMutationUrl() {
+  const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST?.trim();
+
+  if (emulatorHost) {
+    const baseUrl =
+      emulatorHost.startsWith('http://') || emulatorHost.startsWith('https://')
+        ? emulatorHost
+        : `http://${emulatorHost}`;
+
+    return `${baseUrl}/v1/${getDataConnectConnectorPath()}:executeMutation`;
+  }
+
+  return `https://firebasedataconnect.googleapis.com/v1/${getDataConnectConnectorPath()}:executeMutation?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+}
+
+function getDataConnectQueryUrl() {
+  const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST?.trim();
+
+  if (emulatorHost) {
+    const baseUrl =
+      emulatorHost.startsWith('http://') || emulatorHost.startsWith('https://')
+        ? emulatorHost
+        : `http://${emulatorHost}`;
+
+    return `${baseUrl}/v1/${getDataConnectConnectorPath()}:executeQuery`;
+  }
+
+  return `https://firebasedataconnect.googleapis.com/v1/${getDataConnectConnectorPath()}:executeQuery?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+}
+
+function getDataConnectErrorMessage(payload: unknown, fallback: string) {
+  if (payload && typeof payload === 'object') {
+    if ('message' in payload && typeof payload.message === 'string') {
+      return payload.message;
+    }
+
+    if ('errors' in payload && Array.isArray(payload.errors)) {
+      for (const error of payload.errors) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof error.message === 'string'
+        ) {
+          return error.message;
+        }
+      }
+    }
+  }
+
+  if (typeof payload === 'string' && payload.trim()) {
+    return payload;
+  }
+
+  return fallback;
+}
+
+async function executeDataConnectMutationDirect<T, TVariables extends object>(
+  operationName: string,
+  variables: TVariables,
+  authUser?: AppAuthUser | null
+) {
+  const signedInUser = authUser ?? getCurrentAuthUser();
+
+  if (!signedInUser) {
+    throw new Error('Please sign in again before submitting your daily immunity check.');
+  }
+
+  const token = await signedInUser.getIdToken();
+  const connectorPath = getDataConnectConnectorPath();
+  const response = await fetch(getDataConnectMutationUrl(), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Firebase-Auth-Token': token,
+      'x-firebase-gmpid': firebaseConfig.appId,
+    },
+    body: JSON.stringify({
+      name: connectorPath,
+      operationName,
+      variables,
+    }),
+  });
+
+  const responseText = await response.text();
+  let payload: unknown = null;
+
+  if (responseText) {
+    try {
+      payload = JSON.parse(responseText) as unknown;
+    } catch {
+      payload = responseText;
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      getDataConnectErrorMessage(
+        payload,
+        `Data Connect request failed with status ${response.status}.`
+      )
+    );
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'errors' in payload &&
+    Array.isArray(payload.errors) &&
+    payload.errors.length > 0
+  ) {
+    throw new Error(
+      getDataConnectErrorMessage(payload, 'Data Connect rejected the mutation.')
+    );
+  }
+
+  return payload as { data?: T | null };
+}
+
+async function executeDataConnectQueryDirect<
+  TData,
+  TVariables extends object | undefined = undefined,
+>(
+  operationName: string,
+  variables?: TVariables,
+  authUser?: AppAuthUser | null
+) {
+  const signedInUser = authUser ?? getCurrentAuthUser();
+
+  if (!signedInUser) {
+    throw new Error('Please sign in again before loading your data.');
+  }
+
+  const token = await signedInUser.getIdToken();
+  const connectorPath = getDataConnectConnectorPath();
+  const response = await fetch(getDataConnectQueryUrl(), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Firebase-Auth-Token': token,
+      'x-firebase-gmpid': firebaseConfig.appId,
+    },
+    body: JSON.stringify({
+      name: connectorPath,
+      operationName,
+      variables,
+    }),
+  });
+
+  const responseText = await response.text();
+  let payload: unknown = null;
+
+  if (responseText) {
+    try {
+      payload = JSON.parse(responseText) as unknown;
+    } catch {
+      payload = responseText;
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      getDataConnectErrorMessage(
+        payload,
+        `Data Connect request failed with status ${response.status}.`
+      )
+    );
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'errors' in payload &&
+    Array.isArray(payload.errors) &&
+    payload.errors.length > 0
+  ) {
+    throw new Error(
+      getDataConnectErrorMessage(payload, 'Data Connect rejected the query.')
+    );
+  }
+
+  return payload as { data?: TData | null };
+}
+
+async function ensureDirectCurrentUserRecord(authUser?: AppAuthUser | null) {
+  const signedInUser = authUser ?? getCurrentAuthUser();
+
+  if (!signedInUser) {
+    throw new Error('Please sign in again before submitting your daily immunity check.');
+  }
+
+  await executeDataConnectMutationDirect<
+    UpsertCurrentUserData,
+    UpsertCurrentUserVariables
+  >('UpsertCurrentUser', buildUpsertCurrentUserVariables(signedInUser), signedInUser);
+
+  return signedInUser;
+}
+
 export async function syncAuthenticatedUser(user: AppAuthUser) {
   if (hasConfiguredBackend()) {
     await requestBackend('/v1/me', {
       method: 'GET',
       authUser: user,
     });
+    return;
+  }
+
+  if (Platform.OS !== 'web') {
+    await executeDataConnectMutationDirect<
+      UpsertCurrentUserData,
+      UpsertCurrentUserVariables
+    >('UpsertCurrentUser', buildUpsertCurrentUserVariables(user), user);
     return;
   }
 
@@ -211,6 +461,17 @@ export async function getCurrentUserData() {
     };
   }
 
+  if (Platform.OS !== 'web') {
+    const signedInUser = await ensureDirectCurrentUserRecord();
+    const response = await executeDataConnectQueryDirect<GetCurrentUserData>(
+      'GetCurrentUser',
+      undefined,
+      signedInUser
+    );
+
+    return response.data;
+  }
+
   await ensureDataConnectAuthReady();
 
   const { data } = await getCurrentUser(medhaDataConnect);
@@ -235,6 +496,39 @@ export async function saveHealthProfile(input: HealthProfileInput) {
     return;
   }
 
+  if (Platform.OS !== 'web') {
+    const signedInUser = await ensureDirectCurrentUserRecord();
+
+    await executeDataConnectMutationDirect<
+      UpsertCurrentUserData,
+      UpsertCurrentUserVariables
+    >(
+      'UpsertCurrentUser',
+      buildUpsertCurrentUserVariables(signedInUser, {
+        name: input.fullName || undefined,
+        email: input.email || undefined,
+      }),
+      signedInUser
+    );
+
+    await executeDataConnectMutationDirect<
+      UpsertMyProfileData,
+      UpsertMyProfileVariables
+    >(
+      'UpsertMyProfile',
+      {
+        gender: input.gender ?? undefined,
+        age: parseOptionalInt(input.age),
+        weightKg: parseOptionalFloat(input.weight),
+        heightCm: parseOptionalFloat(input.height),
+        purpose: input.purpose ?? undefined,
+        address: input.address?.trim() || undefined,
+      },
+      signedInUser
+    );
+    return;
+  }
+
   await ensureDataConnectAuthReady();
 
   await upsertCurrentUser(medhaDataConnect, {
@@ -252,8 +546,50 @@ export async function saveHealthProfile(input: HealthProfileInput) {
   });
 }
 
+export async function saveCurrentUserPhotoUrl(
+  photoUrl: string,
+  authUser?: AppAuthUser | null
+) {
+  const signedInUser = authUser ?? getCurrentAuthUser();
+
+  if (!signedInUser) {
+    throw new Error('Please sign in again before updating your profile photo.');
+  }
+
+  if (hasConfiguredBackend()) {
+    await requestBackend('/v1/me/photo', {
+      method: 'PUT',
+      body: JSON.stringify({ photoUrl }),
+      authUser: signedInUser,
+    });
+    return;
+  }
+
+  if (Platform.OS !== 'web') {
+    const currentUser = await ensureDirectCurrentUserRecord(signedInUser);
+
+    await executeDataConnectMutationDirect<
+      UpsertCurrentUserData,
+      UpsertCurrentUserVariables
+    >(
+      'UpsertCurrentUser',
+      buildUpsertCurrentUserVariables(currentUser, { photoUrl }),
+      currentUser
+    );
+    return;
+  }
+
+  await ensureDataConnectAuthReady(signedInUser);
+
+  await upsertCurrentUser(
+    medhaDataConnect,
+    buildUpsertCurrentUserVariables(signedInUser, { photoUrl })
+  );
+}
+
 export async function saveDailyImmunitySubmission(
-  input: SubmitDailyImmunityVariables
+  input: SubmitDailyImmunityVariables,
+  authUser?: AppAuthUser | null
 ) {
   if (hasConfiguredBackend()) {
     return requestBackend('/api/auth/save_daily_immunity', {
@@ -262,7 +598,17 @@ export async function saveDailyImmunitySubmission(
     });
   }
 
-  await ensureDataConnectAuthReady();
+  if (Platform.OS !== 'web') {
+    const signedInUser = await ensureDirectCurrentUserRecord(authUser);
+
+    return executeDataConnectMutationDirect<SubmitDailyImmunityData, SubmitDailyImmunityVariables>(
+      'SubmitDailyImmunity',
+      input,
+      signedInUser
+    );
+  }
+
+  await ensureDataConnectAuthReady(authUser);
 
   return submitDailyImmunity(medhaDataConnect, input);
 }
@@ -281,6 +627,97 @@ export async function buildAndStoreWeeklyReport() {
     }
 
     return response.data;
+  }
+
+  if (Platform.OS !== 'web') {
+    const signedInUser = await ensureDirectCurrentUserRecord();
+    const historyResponse =
+      await executeDataConnectQueryDirect<GetMyDailyImmunityHistoryData>(
+        'GetMyDailyImmunityHistory',
+        undefined,
+        signedInUser
+      );
+    const submissions = [...(historyResponse.data?.user?.submissions ?? [])].sort(
+      (left, right) =>
+        new Date(right.submittedAt).getTime() - new Date(left.submittedAt).getTime()
+    );
+
+    const now = new Date();
+    const currentStart = startOfDay(subDays(now, 6));
+    const previousStart = startOfDay(subDays(now, 13));
+    const previousEnd = currentStart;
+
+    const currentSubmissions = submissions.filter(
+      submission => new Date(submission.submittedAt) >= currentStart
+    );
+    const previousSubmissions = submissions.filter(submission => {
+      const submittedAt = new Date(submission.submittedAt);
+      return submittedAt >= previousStart && submittedAt < previousEnd;
+    });
+
+    const currentScores = {} as Record<CategoryKey, number>;
+    const previousScores = {} as Record<CategoryKey, number>;
+    const scoreDifference = {} as WeeklyReportStatus['scoreDifference'];
+
+    for (const [category, fields] of Object.entries(CATEGORY_MAP) as Array<
+      [CategoryKey, Array<keyof DailySubmission>]
+    >) {
+      const current = categoryAverage(currentSubmissions, fields);
+      const previous = categoryAverage(previousSubmissions, fields);
+      const difference = round1(current - previous);
+
+      currentScores[category] = current;
+      previousScores[category] = previous;
+      scoreDifference[category] = {
+        current,
+        previous,
+        difference,
+        trend: trendForDifference(difference),
+      };
+    }
+
+    const overallCurrent = average(Object.values(currentScores));
+    const overallPrevious = average(Object.values(previousScores));
+    const overallDifference = round1(overallCurrent - overallPrevious);
+
+    const report: WeeklyReportStatus = {
+      success: true,
+      message:
+        currentSubmissions.length > 0
+          ? 'Weekly report fetched successfully.'
+          : 'No submissions found in the current week. Returning an empty report.',
+      currentReportDate: currentStart.toISOString(),
+      previousReportDate: previousStart.toISOString(),
+      currentScores,
+      previousScores,
+      scoreDifference,
+      overall: {
+        current: overallCurrent,
+        previous: overallPrevious,
+        difference: overallDifference,
+        trend: trendForDifference(overallDifference),
+      },
+    };
+
+    await executeDataConnectMutationDirect<
+      CreateWeeklyReportData,
+      CreateWeeklyReportVariables
+    >(
+      'CreateWeeklyReport',
+      {
+        weekStart: toIsoDate(currentStart),
+        weekEnd: toIsoDate(now),
+        overallCurrent: report.overall.current,
+        overallPrevious: report.overall.previous,
+        overallDelta: report.overall.difference,
+        trend: report.overall.trend,
+        summary: report.message,
+        payload: report,
+      },
+      signedInUser
+    );
+
+    return report;
   }
 
   await ensureDataConnectAuthReady();

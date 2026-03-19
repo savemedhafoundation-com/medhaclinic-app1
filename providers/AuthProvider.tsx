@@ -10,6 +10,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { Platform } from 'react-native';
@@ -67,6 +68,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 let googleIsConfigured = false;
 
+type StoredUserData = Record<string, unknown>;
+
 function getProfileFromUser(user: AppAuthUser): AuthUserProfile {
   return {
     uid: user.uid,
@@ -77,12 +80,32 @@ function getProfileFromUser(user: AppAuthUser): AuthUserProfile {
 }
 
 async function persistLocalProfile(profile: AuthUserProfile) {
+  let existingData: StoredUserData = {};
+
+  try {
+    const rawValue = await AsyncStorage.getItem('medha_user');
+
+    if (rawValue) {
+      const parsed = JSON.parse(rawValue) as StoredUserData;
+      existingData =
+        parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    }
+  } catch (error) {
+    console.log('Cached profile merge error:', error);
+  }
+
+  const cachedFullName =
+    typeof existingData.fullName === 'string' ? existingData.fullName.trim() : '';
+  const cachedPhotoURL =
+    typeof existingData.photoURL === 'string' ? existingData.photoURL : null;
+
   await AsyncStorage.setItem(
     'medha_user',
     JSON.stringify({
-      fullName: profile.name,
+      ...existingData,
+      fullName: cachedFullName || profile.name,
       email: profile.email,
-      photoURL: profile.photoURL,
+      photoURL: profile.photoURL ?? cachedPhotoURL,
       lastLogin: new Date().toISOString(),
     })
   );
@@ -95,15 +118,27 @@ async function hasCachedHealthProfile() {
       return false;
     }
 
-    const parsed = JSON.parse(rawValue) as Record<string, unknown>;
+    const parsedValue = JSON.parse(rawValue) as unknown;
+
+    if (
+      !parsedValue ||
+      typeof parsedValue !== 'object' ||
+      Array.isArray(parsedValue)
+    ) {
+      return false;
+    }
+
+    const parsed = parsedValue as Record<string, unknown>;
+    const hasSavedProfileFields =
+      'gender' in parsed ||
+      'age' in parsed ||
+      'weight' in parsed ||
+      'height' in parsed ||
+      'purpose' in parsed ||
+      'address' in parsed;
+
     return Boolean(
-      parsed.fullName ||
-        parsed.gender ||
-        parsed.age ||
-        parsed.weight ||
-        parsed.height ||
-        parsed.purpose ||
-        parsed.address
+      parsed.profileCompleted === true || hasSavedProfileFields
     );
   } catch (error) {
     console.log('Cached profile read error:', error);
@@ -196,6 +231,7 @@ function toReadableError(error: unknown) {
       case 'auth/missing-verification-code':
         return 'Enter the OTP sent to your phone.';
       case 'auth/code-expired':
+      case 'auth/session-expired':
         return 'The OTP has expired. Please request a new code.';
       case 'auth/captcha-check-failed':
         return 'reCAPTCHA verification failed. Please try again.';
@@ -215,6 +251,29 @@ function toReadableError(error: unknown) {
   return 'Something went wrong during sign-in.';
 }
 
+function getFirebaseErrorCode(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    return error.code;
+  }
+
+  return null;
+}
+
+function shouldResetPhoneVerification(error: unknown) {
+  const errorCode = getFirebaseErrorCode(error);
+  return errorCode === 'auth/code-expired' || errorCode === 'auth/session-expired';
+}
+
+function isNoCurrentUserError(error: unknown) {
+  const errorCode = getFirebaseErrorCode(error);
+  return errorCode === 'auth/no-current-user' || errorCode === 'no-current-user';
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AppAuthUser | null>(null);
   const [profile, setProfile] = useState<AuthUserProfile | null>(null);
@@ -223,9 +282,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [phoneConfirmation, setPhoneConfirmation] =
     useState<AppPhoneConfirmation | null>(null);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const hydrationRunIdRef = useRef(0);
 
   async function hydrateSignedInUser(currentUser: AppAuthUser) {
     const nextProfile = getProfileFromUser(currentUser);
+
+    // For phone-auth users, displayName is null so getProfileFromUser falls back
+    // to the phone number as the name. Override with the real name the user
+    // entered during signup if it's already cached in AsyncStorage.
+    if (!currentUser.displayName) {
+      try {
+        const rawValue = await AsyncStorage.getItem('medha_user');
+
+        if (rawValue) {
+          const cached = JSON.parse(rawValue) as Record<string, unknown>;
+          const cachedName =
+            typeof cached.fullName === 'string' ? cached.fullName.trim() : '';
+
+          // Only use the cached name if it looks like a real name (not a phone number)
+          if (cachedName && !cachedName.startsWith('+')) {
+            nextProfile.name = cachedName;
+          }
+        }
+      } catch (cacheReadError) {
+        console.log('[Auth] Cached name read note:', cacheReadError);
+      }
+    }
 
     await persistLocalProfile(nextProfile);
     setProfile(nextProfile);
@@ -275,21 +357,45 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       unsubscribe = subscribeToAuthChanges(async (currentUser: AppAuthUser | null) => {
+        const hydrationRunId = ++hydrationRunIdRef.current;
+        const isLatestHydrationRun = () => hydrationRunIdRef.current === hydrationRunId;
+
+        setLoading(true);
         setUser(currentUser);
 
         try {
           if (currentUser) {
             resetPhoneVerification();
             await ensureDataConnectAuthReady(currentUser);
+
+            if (!isLatestHydrationRun()) {
+              return;
+            }
+
             await hydrateSignedInUser(currentUser);
           } else {
             setProfile(null);
             setNeedsProfile(false);
           }
         } catch (error) {
-          console.log('Auth hydration error:', error);
+          const latestUser = getCurrentAuthUser();
+          const signedOutDuringHydration =
+            isNoCurrentUserError(error) &&
+            (!latestUser || latestUser.uid !== currentUser?.uid);
 
-          if (currentUser) {
+          if (!isLatestHydrationRun()) {
+            return;
+          }
+
+          if (!signedOutDuringHydration) {
+            console.log('Auth hydration error:', error);
+          }
+
+          if (!latestUser || latestUser.uid !== currentUser?.uid) {
+            setUser(latestUser);
+            setProfile(null);
+            setNeedsProfile(false);
+          } else if (currentUser) {
             const nextProfile = getProfileFromUser(currentUser);
             await persistLocalProfile(nextProfile);
             setProfile(nextProfile);
@@ -300,13 +406,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
           }
         }
 
-        setLoading(false);
+        if (isLatestHydrationRun()) {
+          setLoading(false);
+        }
       });
     }
 
     void bootstrapAuth();
 
     return () => {
+      hydrationRunIdRef.current += 1;
       resetPhoneVerification();
       unsubscribe?.();
     };
@@ -353,7 +462,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       const credentialResult = await signInWithGoogleIdToken(idToken);
       await ensureDataConnectAuthReady(credentialResult.user);
-      return hydrateSignedInUser(credentialResult.user);
+      return getProfileFromUser(credentialResult.user);
     } catch (error) {
       throw new Error(toReadableError(error));
     } finally {
@@ -392,10 +501,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     try {
       const credentialResult = await phoneConfirmation.confirm(trimmedCode);
-      await ensureDataConnectAuthReady(credentialResult.user);
+
+      // DataConnect sync is non-fatal for phone auth on native — the web SDK
+      // may not have synced if the native SDK consumed the OTP first.
+      // The auth state listener and hydrateSignedInUser handle the rest.
+      try {
+        await ensureDataConnectAuthReady(credentialResult.user);
+      } catch (syncError) {
+        console.log('[Auth] DataConnect ready check note (non-fatal):', syncError);
+      }
+
       resetPhoneVerification();
-      return hydrateSignedInUser(credentialResult.user);
+      return getProfileFromUser(credentialResult.user);
     } catch (error) {
+      if (shouldResetPhoneVerification(error)) {
+        resetPhoneVerification();
+      }
+
       throw new Error(toReadableError(error));
     }
   }
