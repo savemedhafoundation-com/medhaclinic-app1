@@ -29,6 +29,10 @@ import {
   upsertCurrentUser,
   upsertMyProfile,
 } from '../firebase/dataConnect';
+import type {
+  ImmunityAssessmentResult,
+  SystemScoreKey,
+} from './immunityScoring';
 import { hasConfiguredBackend, requestBackend } from './backend';
 
 export type HealthProfileInput = {
@@ -86,19 +90,152 @@ export type WeeklyReportStatus = {
   };
 };
 
-const CATEGORY_MAP: Record<CategoryKey, Array<keyof DailySubmission>> = {
-  energyLevels: ['physicalEnergy'],
-  digestiveHealth: ['appetite', 'digestionComfort', 'burningPain', 'bloatingGas'],
-  cardiovascular: ['bloodPressure', 'swelling'],
-  immuneResponse: ['fever', 'infection', 'immunityScore'],
-  respiratory: ['breathingProblem'],
-  hormonalHealth: [
-    'menstrualRegularity',
-    'libidoStability',
-    'hairHealth',
-    'sleepHours',
-  ],
+type AssessmentSystemSummary = {
+  key: SystemScoreKey;
+  score: number;
+} | null;
+
+export type AuthoritativeImmunityAssessment = ImmunityAssessmentResult & {
+  apiLevel?: string;
 };
+
+type BackendDailyImmunitySubmissionResponse = {
+  success?: boolean;
+  message?: string;
+  assessment?: AuthoritativeImmunityAssessment | null;
+};
+
+export type LatestDailyImmunitySummary = {
+  immunityScore: number;
+  immunityLevel: string | null;
+  submittedAt: string | null;
+};
+
+const CATEGORY_MAP: Record<CategoryKey, (keyof DailySubmission)[]> = {
+  energyLevels: ['physicalEnergy', 'sleepHours'],
+  digestiveHealth: ['appetite', 'digestionComfort', 'bloatingGas'],
+  cardiovascular: ['bloodPressure'],
+  immuneResponse: ['fever', 'infection', 'swelling'],
+  respiratory: ['breathingProblem'],
+  hormonalHealth: ['menstrualRegularity', 'libidoStability'],
+};
+
+function isAssessmentSystemSummary(value: unknown): value is AssessmentSystemSummary {
+  if (value === null) {
+    return true;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  return (
+    'key' in value &&
+    typeof value.key === 'string' &&
+    'score' in value &&
+    typeof value.score === 'number'
+  );
+}
+
+function isAssessmentSystemScoreRecord(
+  value: unknown
+): value is Record<SystemScoreKey, number | null> {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  const keys: SystemScoreKey[] = [
+    'digestive',
+    'immune',
+    'energy',
+    'cardiovascular',
+    'respiratory',
+    'hormonal',
+  ];
+
+  return keys.every(key => {
+    const score = record[key];
+    return score === null || typeof score === 'number';
+  });
+}
+
+export function readAuthoritativeImmunityAssessment(
+  payload: unknown
+): AuthoritativeImmunityAssessment | null {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const response = payload as BackendDailyImmunitySubmissionResponse;
+  const assessment = response.assessment;
+
+  if (!assessment || typeof assessment !== 'object') {
+    return null;
+  }
+
+  if (
+    typeof assessment.immunityScore !== 'number' ||
+    typeof assessment.roundedScore !== 'number' ||
+    typeof assessment.level !== 'string' ||
+    typeof assessment.baseWeightedScore !== 'number' ||
+    typeof assessment.penaltyApplied !== 'number' ||
+    !Array.isArray(assessment.answeredParameters) ||
+    !isAssessmentSystemScoreRecord(assessment.systemScores) ||
+    !isAssessmentSystemSummary(assessment.weakestSystem) ||
+    !isAssessmentSystemSummary(assessment.strongestSystem)
+  ) {
+    return null;
+  }
+
+  return assessment;
+}
+
+function readLatestDailyImmunitySummary(
+  payload: unknown
+): LatestDailyImmunitySummary | null {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  if (typeof record.immunityScore !== 'number') {
+    return null;
+  }
+
+  return {
+    immunityScore: record.immunityScore,
+    immunityLevel:
+      typeof record.immunityLevel === 'string' ? record.immunityLevel : null,
+    submittedAt: typeof record.submittedAt === 'string' ? record.submittedAt : null,
+  };
+}
+
+function getLatestDailyImmunityFromSubmissions(
+  submissions: DailySubmission[]
+): LatestDailyImmunitySummary | null {
+  const latestSubmission = [...submissions].sort(
+    (left, right) =>
+      new Date(right.submittedAt).getTime() - new Date(left.submittedAt).getTime()
+  )[0];
+
+  if (!latestSubmission || typeof latestSubmission.immunityScore !== 'number') {
+    return null;
+  }
+
+  return {
+    immunityScore: latestSubmission.immunityScore,
+    immunityLevel:
+      typeof latestSubmission.immunityLevel === 'string'
+        ? latestSubmission.immunityLevel
+        : null,
+    submittedAt:
+      typeof latestSubmission.submittedAt === 'string'
+        ? latestSubmission.submittedAt
+        : null,
+  };
+}
 
 function parseOptionalInt(value?: string) {
   if (!value?.trim()) {
@@ -162,7 +299,7 @@ function hasNumericValue(value: DailySubmission[keyof DailySubmission]): value i
 
 function categoryAverage(
   submissions: DailySubmission[],
-  fields: Array<keyof DailySubmission>
+  fields: (keyof DailySubmission)[]
 ) {
   const values: number[] = [];
 
@@ -592,10 +729,13 @@ export async function saveDailyImmunitySubmission(
   authUser?: AppAuthUser | null
 ) {
   if (hasConfiguredBackend()) {
-    return requestBackend('/api/auth/save_daily_immunity', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
+    return requestBackend<BackendDailyImmunitySubmissionResponse>(
+      '/api/auth/save_daily_immunity',
+      {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }
+    );
   }
 
   if (Platform.OS !== 'web') {
@@ -611,6 +751,39 @@ export async function saveDailyImmunitySubmission(
   await ensureDataConnectAuthReady(authUser);
 
   return submitDailyImmunity(medhaDataConnect, input);
+}
+
+export async function getLatestDailyImmunitySummary() {
+  if (hasConfiguredBackend()) {
+    const response = await requestBackend<{
+      data?: {
+        immunityScore?: number;
+        immunityLevel?: string | null;
+        submittedAt?: string | null;
+      } | null;
+    }>('/v1/immunity/latest');
+
+    return readLatestDailyImmunitySummary(response.data);
+  }
+
+  if (Platform.OS !== 'web') {
+    const signedInUser = await ensureDirectCurrentUserRecord();
+    const historyResponse =
+      await executeDataConnectQueryDirect<GetMyDailyImmunityHistoryData>(
+        'GetMyDailyImmunityHistory',
+        undefined,
+        signedInUser
+      );
+
+    return getLatestDailyImmunityFromSubmissions(
+      historyResponse.data?.user?.submissions ?? []
+    );
+  }
+
+  await ensureDataConnectAuthReady();
+
+  const { data } = await getMyDailyImmunityHistory(medhaDataConnect);
+  return getLatestDailyImmunityFromSubmissions(data.user?.submissions ?? []);
 }
 
 export async function buildAndStoreWeeklyReport() {
@@ -659,9 +832,10 @@ export async function buildAndStoreWeeklyReport() {
     const previousScores = {} as Record<CategoryKey, number>;
     const scoreDifference = {} as WeeklyReportStatus['scoreDifference'];
 
-    for (const [category, fields] of Object.entries(CATEGORY_MAP) as Array<
-      [CategoryKey, Array<keyof DailySubmission>]
-    >) {
+    for (const [category, fields] of Object.entries(CATEGORY_MAP) as [
+      CategoryKey,
+      (keyof DailySubmission)[],
+    ][]) {
       const current = categoryAverage(currentSubmissions, fields);
       const previous = categoryAverage(previousSubmissions, fields);
       const difference = round1(current - previous);
@@ -745,9 +919,10 @@ export async function buildAndStoreWeeklyReport() {
   const previousScores = {} as Record<CategoryKey, number>;
   const scoreDifference = {} as WeeklyReportStatus['scoreDifference'];
 
-  for (const [category, fields] of Object.entries(CATEGORY_MAP) as Array<
-    [CategoryKey, Array<keyof DailySubmission>]
-  >) {
+  for (const [category, fields] of Object.entries(CATEGORY_MAP) as [
+    CategoryKey,
+    (keyof DailySubmission)[],
+  ][]) {
     const current = categoryAverage(currentSubmissions, fields);
     const previous = categoryAverage(previousSubmissions, fields);
     const difference = round1(current - previous);

@@ -83,6 +83,24 @@ function formatGender(value?: string | null) {
   return value.trim();
 }
 
+function normalizeGenderKey(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized.startsWith('m')) {
+    return 'male' as const;
+  }
+
+  if (normalized.startsWith('f')) {
+    return 'female' as const;
+  }
+
+  return 'other' as const;
+}
+
 export function usePatientProfile() {
   const { profile } = useAuth();
   const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
@@ -120,6 +138,8 @@ export function usePatientProfile() {
     };
   }, [profile?.uid, profile?.name, profile?.photoURL]);
 
+  const rawGender = remoteUser?.profile?.gender ?? storedUser?.gender;
+
   return {
     patientName:
       storedUser?.fullName?.trim() ||
@@ -129,6 +149,7 @@ export function usePatientProfile() {
     patientPhoto:
       remoteUser?.photoUrl || profile?.photoURL || storedUser?.photoURL || null,
     patientAge: parseNumber(remoteUser?.profile?.age ?? storedUser?.age),
-    patientGender: formatGender(remoteUser?.profile?.gender ?? storedUser?.gender),
+    patientGender: formatGender(rawGender),
+    patientGenderKey: normalizeGenderKey(rawGender),
   };
 }

@@ -8,16 +8,26 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../providers/AuthProvider';
-import { getCurrentUserData } from '../services/medhaDataConnect';
+import {
+  getCurrentUserData,
+  getLatestDailyImmunitySummary,
+  type LatestDailyImmunitySummary,
+  saveHealthProfile,
+} from '../services/medhaDataConnect';
 import { uploadCurrentUserProfilePhoto } from '../services/profilePhoto';
 
 type StoredUser = {
@@ -29,6 +39,7 @@ type StoredUser = {
   age?: string;
   weight?: string;
   height?: string;
+  heightUnit?: HeightUnit;
   purpose?: string | null;
   address?: string;
   photoURL?: string | null;
@@ -59,7 +70,21 @@ type ActionCardItem = {
   onPress: () => void;
 };
 
+type HeightUnit = 'cm' | 'foot';
+type EditorMode = 'email' | 'details';
+
+type ProfileEditorForm = {
+  email: string;
+  gender: string | null;
+  age: string;
+  weight: string;
+  height: string;
+  heightUnit: HeightUnit;
+};
+
 const profileImage = require('../assets/images/profile.png');
+const GENDER_OPTIONS = ['Male', 'Female', 'Others'] as const;
+const HEIGHT_UNIT_OPTIONS: HeightUnit[] = ['cm', 'foot'];
 
 function parseNumber(value?: string | number | null) {
   if (typeof value === 'number') {
@@ -139,7 +164,56 @@ function formatLastLogin(value?: string | null) {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-function getSexLabel(gender?: string | null) {
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function formatNormalizedNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function normalizeHeightToCm(value: string, unit: HeightUnit) {
+  const parsedHeight = Number.parseFloat(value);
+
+  if (!Number.isFinite(parsedHeight) || parsedHeight <= 0) {
+    throw new Error('Enter a valid height.');
+  }
+
+  const heightInCm = unit === 'foot' ? parsedHeight * 30.48 : parsedHeight;
+  return formatNormalizedNumber(heightInCm);
+}
+
+function convertHeightFromCm(value?: number, unit: HeightUnit = 'cm') {
+  if (value === undefined) {
+    return '';
+  }
+
+  const convertedHeight = unit === 'foot' ? value / 30.48 : value;
+  return formatNormalizedNumber(convertedHeight);
+}
+
+function convertHeightBetweenUnits(
+  value: string,
+  fromUnit: HeightUnit,
+  toUnit: HeightUnit
+) {
+  if (!value.trim() || fromUnit === toUnit) {
+    return value;
+  }
+
+  const parsedHeight = Number.parseFloat(value);
+
+  if (!Number.isFinite(parsedHeight) || parsedHeight <= 0) {
+    return value;
+  }
+
+  const heightInCm = fromUnit === 'foot' ? parsedHeight * 30.48 : parsedHeight;
+  const convertedHeight = toUnit === 'foot' ? heightInCm / 30.48 : heightInCm;
+
+  return formatNormalizedNumber(convertedHeight);
+}
+
+function getGenderLabel(gender?: string | null) {
   if (!gender) {
     return '--';
   }
@@ -147,14 +221,60 @@ function getSexLabel(gender?: string | null) {
   const normalized = gender.trim().toLowerCase();
 
   if (normalized.startsWith('m')) {
-    return 'M';
+    return 'Male';
   }
 
   if (normalized.startsWith('f')) {
-    return 'F';
+    return 'Female';
   }
 
-  return 'O';
+  return 'Other';
+}
+
+function normalizeImmunityLevelLabel(value?: string | null) {
+  const normalized = value?.trim().toLowerCase();
+
+  switch (normalized) {
+    case 'excellent':
+      return 'Excellent';
+    case 'good':
+      return 'Good';
+    case 'moderate':
+      return 'Moderate';
+    case 'low':
+      return 'Low';
+    default:
+      return null;
+  }
+}
+
+function getLatestImmunityMeta(latestImmunity: LatestDailyImmunitySummary | null) {
+  if (typeof latestImmunity?.immunityScore !== 'number') {
+    return {
+      score: '--',
+      status: 'Pending',
+      note: 'Complete a daily immunity check to see your latest score.',
+    };
+  }
+
+  const normalizedLevel = normalizeImmunityLevelLabel(latestImmunity.immunityLevel);
+  const score = latestImmunity.immunityScore;
+  const derivedLevel =
+    score >= 8.2
+      ? 'Excellent'
+      : score >= 6.8
+        ? 'Good'
+        : score >= 5.2
+          ? 'Moderate'
+          : 'Low';
+
+  return {
+    score: String(score),
+    status: normalizedLevel ?? derivedLevel,
+    note: latestImmunity.submittedAt
+      ? `Last updated ${formatLastLogin(latestImmunity.submittedAt)}`
+      : 'Based on your latest daily immunity check.',
+  };
 }
 
 function calculateBmi(weightKg?: number, heightCm?: number) {
@@ -162,6 +282,7 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
     return {
       score: '--',
       status: 'Update',
+      note: 'Add your weight and height to see your BMI.',
     };
   }
 
@@ -171,6 +292,7 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
     return {
       score: '--',
       status: 'Update',
+      note: 'Add your weight and height to see your BMI.',
     };
   }
 
@@ -178,6 +300,7 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
     return {
       score: bmi.toFixed(1),
       status: 'Low',
+      note: 'Calculated from your saved height and weight.',
     };
   }
 
@@ -185,6 +308,7 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
     return {
       score: bmi.toFixed(1),
       status: 'Healthy',
+      note: 'Calculated from your saved height and weight.',
     };
   }
 
@@ -192,12 +316,14 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
     return {
       score: bmi.toFixed(1),
       status: 'Moderate',
+      note: 'Calculated from your saved height and weight.',
     };
   }
 
   return {
     score: bmi.toFixed(1),
     status: 'High',
+    note: 'Calculated from your saved height and weight.',
   };
 }
 
@@ -265,7 +391,20 @@ export default function ProfileScreen() {
   const { user, profile, signOut } = useAuth();
   const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
   const [remoteUser, setRemoteUser] = useState<RemoteUser | null>(null);
+  const [latestImmunity, setLatestImmunity] =
+    useState<LatestDailyImmunitySummary | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>('details');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editorForm, setEditorForm] = useState<ProfileEditorForm>({
+    email: '',
+    gender: null,
+    age: '',
+    weight: '',
+    height: '',
+    heightUnit: 'cm',
+  });
 
   useEffect(() => {
     let active = true;
@@ -290,6 +429,16 @@ export default function ProfileScreen() {
       } catch (error) {
         console.log('Failed to load remote profile details:', error);
       }
+
+      try {
+        const latestDailyImmunity = await getLatestDailyImmunitySummary();
+
+        if (active) {
+          setLatestImmunity(latestDailyImmunity);
+        }
+      } catch (error) {
+        console.log('Failed to load latest daily immunity score:', error);
+      }
     }
 
     void loadProfileData();
@@ -311,10 +460,6 @@ export default function ProfileScreen() {
 
   function handleBack() {
     router.replace('/(tabs)/dashboard');
-  }
-
-  function handleSettings() {
-    Alert.alert('Settings', 'Settings options will be added next.');
   }
 
   async function persistUploadedPhoto(photoUrl: string) {
@@ -408,10 +553,6 @@ export default function ProfileScreen() {
     router.push('/about');
   }
 
-  function handleUpdateMetrics() {
-    router.push('/signup');
-  }
-
   const actionItems: ActionCardItem[] = [
     {
       key: 'support',
@@ -441,12 +582,13 @@ export default function ProfileScreen() {
     remoteUser?.name?.trim() ||
     profile?.name ||
     'MedhaClinic User';
-  const displayEmail =
+  const savedEmail =
     remoteUser?.email?.trim() ||
-    profile?.email ||
+    profile?.email?.trim() ||
     storedUser?.email?.trim() ||
-    storedUser?.phone?.trim() ||
-    'Add your email';
+    '';
+  const displayEmail = savedEmail || 'Add your email';
+  const hasSavedEmail = Boolean(savedEmail);
   const displayPhoto =
     remoteUser?.photoUrl || profile?.photoURL || storedUser?.photoURL || null;
   const lastLoginLabel = formatLastLogin(
@@ -461,9 +603,13 @@ export default function ProfileScreen() {
   const heightCm = parseNumber(
     remoteUser?.profile?.heightCm ?? storedUser?.height
   );
+  const preferredHeightUnit: HeightUnit =
+    storedUser?.heightUnit === 'cm' ? 'cm' : 'foot';
   const purpose = remoteUser?.profile?.purpose ?? storedUser?.purpose;
+  const address = remoteUser?.profile?.address ?? storedUser?.address;
 
-  const bmi = calculateBmi(weightKg, heightCm);
+  const latestImmunityMeta = getLatestImmunityMeta(latestImmunity);
+  const bmiMeta = calculateBmi(weightKg, heightCm);
   const dailyCalories = calculateDailyCalories({
     gender,
     age,
@@ -471,7 +617,166 @@ export default function ProfileScreen() {
     heightCm,
   });
   const weightMetric = formatMetric(weightKg, 'kg');
-  const heightMetric = formatMetric(heightCm, 'cm');
+  const heightMetric = formatMetric(
+    parseNumber(convertHeightFromCm(heightCm, preferredHeightUnit)),
+    preferredHeightUnit === 'foot' ? 'ft' : 'cm'
+  );
+
+  function handleUpdateMetrics() {
+    setEditorMode('details');
+    setEditorForm({
+      email: savedEmail,
+      gender: gender ?? null,
+      age: age !== undefined ? String(age) : '',
+      weight: weightKg !== undefined ? String(weightKg) : '',
+      height: convertHeightFromCm(heightCm, preferredHeightUnit),
+      heightUnit: preferredHeightUnit,
+    });
+    setEditorVisible(true);
+  }
+
+  function handleEditEmail() {
+    setEditorMode('email');
+    setEditorForm({
+      email: savedEmail,
+      gender: gender ?? null,
+      age: age !== undefined ? String(age) : '',
+      weight: weightKg !== undefined ? String(weightKg) : '',
+      height: convertHeightFromCm(heightCm, preferredHeightUnit),
+      heightUnit: preferredHeightUnit,
+    });
+    setEditorVisible(true);
+  }
+
+  function closeEditor() {
+    if (savingProfile) {
+      return;
+    }
+
+    setEditorVisible(false);
+  }
+
+  async function handleSaveProfileDetails() {
+    const emailOnlyMode = editorMode === 'email';
+    const trimmedEmail = editorForm.email.trim();
+    const trimmedAge = emailOnlyMode ? '' : editorForm.age.trim();
+    const trimmedWeight = emailOnlyMode ? '' : editorForm.weight.trim();
+    const trimmedHeight = emailOnlyMode ? '' : editorForm.height.trim();
+
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      Alert.alert('Invalid email', 'Enter a valid email address.');
+      return;
+    }
+
+    if (emailOnlyMode && !trimmedEmail) {
+      Alert.alert('Email required', 'Enter an email address to continue.');
+      return;
+    }
+
+    const parsedAge = trimmedAge ? Number.parseInt(trimmedAge, 10) : age;
+    if (
+      trimmedAge &&
+      (!Number.isInteger(parsedAge) || !parsedAge || parsedAge <= 0 || parsedAge > 120)
+    ) {
+      Alert.alert('Invalid age', 'Enter a valid age between 1 and 120.');
+      return;
+    }
+
+    const parsedWeight = trimmedWeight ? Number.parseFloat(trimmedWeight) : weightKg;
+    if (
+      trimmedWeight &&
+      (!Number.isFinite(parsedWeight) || !parsedWeight || parsedWeight <= 0 || parsedWeight > 500)
+    ) {
+      Alert.alert('Invalid weight', 'Enter a valid weight in kilograms.');
+      return;
+    }
+
+    let normalizedHeightCm = heightCm !== undefined ? String(heightCm) : undefined;
+    let parsedHeight = heightCm;
+
+    if (trimmedHeight) {
+      try {
+        normalizedHeightCm = normalizeHeightToCm(trimmedHeight, editorForm.heightUnit);
+        parsedHeight = Number.parseFloat(normalizedHeightCm);
+      } catch (error) {
+        Alert.alert(
+          'Invalid height',
+          error instanceof Error ? error.message : 'Enter a valid height.'
+        );
+        return;
+      }
+    }
+
+    const nextEmail = trimmedEmail || savedEmail || undefined;
+    const nextGender = editorForm.gender ?? gender ?? undefined;
+    const nextAge = parsedAge !== undefined ? String(parsedAge) : undefined;
+    const nextWeight = parsedWeight !== undefined ? String(parsedWeight) : undefined;
+    const nextHeight = normalizedHeightCm;
+    const nextHeightUnit = editorForm.heightUnit;
+
+    try {
+      setSavingProfile(true);
+
+      await saveHealthProfile({
+        fullName: displayName,
+        email: nextEmail,
+        gender: nextGender ?? null,
+        age: nextAge,
+        weight: nextWeight,
+        height: nextHeight,
+        purpose,
+        address,
+      });
+
+      const nextStoredUser: StoredUser = {
+        ...(storedUser ?? {}),
+        fullName: displayName,
+        email: nextEmail,
+        phone: storedUser?.phone,
+        lastLogin: storedUser?.lastLogin,
+        gender: nextGender ?? null,
+        age: nextAge,
+        weight: nextWeight,
+        height: nextHeight,
+        heightUnit: nextHeightUnit,
+        purpose,
+        address,
+        photoURL: displayPhoto,
+      };
+
+      await AsyncStorage.setItem('medha_user', JSON.stringify(nextStoredUser));
+
+      setStoredUser(nextStoredUser);
+      setRemoteUser(previous => ({
+        ...(previous ?? {}),
+        name: displayName,
+        email: nextEmail ?? null,
+        photoUrl: displayPhoto,
+        lastLoginAt: previous?.lastLoginAt ?? null,
+        profile: {
+          ...(previous?.profile ?? {}),
+          gender: nextGender ?? null,
+          age: parsedAge,
+          weightKg: parsedWeight,
+          heightCm: parsedHeight,
+          purpose: purpose ?? null,
+          address: address ?? null,
+        },
+      }));
+
+      setEditorVisible(false);
+      Alert.alert('Profile updated', 'Your profile details have been saved.');
+    } catch (error) {
+      console.log('Profile details update failed:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not save your profile details. Please try again.';
+      Alert.alert('Update failed', message);
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
   return (
     <View style={styles.screen}>
@@ -529,6 +834,16 @@ export default function ProfileScreen() {
 
               <Text style={styles.profileName}>{displayName}</Text>
               <Text style={styles.profileEmail}>{displayEmail}</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleEditEmail}
+                style={styles.addEmailButton}
+              >
+                <Ionicons name="mail-outline" size={14} color="#16A34A" />
+                <Text style={styles.addEmailButtonText}>
+                  {hasSavedEmail ? 'Update Email' : 'Add Email'}
+                </Text>
+              </TouchableOpacity>
               <Text style={styles.photoHint}>
                 {photoBusy ? 'Uploading photo...' : 'Tap photo to update'}
               </Text>
@@ -543,15 +858,7 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Body Mass Index</Text>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={handleUpdateMetrics}
-              style={styles.sectionAction}
-            >
-              <Text style={styles.sectionActionText}>Update</Text>
-              <Ionicons name="chevron-forward" size={14} color="#16A34A" />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Latest Immunity Score</Text>
           </View>
 
           <LinearGradient
@@ -568,11 +875,46 @@ export default function ProfileScreen() {
                 <Text style={styles.bmiLabel}>Current Score</Text>
 
                 <View style={styles.bmiValueRow}>
-                  <Text style={styles.bmiValue}>{bmi.score}</Text>
+                  <Text style={styles.bmiValue}>{latestImmunityMeta.score}</Text>
                   <View style={styles.bmiBadge}>
-                    <Text style={styles.bmiBadgeText}>{bmi.status}</Text>
+                    <Text style={styles.bmiBadgeText}>{latestImmunityMeta.status}</Text>
                   </View>
                 </View>
+
+                <Text style={styles.bmiNote}>{latestImmunityMeta.note}</Text>
+              </View>
+
+              <View style={styles.bmiIconWrap}>
+                <Ionicons name="shield-checkmark-outline" size={24} color="#FFFFFF" />
+              </View>
+            </View>
+          </LinearGradient>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Body Mass Index</Text>
+          </View>
+
+          <LinearGradient
+            colors={['#22C55E', '#16A34A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bmiCard}
+          >
+            <View style={styles.bmiGlowTop} />
+            <View style={styles.bmiGlowBottom} />
+
+            <View style={styles.bmiRow}>
+              <View style={styles.bmiCopy}>
+                <Text style={styles.bmiLabel}>Current Score</Text>
+
+                <View style={styles.bmiValueRow}>
+                  <Text style={styles.bmiValue}>{bmiMeta.score}</Text>
+                  <View style={styles.bmiBadge}>
+                    <Text style={styles.bmiBadgeText}>{bmiMeta.status}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.bmiNote}>{bmiMeta.note}</Text>
               </View>
 
               <View style={styles.bmiIconWrap}>
@@ -581,9 +923,21 @@ export default function ProfileScreen() {
             </View>
           </LinearGradient>
 
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Personal Details</Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleUpdateMetrics}
+              style={styles.sectionAction}
+            >
+              <Text style={styles.sectionActionText}>Edit Details</Text>
+              <Ionicons name="chevron-forward" size={14} color="#16A34A" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.statsGrid}>
             <StatCard label="Age" value={age ? String(age) : '--'} />
-            <StatCard label="Sex" value={getSexLabel(gender)} />
+            <StatCard label="Gender" value={getGenderLabel(gender)} />
             <StatCard
               label="Weight"
               value={weightMetric.value}
@@ -674,6 +1028,230 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={editorVisible}
+        onRequestClose={closeEditor}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={closeEditor} />
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.modalKeyboardWrap}
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalTitleWrap}>
+                  <Text style={styles.modalTitle}>
+                    {editorMode === 'email' ? 'Update Email' : 'Edit Details'}
+                  </Text>
+                  <Text style={styles.modalSubtitle}>
+                    {editorMode === 'email'
+                      ? 'Add or update your email address only.'
+                      : 'Update your gender, age, weight, and height in cm or foot.'}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  disabled={savingProfile}
+                  onPress={closeEditor}
+                  style={styles.modalCloseButton}
+                >
+                  <Ionicons name="close" size={18} color="#475569" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.modalContent}
+              >
+                {editorMode === 'email' ? (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Email</Text>
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      onChangeText={value =>
+                        setEditorForm(previous => ({
+                          ...previous,
+                          email: value,
+                        }))
+                      }
+                      placeholder="Enter your email"
+                      placeholderTextColor="#94A3B8"
+                      style={styles.input}
+                      value={editorForm.email}
+                    />
+                  </View>
+                ) : null}
+
+                {editorMode === 'details' ? (
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Gender</Text>
+                      <View style={styles.genderOptionsRow}>
+                        {GENDER_OPTIONS.map(option => {
+                          const selected = editorForm.gender === option;
+
+                          return (
+                            <TouchableOpacity
+                              key={option}
+                              activeOpacity={0.85}
+                              onPress={() =>
+                                setEditorForm(previous => ({
+                                  ...previous,
+                                  gender: option,
+                                }))
+                              }
+                              style={[
+                                styles.genderOption,
+                                selected && styles.genderOptionSelected,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.genderOptionText,
+                                  selected && styles.genderOptionTextSelected,
+                                ]}
+                              >
+                                {option}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    <View style={styles.inputRow}>
+                      <View style={[styles.inputGroup, styles.inputHalf]}>
+                        <Text style={styles.inputLabel}>Age</Text>
+                        <TextInput
+                          keyboardType="number-pad"
+                          onChangeText={value =>
+                            setEditorForm(previous => ({
+                              ...previous,
+                              age: value.replace(/[^0-9]/g, ''),
+                            }))
+                          }
+                          placeholder="Years"
+                          placeholderTextColor="#94A3B8"
+                          style={styles.input}
+                          value={editorForm.age}
+                        />
+                      </View>
+
+                      <View style={[styles.inputGroup, styles.inputHalf]}>
+                        <Text style={styles.inputLabel}>Weight (kg)</Text>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          onChangeText={value =>
+                            setEditorForm(previous => ({
+                              ...previous,
+                              weight: value.replace(/[^0-9.]/g, ''),
+                            }))
+                          }
+                          placeholder="Enter kg"
+                          placeholderTextColor="#94A3B8"
+                          style={styles.input}
+                          value={editorForm.weight}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <View style={styles.inputLabelRow}>
+                        <Text style={styles.inputLabel}>
+                          Height ({editorForm.heightUnit === 'foot' ? 'foot' : 'cm'})
+                        </Text>
+
+                        <View style={styles.heightUnitRow}>
+                          {HEIGHT_UNIT_OPTIONS.map(option => {
+                            const selected = editorForm.heightUnit === option;
+
+                            return (
+                              <TouchableOpacity
+                                key={option}
+                                activeOpacity={0.85}
+                                onPress={() =>
+                                  setEditorForm(previous => ({
+                                    ...previous,
+                                    height: convertHeightBetweenUnits(
+                                      previous.height,
+                                      previous.heightUnit,
+                                      option
+                                    ),
+                                    heightUnit: option,
+                                  }))
+                                }
+                                style={[
+                                  styles.heightUnitOption,
+                                  selected && styles.heightUnitOptionSelected,
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.heightUnitOptionText,
+                                    selected && styles.heightUnitOptionTextSelected,
+                                  ]}
+                                >
+                                  {option === 'foot' ? 'Foot' : 'CM'}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        onChangeText={value =>
+                          setEditorForm(previous => ({
+                            ...previous,
+                            height: value.replace(/[^0-9.]/g, ''),
+                          }))
+                        }
+                        placeholder={
+                          editorForm.heightUnit === 'foot' ? 'Enter feet' : 'Enter cm'
+                        }
+                        placeholderTextColor="#94A3B8"
+                        style={styles.input}
+                        value={editorForm.height}
+                      />
+                    </View>
+                  </>
+                ) : null}
+              </ScrollView>
+
+              <TouchableOpacity
+                activeOpacity={0.88}
+                disabled={savingProfile}
+                onPress={() => void handleSaveProfileDetails()}
+                style={[
+                  styles.saveButton,
+                  savingProfile && styles.saveButtonDisabled,
+                ]}
+              >
+                {savingProfile ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.saveButtonText}>
+                      {editorMode === 'email' ? 'Save Email' : 'Save Changes'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -816,6 +1394,23 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'center',
   },
+  addEmailButton: {
+    marginTop: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  addEmailButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#16A34A',
+  },
   photoHint: {
     fontSize: 13,
     fontWeight: '600',
@@ -931,6 +1526,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  bmiNote: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(240, 253, 244, 0.9)',
+    marginTop: 12,
+    lineHeight: 19,
   },
   bmiIconWrap: {
     width: 48,
@@ -1098,6 +1700,162 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     marginLeft: 70,
     marginRight: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalKeyboardWrap: {
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 24,
+    paddingTop: 22,
+    paddingBottom: 30,
+    maxHeight: '82%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  modalTitleWrap: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContent: {
+    paddingBottom: 12,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  inputLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#DCE6F0',
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inputHalf: {
+    flex: 1,
+  },
+  genderOptionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  genderOption: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#DCE6F0',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genderOptionSelected: {
+    borderColor: '#22C55E',
+    backgroundColor: '#F0FDF4',
+  },
+  genderOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  genderOptionTextSelected: {
+    color: '#15803D',
+  },
+  heightUnitRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heightUnitOption: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#DCE6F0',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  heightUnitOptionSelected: {
+    borderColor: '#22C55E',
+    backgroundColor: '#F0FDF4',
+  },
+  heightUnitOptionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
+  heightUnitOptionTextSelected: {
+    color: '#15803D',
+  },
+  saveButton: {
+    marginTop: 6,
+    borderRadius: 18,
+    backgroundColor: '#16A34A',
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  saveButtonDisabled: {
+    opacity: 0.75,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   logoutButton: {
     marginTop: 24,

@@ -23,8 +23,17 @@ import { router } from "expo-router";
 import SvgHeader from "../../components/Clipperbg";
 import Speedometer from "../../components/Svgspeedometer";
 import type { SubmitDailyImmunityVariables } from "../../firebase/dataConnect";
+import { usePatientProfile } from "../../hooks/use-patient-profile";
 import { useAuth } from "../../providers/AuthProvider";
-import { saveDailyImmunitySubmission } from "../../services/medhaDataConnect";
+import {
+  buildImmunityAssessment,
+  type AnsweredImmunityParameter,
+  type ImmunityLevel,
+} from "../../services/immunityScoring";
+import {
+  readAuthoritativeImmunityAssessment,
+  saveDailyImmunitySubmission,
+} from "../../services/medhaDataConnect";
 
 type QuestionId =
   | "energy"
@@ -410,37 +419,37 @@ const QUESTIONS: Question[] = [
 ];
 
 // ---------------------- RESULT HELPERS ----------------------
-const getImmunityLabel = (score: number) => {
-  if (score >= 8.5) {
-    return {
-      label: "Excellent Immunity",
-      color: "#15803d",
-      icon: "shield-checkmark",
-      apiLevel: "high" as const,
-    };
+const getImmunityMeta = (level: ImmunityLevel) => {
+  switch (level) {
+    case "Excellent":
+      return {
+        label: "Excellent",
+        color: "#15803d",
+        icon: "shield-checkmark",
+        apiLevel: "excellent" as const,
+      };
+    case "Good":
+      return {
+        label: "Good",
+        color: "#16a34a",
+        icon: "thumbs-up",
+        apiLevel: "good" as const,
+      };
+    case "Moderate":
+      return {
+        label: "Moderate",
+        color: "#ca8a04",
+        icon: "alert-circle",
+        apiLevel: "moderate" as const,
+      };
+    default:
+      return {
+        label: "Low",
+        color: "#dc2626",
+        icon: "warning",
+        apiLevel: "low" as const,
+      };
   }
-  if (score >= 7) {
-    return {
-      label: "Good Immunity",
-      color: "#16a34a",
-      icon: "thumbs-up",
-      apiLevel: "good" as const,
-    };
-  }
-  if (score >= 5) {
-    return {
-      label: "Moderate Immunity",
-      color: "#ca8a04",
-      icon: "alert-circle",
-      apiLevel: "medium" as const,
-    };
-  }
-  return {
-    label: "Low Immunity",
-    color: "#dc2626",
-    icon: "warning",
-    apiLevel: "low" as const,
-  };
 };
 
 // ---------------------- MAP FRONTEND QUESTION IDS TO API KEYS ----------------------
@@ -523,37 +532,78 @@ const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
 // ---------------------- MAIN SCREEN ----------------------
 export default function DailyImmunityCheck() {
   const { user } = useAuth();
+  const { patientGenderKey } = usePatientProfile();
   const [answers, setAnswers] = useState<Answers>({});
   const [loading, setLoading] = useState(false);
 
-  const totalAnswered = Object.keys(answers).length;
-  const progressPct = Math.round((totalAnswered / QUESTIONS.length) * 100);
+  const visibleQuestions = useMemo(() => {
+    return QUESTIONS.filter((question) => {
+      if (question.id === "menstrual") {
+        return patientGenderKey !== "male";
+      }
 
-  const speedometerValue = useMemo(() => {
-    const scores = [];
+      if (question.id === "libido") {
+        return patientGenderKey !== "female";
+      }
 
-    for (const q of QUESTIONS) {
-      const picked = answers[q.id];
-      if (!picked) continue;
+      return true;
+    });
+  }, [patientGenderKey]);
 
-      const opt = q.options.find((o) => o.key === picked);
-      if (opt) scores.push(opt.score);
-    }
+  const totalQuestions = visibleQuestions.length;
 
-    return scores.length
-      ? Number(
-          (scores.reduce((total, value) => total + value, 0) / scores.length).toFixed(2)
-        )
-      : 0;
-  }, [answers]);
+  const totalAnswered = useMemo(() => {
+    return visibleQuestions.reduce((count, question) => {
+      return answers[question.id] ? count + 1 : count;
+    }, 0);
+  }, [answers, visibleQuestions]);
+
+  const progressPct = totalQuestions
+    ? Math.round((totalAnswered / totalQuestions) * 100)
+    : 0;
+
+  const answeredParameters = useMemo<AnsweredImmunityParameter[]>(() => {
+    return visibleQuestions.flatMap((question) => {
+      const selectedKey = answers[question.id];
+      if (!selectedKey) {
+        return [];
+      }
+
+      const selectedOption = question.options.find((option) => option.key === selectedKey);
+      const apiField = API_FIELD_MAP[question.id];
+
+      if (!selectedOption || !apiField) {
+        return [];
+      }
+
+      return [
+        {
+          key: apiField,
+          score: selectedOption.score,
+          answered: true,
+        },
+      ];
+    });
+  }, [answers, visibleQuestions]);
+
+  const assessment = useMemo(() => {
+    return buildImmunityAssessment(answeredParameters, patientGenderKey);
+  }, [answeredParameters, patientGenderKey]);
+
+  const speedometerValue = assessment.immunityScore;
+  const immunityMeta = useMemo(
+    () => getImmunityMeta(assessment.level),
+    [assessment.level]
+  );
 
   const buildPayload = () => {
-    return QUESTIONS.map((q) => {
+    return visibleQuestions.map((q) => {
       const selectedKey = answers[q.id] ?? null;
       const selectedOption = q.options.find((o) => o.key === selectedKey) ?? null;
 
       return {
         id: q.id,
+        parameterKey: API_FIELD_MAP[q.id],
         title: q.title,
         selectedKey,
         selectedLabel: selectedOption?.label ?? null,
@@ -566,7 +616,7 @@ export default function DailyImmunityCheck() {
   const buildApiRequestBody = (): SubmitDailyImmunityVariables => {
     const requestBody: Partial<SubmitDailyImmunityVariables> = {};
 
-    QUESTIONS.forEach((q) => {
+    visibleQuestions.forEach((q) => {
       const selectedKey = answers[q.id];
       if (!selectedKey) return;
 
@@ -579,17 +629,15 @@ export default function DailyImmunityCheck() {
       }
     });
 
-    const immunityMeta = getImmunityLabel(speedometerValue);
-
     return {
       ...requestBody,
-      immunityScore: Number(speedometerValue.toFixed(0)),
+      immunityScore: assessment.roundedScore,
       immunityLevel: immunityMeta.apiLevel,
     };
   };
 
   const postImmunityData = async (requestBody: SubmitDailyImmunityVariables) => {
-    await saveDailyImmunitySubmission(requestBody, user);
+    return saveDailyImmunitySubmission(requestBody, user);
   };
 
   const handleGetResult = async () => {
@@ -604,29 +652,38 @@ export default function DailyImmunityCheck() {
     try {
       setLoading(true);
 
+      const requestBody = buildApiRequestBody();
+      const submissionResponse = await postImmunityData(requestBody);
+      const authoritativeAssessment =
+        readAuthoritativeImmunityAssessment(submissionResponse) ?? assessment;
+      const authoritativeMeta = getImmunityMeta(authoritativeAssessment.level);
       const payload = buildPayload();
 
       const summary = {
-        totalQuestions: QUESTIONS.length,
+        totalQuestions,
         totalAnswered,
-        averageScore: speedometerValue,
-        immunityLabel: getImmunityLabel(speedometerValue).label,
+        weightedScore: authoritativeAssessment.immunityScore,
+        roundedScore: authoritativeAssessment.roundedScore,
+        baseWeightedScore: authoritativeAssessment.baseWeightedScore,
+        penaltyApplied: authoritativeAssessment.penaltyApplied,
+        immunityLabel: authoritativeAssessment.level,
+        systemScores: authoritativeAssessment.systemScores,
+        weakestSystem: authoritativeAssessment.weakestSystem,
+        strongestSystem: authoritativeAssessment.strongestSystem,
+        hormonalParameterKeyUsed: authoritativeAssessment.hormonalParameterKeyUsed,
         completionPercent: progressPct,
         submittedAt: new Date().toISOString(),
       };
 
       const speedometer = {
-        score: speedometerValue,
+        score: authoritativeAssessment.immunityScore,
         outOf: 10,
-        label: getImmunityLabel(speedometerValue).label,
-        color: getImmunityLabel(speedometerValue).color,
-        icon: getImmunityLabel(speedometerValue).icon,
-        percentage: Math.round((speedometerValue / 10) * 100),
+        roundedScore: authoritativeAssessment.roundedScore,
+        label: authoritativeAssessment.level,
+        color: authoritativeMeta.color,
+        icon: authoritativeMeta.icon,
+        percentage: Math.round((authoritativeAssessment.immunityScore / 10) * 100),
       };
-
-      const requestBody = buildApiRequestBody();
-
-      await postImmunityData(requestBody);
 
       router.push(
         {
@@ -692,7 +749,7 @@ export default function DailyImmunityCheck() {
         </View>
         <Text className="text-right text-green-700 mt-1">{progressPct}%</Text>
       </View>
-        {QUESTIONS.map((q, idx) => (
+        {visibleQuestions.map((q, idx) => (
           <View key={q.id} className="mt-6">
             <Text className="font-bold text-green-800 mb-2">
               {idx + 1}. {q.title}
@@ -748,7 +805,7 @@ export default function DailyImmunityCheck() {
           </View>
 
           <Text className="text-green-100 text-xs mt-1">
-            {totalAnswered} of {QUESTIONS.length} questions answered
+            {totalAnswered} of {totalQuestions} questions answered
           </Text>
         </TouchableOpacity>
       </ScrollView>
