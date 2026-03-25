@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SvgHeader from '../../components/Clipperbg';
+import { usePatientProfile } from '../../hooks/use-patient-profile';
 
 /* ===== ASSETS ===== */
 const profileImg = require('../../assets/images/profile.png');
@@ -17,6 +18,8 @@ const badge = require('../../assets/images/badge.png');
 const HEADER_HEIGHT = 230;
 
 export default function WeeklyImmunityReport() {
+  const { patientName, patientPhoto } = usePatientProfile();
+
   return (
     <View className="flex-1 bg-[#f4f7fb]">
       {/* ===== HEADER ===== */}
@@ -57,7 +60,7 @@ export default function WeeklyImmunityReport() {
               </Text>
 
               <Text className="text-white text-[20px] font-bold mb-2">
-                Sachin Biswas
+                {patientName}
               </Text>
 
               <View className="bg-white px-3 py-1 rounded-full self-start">
@@ -68,7 +71,7 @@ export default function WeeklyImmunityReport() {
             </View>
 
             <Image
-              source={profileImg}
+              source={patientPhoto ? { uri: patientPhoto } : profileImg}
               className="w-20 h-20 rounded-full ml-4"
               resizeMode="cover"
             />

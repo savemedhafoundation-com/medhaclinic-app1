@@ -3,6 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "node ./scripts/patch-expo-android-adb.js",
+    "fix:expo-android-adb": "node ./scripts/patch-expo-android-adb.js",
     "start": "expo start",
     "start:go": "expo start --go",
     "start:dev": "expo start --dev-client",

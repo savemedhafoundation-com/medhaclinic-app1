@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import SvgHeader from "../../components/Clipperbg";
+import { usePatientProfile } from "../../hooks/use-patient-profile";
 import {
   buildAndStoreWeeklyReport,
   type WeeklyReportStatus,
@@ -134,6 +135,8 @@ const labelMap: Record<string, string> = {
   hormonalHealth: "Hormonal Health",
 };
 
+const defaultProfileImage = require("../../assets/images/profile.png");
+
 // ---------------- TYPES ----------------
 
 type ScoreDifferenceItem = {
@@ -217,7 +220,8 @@ const HealthCard = ({ item }: { item: any }) => (
 
 // ---------------- MAIN SCREEN ----------------
 
-export default function WeeklyReportStatus() {
+export default function WeeklyReportScreen() {
+  const { patientName, patientPhoto } = usePatientProfile();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<WeeklyReportStatus | null>(null);
   const [error, setError] = useState("");
@@ -248,9 +252,10 @@ export default function WeeklyReportStatus() {
     if (!reportData?.scoreDifference) return [];
 
     return (
-      Object.entries(reportData.scoreDifference) as Array<
-        [keyof typeof reportData.scoreDifference, ScoreDifferenceItem]
-      >
+      Object.entries(reportData.scoreDifference) as [
+        keyof typeof reportData.scoreDifference,
+        ScoreDifferenceItem,
+      ][]
     ).map(([key, item]) => {
       const meta = getStatusMeta(item.current);
 
@@ -352,7 +357,7 @@ export default function WeeklyReportStatus() {
 
           <View className="flex-row items-center mt-2">
             <Image
-              source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+              source={patientPhoto ? { uri: patientPhoto } : defaultProfileImage}
               style={{
                 width: 64,
                 height: 64,
@@ -364,6 +369,12 @@ export default function WeeklyReportStatus() {
             <View className="ml-4 flex-1">
               <Text className="text-white text-[20px] font-extrabold">
                 Weekly Summary
+              </Text>
+              <Text
+                className="text-green-100 text-[14px] mt-1 font-semibold"
+                numberOfLines={1}
+              >
+                {patientName}
               </Text>
               <View className="mt-1">
                 <Text className="text-green-200 text-[13px]">
