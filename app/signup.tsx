@@ -41,7 +41,7 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-type HeightUnit = 'cm' | 'inch';
+type HeightUnit = 'cm' | 'foot';
 
 function formatNormalizedNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
@@ -54,7 +54,7 @@ function normalizeHeightToCm(value: string, unit: HeightUnit) {
     throw new Error('Enter a valid height.');
   }
 
-  const heightInCm = unit === 'inch' ? parsedHeight * 2.54 : parsedHeight;
+  const heightInCm = unit === 'foot' ? parsedHeight * 30.48 : parsedHeight;
   return formatNormalizedNumber(heightInCm);
 }
 
@@ -301,9 +301,9 @@ export default function SignupScreen() {
                 />
 
                 <UnitChip
-                  label="inch"
-                  selected={heightUnit === 'inch'}
-                  onPress={() => setHeightUnit('inch')}
+                  label="foot"
+                  selected={heightUnit === 'foot'}
+                  onPress={() => setHeightUnit('foot')}
                 />
               </View>
 
@@ -312,7 +312,7 @@ export default function SignupScreen() {
                 <Input
                   small
                   label={`Height * (${heightUnit})`}
-                  placeholder={heightUnit === 'cm' ? 'Enter cm' : 'Enter inches'}
+                  placeholder={heightUnit === 'cm' ? 'Enter cm' : 'Enter feet'}
                   value={height}
                   onChangeText={setHeight}
                   keyboardType="numeric"

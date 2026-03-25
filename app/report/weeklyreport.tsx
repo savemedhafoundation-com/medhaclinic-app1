@@ -20,36 +20,29 @@ import {
 // ---------------- HELPERS ----------------
 
 const getStatusMeta = (score: number) => {
-  if (score >= 8.5) {
+  if (score >= 8.2) {
     return {
       status: "Excellent",
       statusColor: "#16a34a",
       iconBg: "#dcfce7",
     };
   }
-  if (score >= 7) {
+  if (score >= 6.8) {
     return {
-      status: "Strong",
+      status: "Good",
       statusColor: "#15803d",
       iconBg: "#dcfce7",
     };
   }
-  if (score >= 5) {
+  if (score >= 5.2) {
     return {
-      status: "Good",
+      status: "Moderate",
       statusColor: "#ca8a04",
       iconBg: "#fef9c3",
     };
   }
-  if (score >= 3) {
-    return {
-      status: "Needs Attention",
-      statusColor: "#2563eb",
-      iconBg: "#dbeafe",
-    };
-  }
   return {
-    status: "Critical",
+    status: "Low",
     statusColor: "#dc2626",
     iconBg: "#fee2e2",
   };
@@ -82,8 +75,8 @@ const getScoreDescription = (label: string, score: number, trend: string) => {
       : "remained stable.";
 
   switch (label) {
-    case "Physical Energy":
-      return `Your physical energy ${trendText}`;
+    case "Energy & Recovery":
+      return `Your energy and recovery pattern ${trendText}`;
     case "Digestive Health":
       return `Your digestive condition ${trendText}`;
     case "Cardiovascular":
@@ -127,7 +120,7 @@ const iconMap: Record<string, any> = {
 // ---------------- SCORE LABEL MAP ----------------
 
 const labelMap: Record<string, string> = {
-  energyLevels: "Physical Energy",
+  energyLevels: "Energy & Recovery",
   digestiveHealth: "Digestive Health",
   cardiovascular: "Cardiovascular",
   immuneResponse: "Immune Response",
@@ -378,10 +371,10 @@ export default function WeeklyReportScreen() {
               </Text>
               <View className="mt-1">
                 <Text className="text-green-200 text-[13px]">
-                  Current Overall Score – {reportData.overall.current.toFixed(1)}
+                  Current Overall Score - {reportData.overall.current.toFixed(1)}
                 </Text>
                 <Text className="text-green-200 text-[13px] mt-1">
-                  Previous Overall Score – {reportData.overall.previous.toFixed(1)}
+                  Previous Overall Score - {reportData.overall.previous.toFixed(1)}
                 </Text>
               </View>
             </View>

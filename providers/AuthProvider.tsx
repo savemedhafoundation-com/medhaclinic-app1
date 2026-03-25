@@ -96,6 +96,8 @@ async function persistLocalProfile(profile: AuthUserProfile) {
 
   const cachedFullName =
     typeof existingData.fullName === 'string' ? existingData.fullName.trim() : '';
+  const cachedEmail =
+    typeof existingData.email === 'string' ? existingData.email.trim() : '';
   const cachedPhotoURL =
     typeof existingData.photoURL === 'string' ? existingData.photoURL : null;
 
@@ -104,7 +106,7 @@ async function persistLocalProfile(profile: AuthUserProfile) {
     JSON.stringify({
       ...existingData,
       fullName: cachedFullName || profile.name,
-      email: profile.email,
+      email: profile.email || cachedEmail,
       photoURL: profile.photoURL ?? cachedPhotoURL,
       lastLogin: new Date().toISOString(),
     })

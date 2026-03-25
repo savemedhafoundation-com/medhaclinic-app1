@@ -24,17 +24,12 @@ const CATEGORY_MAP: Record<
   CategoryKey,
   Array<keyof DailyImmunitySubmission>
 > = {
-  energyLevels: ['physicalEnergy'],
-  digestiveHealth: ['appetite', 'digestionComfort', 'burningPain', 'bloatingGas'],
-  cardiovascular: ['bloodPressure', 'swelling'],
-  immuneResponse: ['fever', 'infection', 'immunityScore'],
+  energyLevels: ['physicalEnergy', 'sleepHours'],
+  digestiveHealth: ['appetite', 'digestionComfort', 'bloatingGas'],
+  cardiovascular: ['bloodPressure'],
+  immuneResponse: ['fever', 'infection', 'swelling'],
   respiratory: ['breathingProblem'],
-  hormonalHealth: [
-    'menstrualRegularity',
-    'libidoStability',
-    'hairHealth',
-    'sleepHours',
-  ],
+  hormonalHealth: ['menstrualRegularity', 'libidoStability'],
 };
 
 function startOfDay(date: Date) {
