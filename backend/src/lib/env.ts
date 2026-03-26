@@ -38,8 +38,47 @@ const hasSplitCredential =
   !!parsed.FIREBASE_PRIVATE_KEY;
 const hasCredentialFile = !!parsed.GOOGLE_APPLICATION_CREDENTIALS;
 
+type FirebaseAdminCredentialSource = 'service_account_json' | 'split_env' | 'credential_file' | 'none';
+
 export function hasFirebaseAdminConfig() {
   return hasJsonCredential || hasSplitCredential || hasCredentialFile;
+}
+
+export function getFirebaseAdminCredentialSource(): FirebaseAdminCredentialSource {
+  if (hasJsonCredential) {
+    return 'service_account_json';
+  }
+
+  if (hasSplitCredential) {
+    return 'split_env';
+  }
+
+  if (hasCredentialFile) {
+    return 'credential_file';
+  }
+
+  return 'none';
+}
+
+export function getFirebaseAdminProjectId() {
+  if (parsed.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      const serviceAccount = JSON.parse(parsed.FIREBASE_SERVICE_ACCOUNT_JSON) as {
+        project_id?: string;
+        projectId?: string;
+      };
+
+      return serviceAccount.projectId ?? serviceAccount.project_id ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  if (parsed.FIREBASE_PROJECT_ID) {
+    return parsed.FIREBASE_PROJECT_ID;
+  }
+
+  return null;
 }
 
 export const env = parsed;

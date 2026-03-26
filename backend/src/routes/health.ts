@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 
-import { env, hasFirebaseAdminConfig } from '../lib/env.js';
+import {
+  env,
+  getFirebaseAdminCredentialSource,
+  getFirebaseAdminProjectId,
+  hasFirebaseAdminConfig,
+} from '../lib/env.js';
 
 const healthRouter = new Hono();
 
@@ -11,6 +16,8 @@ healthRouter.get('/', c =>
     status: 'ok',
     timestamp: new Date().toISOString(),
     firebaseAdminConfigured: hasFirebaseAdminConfig(),
+    firebaseAdminCredentialSource: getFirebaseAdminCredentialSource(),
+    firebaseAdminProjectId: getFirebaseAdminProjectId(),
     openaiConfigured: Boolean(env.OPENAI_API_KEY),
   })
 );
