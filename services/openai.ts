@@ -1,7 +1,15 @@
 import type { AppAuthUser } from '../firebase/authClient.types';
-import { hasConfiguredBackend, requestBackend } from './backend';
+import {
+  BackendRequestError,
+  hasConfiguredBackend,
+  requestBackend,
+} from './backend';
 
 const WELLNESS_API_URL = 'https://medhaclinic-backend.vercel.app';
+
+function shouldUsePublicAiSummaryRoute(error: unknown) {
+  return error instanceof BackendRequestError && error.status === 401;
+}
 
 export async function fetchImmunityResult(
   promptText: string,
@@ -12,14 +20,35 @@ export async function fetchImmunityResult(
   }
 
   if (hasConfiguredBackend()) {
-    const data = await requestBackend<{ result?: string }>(
-      '/v1/ai/immunity-summary',
-      {
-        method: 'POST',
-        body: JSON.stringify({ prompt: promptText }),
-        authUser,
+    let data: { result?: string } | null = null;
+
+    if (authUser) {
+      try {
+        data = await requestBackend<{ result?: string }>(
+          '/v1/ai/immunity-summary',
+          {
+            method: 'POST',
+            body: JSON.stringify({ prompt: promptText }),
+            authUser,
+          }
+        );
+      } catch (error) {
+        if (!shouldUsePublicAiSummaryRoute(error)) {
+          throw error;
+        }
       }
-    );
+    }
+
+    if (!data) {
+      data = await requestBackend<{ result?: string }>(
+        '/v1/ai/immunity-summary-public',
+        {
+          method: 'POST',
+          body: JSON.stringify({ prompt: promptText }),
+          authRequired: false,
+        }
+      );
+    }
 
     if (!data.result) {
       throw new Error('Invalid response from AI server');

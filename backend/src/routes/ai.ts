@@ -8,12 +8,12 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthEnv } from '../middleware/auth.js';
 
 const legacyPromptSchema = z.object({
-  prompt: z.string().trim().min(1),
+  prompt: z.string().trim().min(1).max(6000),
   sourceSubmissionId: z.string().trim().optional(),
 });
 
 const summarySchema = z.object({
-  prompt: z.string().trim().min(1).optional(),
+  prompt: z.string().trim().min(1).max(6000).optional(),
   summary: z.record(z.any()).optional(),
   answers: z.array(z.record(z.any())).optional(),
   immunityScore: z.coerce.number().optional(),
@@ -41,8 +41,11 @@ function buildPrompt(input: z.infer<typeof summarySchema>) {
 }
 
 async function runSummary(
-  c: Context<AuthEnv>,
-  body: unknown
+  c: Context,
+  body: unknown,
+  options: {
+    storeForUserId?: string | null;
+  } = {}
 ) {
   const parsed = summarySchema.safeParse(body);
 
@@ -76,17 +79,18 @@ async function runSummary(
   });
 
   const result = response.output_text.trim();
-  const dbUser = c.get('dbUser');
 
-  await prisma.aiSummary.create({
-    data: {
-      userId: dbUser.id,
-      sourceSubmissionId: parsed.data.sourceSubmissionId,
-      promptJson: parsed.data,
-      resultText: result,
-      model: env.OPENAI_MODEL,
-    },
-  });
+  if (options.storeForUserId) {
+    await prisma.aiSummary.create({
+      data: {
+        userId: options.storeForUserId,
+        sourceSubmissionId: parsed.data.sourceSubmissionId,
+        promptJson: parsed.data,
+        resultText: result,
+        model: env.OPENAI_MODEL,
+      },
+    });
+  }
 
   return c.json({
     success: true,
@@ -94,9 +98,18 @@ async function runSummary(
   });
 }
 
+const publicAiRouter = new Hono();
+publicAiRouter.post('/immunity-summary-public', async c =>
+  runSummary(c, await c.req.json())
+);
+
 const aiRouter = new Hono<AuthEnv>();
 aiRouter.use('*', requireAuth);
-aiRouter.post('/immunity-summary', async c => runSummary(c, await c.req.json()));
+aiRouter.post('/immunity-summary', async c =>
+  runSummary(c, await c.req.json(), {
+    storeForUserId: c.get('dbUser').id,
+  })
+);
 
 const legacyAiRouter = new Hono<AuthEnv>();
 legacyAiRouter.use('*', requireAuth);
@@ -115,8 +128,11 @@ legacyAiRouter.post('/chat', async c => {
     );
   }
 
-  return runSummary(c, parsed.data);
+  return runSummary(c, parsed.data, {
+    storeForUserId: c.get('dbUser').id,
+  });
 });
 
+export { publicAiRouter };
 export { legacyAiRouter };
 export default aiRouter;
