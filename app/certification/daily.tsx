@@ -43,6 +43,9 @@ const initialState: State = {
   error: false,
 };
 
+
+
+
 const defaultProfileImage = require('../../assets/images/profile.png');
 
 function reportReducer(state: State, action: Action): State {
