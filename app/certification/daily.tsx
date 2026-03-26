@@ -1,4 +1,13 @@
-import React, { useEffect, useMemo, useReducer } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useReducer,
+} from 'react';
+
+import {
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
 import {
   ActivityIndicator,
   Image,
@@ -8,8 +17,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
 
 import SvgHeader from '../../components/Clipperbg';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
@@ -20,6 +29,9 @@ type State = {
   loading: boolean;
   error: boolean;
 };
+
+
+
 
 type Action =
   | { type: 'SET_RESULT'; paragraphs: string[] }
