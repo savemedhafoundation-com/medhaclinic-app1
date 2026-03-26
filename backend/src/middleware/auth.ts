@@ -3,6 +3,7 @@ import type { DecodedIdToken } from 'firebase-admin/auth';
 import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
+import { getFirebaseAdminProjectId } from '../lib/env.js';
 import { getAdminAuth } from '../lib/firebase-admin.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -19,6 +20,48 @@ function getBearerToken(c: Context) {
   const header = c.req.header('authorization') || '';
   const match = header.match(/^Bearer\s+(.+)$/i);
   return match?.[1] ?? null;
+}
+
+function decodeJwtPayload(token: string) {
+  const payload = token.split('.')[1];
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      '='
+    );
+
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf8')) as {
+      aud?: unknown;
+      iss?: unknown;
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getTokenProjectId(token: string) {
+  const claims = decodeJwtPayload(token);
+
+  if (!claims) {
+    return null;
+  }
+
+  if (typeof claims.aud === 'string' && claims.aud.trim()) {
+    return claims.aud;
+  }
+
+  if (typeof claims.iss === 'string') {
+    const match = claims.iss.match(/^https:\/\/securetoken\.google\.com\/(.+)$/);
+    return match?.[1] ?? null;
+  }
+
+  return null;
 }
 
 export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
@@ -83,7 +126,28 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
 
       await next();
     } catch (error) {
-      console.error('Firebase auth verification failed:', error);
+      const adminProjectId = getFirebaseAdminProjectId();
+      const tokenProjectId = getTokenProjectId(token);
+
+      console.error('Firebase auth verification failed:', {
+        error,
+        tokenProjectId,
+        adminProjectId,
+      });
+
+      if (
+        tokenProjectId &&
+        adminProjectId &&
+        tokenProjectId !== adminProjectId
+      ) {
+        return c.json(
+          {
+            success: false,
+            message: `Firebase token project mismatch. The app token is for "${tokenProjectId}" but the backend is configured for "${adminProjectId}". Update the Vercel Firebase Admin env vars to the same Firebase project as the app.`,
+          },
+          401
+        );
+      }
 
       return c.json(
         {

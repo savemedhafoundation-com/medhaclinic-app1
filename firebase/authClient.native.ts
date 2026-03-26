@@ -32,11 +32,15 @@ import { auth } from './firebaseConfig';
 
 const nativeAuth = getNativeAuth(getNativeApp());
 let pendingDataConnectAuthSync: Promise<void> | null = null;
+let pendingWebSdkSignIn: Promise<void> | null = null;
+let suppressWebSdkProxyInjection = false;
 let lastKnownNativeUser: NativeUser | null = nativeAuth.currentUser;
 
 type NativeWrappedAppAuthUser = AppAuthUser & {
   __nativeUser?: NativeUser;
 };
+
+const NATIVE_WEB_PROXY_MARKER = '__medhaNativeWebSdkProxyUser';
 
 function getFirebaseErrorCode(error: unknown) {
   if (
@@ -103,6 +107,7 @@ function buildProxyUser(nativeUser: NativeUser | null) {
   if (!nativeUser) return null;
 
   return {
+    [NATIVE_WEB_PROXY_MARKER]: true,
     uid: nativeUser.uid,
     phoneNumber: nativeUser.phoneNumber ?? null,
     displayName: nativeUser.displayName ?? null,
@@ -130,9 +135,74 @@ function buildProxyUser(nativeUser: NativeUser | null) {
     getIdTokenResult: (forceRefresh?: boolean) =>
       getNativeIdTokenResult(nativeUser, forceRefresh ?? false),
     reload: () => reloadNativeUser(nativeUser),
+    _startProactiveRefresh: () => undefined,
+    _stopProactiveRefresh: () => undefined,
     toJSON: () => ({ uid: nativeUser.uid }),
     delete: () => deleteNativeUser(nativeUser),
   };
+}
+
+function getPropertyDescriptor(
+  target: object,
+  key: PropertyKey
+): PropertyDescriptor | undefined {
+  let current: object | null = target;
+
+  while (current) {
+    const descriptor = Object.getOwnPropertyDescriptor(current, key);
+
+    if (descriptor) {
+      return descriptor;
+    }
+
+    current = Object.getPrototypeOf(current);
+  }
+
+  return undefined;
+}
+
+function trySetProperty(
+  target: object,
+  key: 'currentUser' | '_currentUser',
+  value: unknown
+) {
+  const descriptor = getPropertyDescriptor(target, key);
+
+  if (!descriptor) {
+    try {
+      Object.defineProperty(target, key, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof descriptor.set === 'function') {
+    descriptor.set.call(target, value);
+    return true;
+  }
+
+  if ('writable' in descriptor && descriptor.writable) {
+    Reflect.set(target as Record<string, unknown>, key, value);
+    return true;
+  }
+
+  if (descriptor.configurable) {
+    Object.defineProperty(target, key, {
+      configurable: descriptor.configurable,
+      enumerable: descriptor.enumerable ?? true,
+      writable: true,
+      value,
+    });
+    return true;
+  }
+
+  return false;
 }
 
 function setWebSdkCurrentUser(nextUser: unknown) {
@@ -141,20 +211,32 @@ function setWebSdkCurrentUser(nextUser: unknown) {
     _currentUser?: unknown;
   };
 
-  try {
-    webAuth.currentUser = nextUser;
-  } catch {
-    Object.defineProperty(webAuth, 'currentUser', {
-      configurable: true,
-      enumerable: true,
-      writable: true,
-      value: nextUser,
-    });
+  const currentUserUpdated = trySetProperty(webAuth, 'currentUser', nextUser);
+
+  if (!currentUserUpdated) {
+    throw new TypeError('Unable to sync Firebase Web SDK currentUser proxy.');
   }
 
   if ('_currentUser' in webAuth) {
-    webAuth._currentUser = nextUser;
+    trySetProperty(webAuth, '_currentUser', nextUser);
   }
+}
+
+function trackPendingWebSdkSignIn<T>(work: Promise<T>) {
+  const pendingTask = work.then(
+    () => undefined,
+    () => undefined
+  );
+
+  pendingWebSdkSignIn = pendingTask;
+
+  void pendingTask.finally(() => {
+    if (pendingWebSdkSignIn === pendingTask) {
+      pendingWebSdkSignIn = null;
+    }
+  });
+
+  return work;
 }
 
 function resolveNativeUserCandidate(currentUser?: AppAuthUser | null) {
@@ -180,6 +262,14 @@ function syncWebSdkFromNativeUser(
 
     if (!nativeUser) {
       setWebSdkCurrentUser(null);
+      return;
+    }
+
+    if (suppressWebSdkProxyInjection) {
+      return;
+    }
+
+    if (pendingWebSdkSignIn) {
       return;
     }
 
@@ -235,6 +325,10 @@ async function ensureDataConnectAuthReadyInternal(
 ) {
   if (waitForPending && pendingDataConnectAuthSync) {
     await pendingDataConnectAuthSync;
+  }
+
+  if (waitForPending && pendingWebSdkSignIn) {
+    await pendingWebSdkSignIn;
   }
 
   const expectedUid = currentUser?.uid ?? null;
@@ -326,24 +420,29 @@ export function subscribeToAuthChanges(
 
 export async function signInWithGoogleIdToken(idToken: string) {
   return trackDataConnectAuthSync(async () => {
+    suppressWebSdkProxyInjection = true;
     const credential = NativeGoogleAuthProvider.credential(idToken);
-    const userCredential = await signInWithNativeCredential(
-      nativeAuth,
-      credential
-    );
-    lastKnownNativeUser = userCredential.user;
-
     try {
-      await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+      const userCredential = await signInWithNativeCredential(
+        nativeAuth,
+        credential
+      );
+      lastKnownNativeUser = userCredential.user;
+
+      await trackPendingWebSdkSignIn(
+        signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
+      );
+
+      return {
+        user: toAppAuthUser(userCredential.user)!,
+      } satisfies AppAuthUserCredential;
     } catch (error) {
       lastKnownNativeUser = null;
       await signOutFromNativeAuth(nativeAuth).catch(() => null);
       throw error;
+    } finally {
+      suppressWebSdkProxyInjection = false;
     }
-
-    return {
-      user: toAppAuthUser(userCredential.user)!,
-    } satisfies AppAuthUserCredential;
   });
 }
 
@@ -420,6 +519,8 @@ export async function signOutFromAuth() {
   syncWebSdkFromNativeUser(null);
   await Promise.allSettled([signOutFromNativeAuth(nativeAuth), auth.signOut()]);
   pendingDataConnectAuthSync = null;
+  pendingWebSdkSignIn = null;
+  suppressWebSdkProxyInjection = false;
   lastKnownNativeUser = null;
 }
 
