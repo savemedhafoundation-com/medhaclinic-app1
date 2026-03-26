@@ -1,17 +1,25 @@
+import type { AppAuthUser } from '../firebase/authClient.types';
 import { hasConfiguredBackend, requestBackend } from './backend';
 
 const WELLNESS_API_URL = 'https://medhaclinic-backend.vercel.app';
 
-export async function fetchImmunityResult(promptText: string) {
+export async function fetchImmunityResult(
+  promptText: string,
+  authUser?: AppAuthUser | null
+) {
   if (!promptText) {
     throw new Error('Prompt is empty or undefined');
   }
 
   if (hasConfiguredBackend()) {
-    const data = await requestBackend<{ result?: string }>('/api/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({ prompt: promptText }),
-    });
+    const data = await requestBackend<{ result?: string }>(
+      '/v1/ai/immunity-summary',
+      {
+        method: 'POST',
+        body: JSON.stringify({ prompt: promptText }),
+        authUser,
+      }
+    );
 
     if (!data.result) {
       throw new Error('Invalid response from AI server');

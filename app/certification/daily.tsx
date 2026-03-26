@@ -22,12 +22,15 @@ import { Ionicons } from '@expo/vector-icons';
 
 import SvgHeader from '../../components/Clipperbg';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
+import { useAuth } from '../../providers/AuthProvider';
 import { fetchImmunityResult } from '../../services/openai';
 
 type State = {
   paragraphs: string[];
   loading: boolean;
   error: boolean;
+  source: 'ai' | 'fallback' | null;
+  errorMessage: string | null;
 };
 
 
@@ -35,12 +38,14 @@ type State = {
 
 type Action =
   | { type: 'SET_RESULT'; paragraphs: string[] }
-  | { type: 'SET_ERROR' };
+  | { type: 'SET_ERROR'; message: string };
 
 const initialState: State = {
   paragraphs: [],
   loading: true,
   error: false,
+  source: null,
+  errorMessage: null,
 };
 
 
@@ -51,11 +56,19 @@ const defaultProfileImage = require('../../assets/images/profile.png');
 function reportReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_RESULT':
-      return { paragraphs: action.paragraphs, loading: false, error: false };
+      return {
+        paragraphs: action.paragraphs,
+        loading: false,
+        error: false,
+        source: 'ai',
+        errorMessage: null,
+      };
     case 'SET_ERROR':
       return {
         loading: false,
         error: true,
+        source: 'fallback',
+        errorMessage: action.message,
         paragraphs: [
           'Your immunity indicators reflect a stable and balanced internal health state.',
           'Daily physiological functions are operating within healthy ranges.',
@@ -70,6 +83,7 @@ function reportReducer(state: State, action: Action): State {
 export default function DailyImmunityReport() {
   const { data, summary, speedometer } = useLocalSearchParams();
   const [state, dispatch] = useReducer(reportReducer, initialState);
+  const { user } = useAuth();
   const { patientName, patientPhoto, patientAge, patientGender } =
     usePatientProfile();
 
@@ -145,7 +159,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
 
     async function generateReport() {
       try {
-        const aiText = await fetchImmunityResult(prompt);
+        const aiText = await fetchImmunityResult(prompt, user);
         const cleaned = aiText
           .split('\n')
           .map((paragraph: string) => paragraph.trim())
@@ -153,13 +167,19 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
           .slice(0, 3);
 
         dispatch({ type: 'SET_RESULT', paragraphs: cleaned });
-      } catch {
-        dispatch({ type: 'SET_ERROR' });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Unknown AI summary error.';
+
+        console.log('[DailyReport] AI summary error:', error);
+        dispatch({ type: 'SET_ERROR', message });
       }
     }
 
     void generateReport();
-  }, [prompt]);
+  }, [prompt, user]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#f7fff6]">
@@ -286,19 +306,43 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
               </Text>
             </View>
           ) : (
-            state.paragraphs.map((paragraph, index) => (
-              <View key={index} className="flex-row mb-4">
-                <Ionicons
-                  name={state.error ? 'alert-circle' : 'checkmark-circle'}
-                  size={22}
-                  color="#16a34a"
-                  style={{ marginTop: 2 }}
-                />
-                <Text className="text-[#14532d] text-[16px] ml-3 flex-1 leading-[24px]">
-                  {paragraph}
+            <>
+              <View
+                className={`mb-4 self-start rounded-full px-3 py-1 ${
+                  state.source === 'ai' ? 'bg-[#bbf7d0]' : 'bg-[#fef3c7]'
+                }`}
+              >
+                <Text
+                  className={`text-[12px] font-semibold ${
+                    state.source === 'ai' ? 'text-[#166534]' : 'text-[#92400e]'
+                  }`}
+                >
+                  {state.source === 'ai'
+                    ? 'Source: AI-generated summary'
+                    : 'Source: Template fallback summary'}
                 </Text>
               </View>
-            ))
+
+              {state.errorMessage ? (
+                <Text className="mb-4 text-[12px] leading-[18px] text-[#92400e]">
+                  AI request failed: {state.errorMessage}
+                </Text>
+              ) : null}
+
+              {state.paragraphs.map((paragraph, index) => (
+                <View key={index} className="flex-row mb-4">
+                  <Ionicons
+                    name={state.error ? 'alert-circle' : 'checkmark-circle'}
+                    size={22}
+                    color="#16a34a"
+                    style={{ marginTop: 2 }}
+                  />
+                  <Text className="text-[#14532d] text-[16px] ml-3 flex-1 leading-[24px]">
+                    {paragraph}
+                  </Text>
+                </View>
+              ))}
+            </>
           )}
         </View>
 

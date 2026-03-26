@@ -33,7 +33,11 @@ import type {
   ImmunityAssessmentResult,
   SystemScoreKey,
 } from './immunityScoring';
-import { hasConfiguredBackend, requestBackend } from './backend';
+import {
+  hasConfiguredBackend,
+  requestBackend,
+  shouldFallbackToDataConnect,
+} from './backend';
 
 export type HealthProfileInput = {
   fullName: string;
@@ -119,6 +123,16 @@ const CATEGORY_MAP: Record<CategoryKey, (keyof DailySubmission)[]> = {
   respiratory: ['breathingProblem'],
   hormonalHealth: ['menstrualRegularity', 'libidoStability'],
 };
+
+function resolveSignedInUser(authUser?: AppAuthUser | null) {
+  const currentAuthUser = getCurrentAuthUser();
+
+  if (authUser && currentAuthUser && authUser.uid === currentAuthUser.uid) {
+    return currentAuthUser;
+  }
+
+  return currentAuthUser ?? authUser ?? null;
+}
 
 function isAssessmentSystemSummary(value: unknown): value is AssessmentSystemSummary {
   if (value === null) {
@@ -419,38 +433,62 @@ async function executeDataConnectMutationDirect<T, TVariables extends object>(
   variables: TVariables,
   authUser?: AppAuthUser | null
 ) {
-  const signedInUser = authUser ?? getCurrentAuthUser();
+  let signedInUser = resolveSignedInUser(authUser);
 
   if (!signedInUser) {
     throw new Error('Please sign in again before submitting your daily immunity check.');
   }
 
-  const token = await signedInUser.getIdToken();
   const connectorPath = getDataConnectConnectorPath();
-  const response = await fetch(getDataConnectMutationUrl(), {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-Firebase-Auth-Token': token,
-      'x-firebase-gmpid': firebaseConfig.appId,
-    },
-    body: JSON.stringify({
-      name: connectorPath,
-      operationName,
-      variables,
-    }),
-  });
+  async function performRequest(forceRefreshToken = false) {
+    signedInUser = resolveSignedInUser(signedInUser);
 
-  const responseText = await response.text();
-  let payload: unknown = null;
-
-  if (responseText) {
-    try {
-      payload = JSON.parse(responseText) as unknown;
-    } catch {
-      payload = responseText;
+    if (!signedInUser) {
+      throw new Error(
+        'Please sign in again before submitting your daily immunity check.'
+      );
     }
+
+    const token = await signedInUser.getIdToken(forceRefreshToken);
+
+    return fetch(getDataConnectMutationUrl(), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Firebase-Auth-Token': token,
+        'x-firebase-gmpid': firebaseConfig.appId,
+      },
+      body: JSON.stringify({
+        name: connectorPath,
+        operationName,
+        variables,
+      }),
+    });
+  }
+
+  let response = await performRequest();
+
+  async function readResponsePayload(currentResponse: Response) {
+    const responseText = await currentResponse.text();
+    let payload: unknown = null;
+
+    if (responseText) {
+      try {
+        payload = JSON.parse(responseText) as unknown;
+      } catch {
+        payload = responseText;
+      }
+    }
+
+    return payload;
+  }
+
+  let payload = await readResponsePayload(response);
+
+  if (!response.ok && (response.status === 401 || response.status === 403)) {
+    response = await performRequest(true);
+    payload = await readResponsePayload(response);
   }
 
   if (!response.ok) {
@@ -485,38 +523,60 @@ async function executeDataConnectQueryDirect<
   variables?: TVariables,
   authUser?: AppAuthUser | null
 ) {
-  const signedInUser = authUser ?? getCurrentAuthUser();
+  let signedInUser = resolveSignedInUser(authUser);
 
   if (!signedInUser) {
     throw new Error('Please sign in again before loading your data.');
   }
 
-  const token = await signedInUser.getIdToken();
   const connectorPath = getDataConnectConnectorPath();
-  const response = await fetch(getDataConnectQueryUrl(), {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-Firebase-Auth-Token': token,
-      'x-firebase-gmpid': firebaseConfig.appId,
-    },
-    body: JSON.stringify({
-      name: connectorPath,
-      operationName,
-      variables,
-    }),
-  });
+  async function performRequest(forceRefreshToken = false) {
+    signedInUser = resolveSignedInUser(signedInUser);
 
-  const responseText = await response.text();
-  let payload: unknown = null;
-
-  if (responseText) {
-    try {
-      payload = JSON.parse(responseText) as unknown;
-    } catch {
-      payload = responseText;
+    if (!signedInUser) {
+      throw new Error('Please sign in again before loading your data.');
     }
+
+    const token = await signedInUser.getIdToken(forceRefreshToken);
+
+    return fetch(getDataConnectQueryUrl(), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Firebase-Auth-Token': token,
+        'x-firebase-gmpid': firebaseConfig.appId,
+      },
+      body: JSON.stringify({
+        name: connectorPath,
+        operationName,
+        variables,
+      }),
+    });
+  }
+
+  let response = await performRequest();
+
+  async function readResponsePayload(currentResponse: Response) {
+    const responseText = await currentResponse.text();
+    let payload: unknown = null;
+
+    if (responseText) {
+      try {
+        payload = JSON.parse(responseText) as unknown;
+      } catch {
+        payload = responseText;
+      }
+    }
+
+    return payload;
+  }
+
+  let payload = await readResponsePayload(response);
+
+  if (!response.ok && (response.status === 401 || response.status === 403)) {
+    response = await performRequest(true);
+    payload = await readResponsePayload(response);
   }
 
   if (!response.ok) {
@@ -544,7 +604,7 @@ async function executeDataConnectQueryDirect<
 }
 
 async function ensureDirectCurrentUserRecord(authUser?: AppAuthUser | null) {
-  const signedInUser = authUser ?? getCurrentAuthUser();
+  const signedInUser = resolveSignedInUser(authUser);
 
   if (!signedInUser) {
     throw new Error('Please sign in again before submitting your daily immunity check.');
@@ -560,11 +620,17 @@ async function ensureDirectCurrentUserRecord(authUser?: AppAuthUser | null) {
 
 export async function syncAuthenticatedUser(user: AppAuthUser) {
   if (hasConfiguredBackend()) {
-    await requestBackend('/v1/me', {
-      method: 'GET',
-      authUser: user,
-    });
-    return;
+    try {
+      await requestBackend('/v1/me', {
+        method: 'GET',
+        authUser: user,
+      });
+      return;
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -587,15 +653,21 @@ export async function syncAuthenticatedUser(user: AppAuthUser) {
 
 export async function getCurrentUserData() {
   if (hasConfiguredBackend()) {
-    const response = await requestBackend<{
-      data?: {
-        profile?: Record<string, unknown> | null;
-      } | null;
-    }>('/v1/me');
+    try {
+      const response = await requestBackend<{
+        data?: {
+          profile?: Record<string, unknown> | null;
+        } | null;
+      }>('/v1/me');
 
-    return {
-      user: response.data ?? null,
-    };
+      return {
+        user: response.data ?? null,
+      };
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -617,20 +689,26 @@ export async function getCurrentUserData() {
 
 export async function saveHealthProfile(input: HealthProfileInput) {
   if (hasConfiguredBackend()) {
-    await requestBackend('/v1/me/profile', {
-      method: 'PUT',
-      body: JSON.stringify({
-        fullName: input.fullName || undefined,
-        email: input.email || undefined,
-        gender: input.gender ?? undefined,
-        age: parseOptionalInt(input.age),
-        weightKg: parseOptionalFloat(input.weight),
-        heightCm: parseOptionalFloat(input.height),
-        purpose: input.purpose ?? undefined,
-        address: input.address?.trim() || undefined,
-      }),
-    });
-    return;
+    try {
+      await requestBackend('/v1/me/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          fullName: input.fullName || undefined,
+          email: input.email || undefined,
+          gender: input.gender ?? undefined,
+          age: parseOptionalInt(input.age),
+          weightKg: parseOptionalFloat(input.weight),
+          heightCm: parseOptionalFloat(input.height),
+          purpose: input.purpose ?? undefined,
+          address: input.address?.trim() || undefined,
+        }),
+      });
+      return;
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -694,12 +772,18 @@ export async function saveCurrentUserPhotoUrl(
   }
 
   if (hasConfiguredBackend()) {
-    await requestBackend('/v1/me/photo', {
-      method: 'PUT',
-      body: JSON.stringify({ photoUrl }),
-      authUser: signedInUser,
-    });
-    return;
+    try {
+      await requestBackend('/v1/me/photo', {
+        method: 'PUT',
+        body: JSON.stringify({ photoUrl }),
+        authUser: signedInUser,
+      });
+      return;
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -729,13 +813,20 @@ export async function saveDailyImmunitySubmission(
   authUser?: AppAuthUser | null
 ) {
   if (hasConfiguredBackend()) {
-    return requestBackend<BackendDailyImmunitySubmissionResponse>(
-      '/api/auth/save_daily_immunity',
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
+    try {
+      return await requestBackend<BackendDailyImmunitySubmissionResponse>(
+        '/v1/immunity/daily',
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+          authUser,
+        }
+      );
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
       }
-    );
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -755,15 +846,21 @@ export async function saveDailyImmunitySubmission(
 
 export async function getLatestDailyImmunitySummary() {
   if (hasConfiguredBackend()) {
-    const response = await requestBackend<{
-      data?: {
-        immunityScore?: number;
-        immunityLevel?: string | null;
-        submittedAt?: string | null;
-      } | null;
-    }>('/v1/immunity/latest');
+    try {
+      const response = await requestBackend<{
+        data?: {
+          immunityScore?: number;
+          immunityLevel?: string | null;
+          submittedAt?: string | null;
+        } | null;
+      }>('/v1/immunity/latest');
 
-    return readLatestDailyImmunitySummary(response.data);
+      return readLatestDailyImmunitySummary(response.data);
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
+    }
   }
 
   if (Platform.OS !== 'web') {
@@ -788,18 +885,24 @@ export async function getLatestDailyImmunitySummary() {
 
 export async function buildAndStoreWeeklyReport() {
   if (hasConfiguredBackend()) {
-    const response = await requestBackend<{
-      data?: WeeklyReportStatus;
-    }>('/v1/reports/weekly/generate', {
-      method: 'POST',
-      body: JSON.stringify({}),
-    });
+    try {
+      const response = await requestBackend<{
+        data?: WeeklyReportStatus;
+      }>('/v1/reports/weekly/generate', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
 
-    if (!response.data) {
-      throw new Error('Invalid weekly report response from backend.');
+      if (!response.data) {
+        throw new Error('Invalid weekly report response from backend.');
+      }
+
+      return response.data;
+    } catch (error) {
+      if (!shouldFallbackToDataConnect(error)) {
+        throw error;
+      }
     }
-
-    return response.data;
   }
 
   if (Platform.OS !== 'web') {
