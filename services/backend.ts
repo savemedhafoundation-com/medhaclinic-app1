@@ -6,10 +6,48 @@ const backendBaseUrl = process.env.EXPO_PUBLIC_BACKEND_URL?.trim()?.replace(
   ''
 );
 
+export class BackendRequestError extends Error {
+  status: number | null;
+  path: string;
+  payload: unknown;
+
+  constructor({
+    message,
+    status,
+    path,
+    payload = null,
+  }: {
+    message: string;
+    status: number | null;
+    path: string;
+    payload?: unknown;
+  }) {
+    super(message);
+    this.name = 'BackendRequestError';
+    this.status = status;
+    this.path = path;
+    this.payload = payload;
+  }
+}
+
 type BackendRequestOptions = RequestInit & {
   authRequired?: boolean;
   authUser?: AppAuthUser | null;
 };
+
+function resolveAuthUser(preferredUser?: AppAuthUser | null) {
+  const currentAuthUser = getCurrentAuthUser();
+
+  if (preferredUser && currentAuthUser && preferredUser.uid === currentAuthUser.uid) {
+    return currentAuthUser;
+  }
+
+  return currentAuthUser ?? preferredUser ?? null;
+}
+
+function isInvalidOrExpiredFirebaseTokenMessage(message: string) {
+  return message.trim().toLowerCase() === 'invalid or expired firebase token.';
+}
 
 function getErrorMessage(payload: unknown, fallback: string) {
   if (payload && typeof payload === 'object') {
@@ -36,6 +74,20 @@ export function getConfiguredBackendUrl() {
   return backendBaseUrl ?? null;
 }
 
+export function shouldFallbackToDataConnect(error: unknown) {
+  if (error instanceof BackendRequestError) {
+    return (
+      error.status === null ||
+      error.status === 404 ||
+      error.status >= 500 ||
+      (error.status === 401 &&
+        isInvalidOrExpiredFirebaseTokenMessage(error.message))
+    );
+  }
+
+  return false;
+}
+
 export async function requestBackend<T>(
   path: string,
   options: BackendRequestOptions = {}
@@ -55,21 +107,49 @@ export async function requestBackend<T>(
     headers['Content-Type'] = 'application/json';
   }
 
-  if (options.authRequired !== false) {
-    const authUser = options.authUser ?? getCurrentAuthUser();
+  let authUser = options.authRequired !== false
+    ? resolveAuthUser(options.authUser)
+    : null;
 
-    if (!authUser) {
+  if (options.authRequired !== false && !authUser) {
+    throw new Error('Please sign in before contacting the backend.');
+  }
+
+  async function performFetch(forceRefreshToken = false) {
+    const requestHeaders: Record<string, string> = {
+      ...headers,
+    };
+
+    authUser = options.authRequired !== false ? resolveAuthUser(authUser) : null;
+
+    if (options.authRequired !== false && !authUser) {
       throw new Error('Please sign in before contacting the backend.');
     }
 
-    const token = await authUser.getIdToken();
-    headers.Authorization = `Bearer ${token}`;
+    if (authUser) {
+      const token = await authUser.getIdToken(forceRefreshToken);
+      requestHeaders.Authorization = `Bearer ${token}`;
+    }
+
+    try {
+      return await fetch(`${backendBaseUrl}${path}`, {
+        ...options,
+        headers: requestHeaders,
+      });
+    } catch (error) {
+      throw new BackendRequestError({
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Backend request failed before reaching the server.',
+        status: null,
+        path,
+        payload: error,
+      });
+    }
   }
 
-  const response = await fetch(`${backendBaseUrl}${path}`, {
-    ...options,
-    headers,
-  });
+  let response = await performFetch();
 
   const responseText = await response.text();
   let payload: unknown = null;
@@ -83,12 +163,36 @@ export async function requestBackend<T>(
   }
 
   if (!response.ok) {
-    throw new Error(
-      getErrorMessage(
+    if (response.status === 401 && authUser) {
+      response = await performFetch(true);
+
+      const retryResponseText = await response.text();
+      let retryPayload: unknown = null;
+
+      if (retryResponseText) {
+        try {
+          retryPayload = JSON.parse(retryResponseText);
+        } catch {
+          retryPayload = retryResponseText;
+        }
+      }
+
+      if (response.ok) {
+        return retryPayload as T;
+      }
+
+      payload = retryPayload;
+    }
+
+    throw new BackendRequestError({
+      message: getErrorMessage(
         payload,
         `Backend request failed with status ${response.status}.`
-      )
-    );
+      ),
+      status: response.status,
+      path,
+      payload,
+    });
   }
 
   return payload as T;
