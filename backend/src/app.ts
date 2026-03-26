@@ -26,6 +26,17 @@ app.use(
   })
 );
 
+app.get('/', c =>
+  c.json({
+    success: true,
+    service: 'medhaclinic-backend',
+    message: 'Backend is running. Use /health for a health check.',
+  })
+);
+
+app.get('/favicon.ico', c => c.body(null, 204));
+app.get('/favicon.png', c => c.body(null, 204));
+
 app.route('/health', healthRouter);
 app.route('/v1/me', meRouter);
 app.route('/v1/immunity', immunityRouter);
