@@ -3,6 +3,14 @@ import { z } from 'zod';
 
 config();
 
+function readTrimmedEnv(name: string) {
+  return process.env[name]?.trim();
+}
+
+function readTrimmedMultilineEnv(name: string) {
+  return process.env[name]?.replace(/\\n/g, '\n').trim();
+}
+
 const baseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -20,15 +28,15 @@ const baseEnvSchema = z.object({
 const parsed = baseEnvSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
-  CORS_ORIGIN: process.env.CORS_ORIGIN,
-  DATABASE_URL: process.env.DATABASE_URL,
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  OPENAI_MODEL: process.env.OPENAI_MODEL,
-  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
-  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
-  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
-  GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  CORS_ORIGIN: readTrimmedEnv('CORS_ORIGIN'),
+  DATABASE_URL: readTrimmedEnv('DATABASE_URL'),
+  OPENAI_API_KEY: readTrimmedEnv('OPENAI_API_KEY'),
+  OPENAI_MODEL: readTrimmedEnv('OPENAI_MODEL'),
+  FIREBASE_PROJECT_ID: readTrimmedEnv('FIREBASE_PROJECT_ID'),
+  FIREBASE_CLIENT_EMAIL: readTrimmedEnv('FIREBASE_CLIENT_EMAIL'),
+  FIREBASE_PRIVATE_KEY: readTrimmedMultilineEnv('FIREBASE_PRIVATE_KEY'),
+  FIREBASE_SERVICE_ACCOUNT_JSON: readTrimmedEnv('FIREBASE_SERVICE_ACCOUNT_JSON'),
+  GOOGLE_APPLICATION_CREDENTIALS: readTrimmedEnv('GOOGLE_APPLICATION_CREDENTIALS'),
 });
 
 const hasJsonCredential = !!parsed.FIREBASE_SERVICE_ACCOUNT_JSON;
