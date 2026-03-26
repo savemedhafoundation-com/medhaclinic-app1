@@ -40,6 +40,31 @@ function buildPrompt(input: z.infer<typeof summarySchema>) {
     .join('\n');
 }
 
+function getAiUpstreamFailure(
+  error: unknown
+): { message: string; status: 502 | 504 } {
+  const message =
+    error instanceof Error ? error.message : 'OpenAI request failed.';
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes('timed out') ||
+    normalized.includes('timeout') ||
+    normalized.includes('aborted')
+  ) {
+    return {
+      message:
+        'OpenAI request timed out before Vercel finished the function. Please try again.',
+      status: 504,
+    };
+  }
+
+  return {
+    message,
+    status: 502,
+  };
+}
+
 async function runSummary(
   c: Context,
   body: unknown,
@@ -63,20 +88,37 @@ async function runSummary(
   const prompt = buildPrompt(parsed.data);
   const openai = getOpenAIClient();
 
-  const response = await openai.responses.create({
-    model: env.OPENAI_MODEL,
-    input: [
+  let response;
+
+  try {
+    response = await openai.responses.create({
+      model: env.OPENAI_MODEL,
+      max_output_tokens: 220,
+      input: [
+        {
+          role: 'system',
+          content:
+            'You write short wellness summaries for a health-tracking app. Do not diagnose. Avoid certainty, fear, or emergency language unless explicitly present in the input.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    });
+  } catch (error) {
+    const upstreamFailure = getAiUpstreamFailure(error);
+
+    return c.json(
       {
-        role: 'system',
-        content:
-          'You write short wellness summaries for a health-tracking app. Do not diagnose. Avoid certainty, fear, or emergency language unless explicitly present in the input.',
+        success: false,
+        message: upstreamFailure.message,
       },
       {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  });
+        status: upstreamFailure.status,
+      }
+    );
+  }
 
   const result = response.output_text.trim();
 
