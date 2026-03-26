@@ -74,6 +74,38 @@ The server runs on `http://localhost:4000` by default.
 `GET /health` stays available even before Firebase Admin is configured. It also
 reports whether Firebase Admin and OpenAI are configured.
 
+## Production deploy
+
+This repo now includes a root-level `render.yaml` that provisions:
+
+- a Render web service for `backend/`
+- a managed Render Postgres instance
+- `DATABASE_URL` wired from the database into the service
+- `npm run prisma:deploy` as a pre-deploy migration step
+
+Deploy flow:
+
+1. Push the repo to GitHub/GitLab/Bitbucket.
+2. In Render, create a new Blueprint from the repository.
+3. Approve the `medhaclinic-backend` web service and `medhaclinic-postgres` database.
+4. Provide these required secrets in Render:
+   - `CORS_ORIGIN`
+   - `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - `OPENAI_API_KEY` if you want AI summary/report endpoints enabled
+5. After the first deploy succeeds, set the Expo app's `EXPO_PUBLIC_BACKEND_URL`
+   to your Render backend URL, for example `https://medhaclinic-backend.onrender.com`.
+
+`FIREBASE_SERVICE_ACCOUNT_JSON` is the easiest production Firebase Admin setup:
+paste the downloaded service-account JSON as a single-line JSON string.
+
+The checked-in `backend/prisma/migrations/` folder is what allows Render to run:
+
+```bash
+npm run prisma:deploy
+```
+
+on every deploy instead of trying to infer schema changes at runtime.
+
 ## Auth flow
 
 The mobile app should send:
