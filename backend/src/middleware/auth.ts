@@ -64,6 +64,40 @@ function getTokenProjectId(token: string) {
   return null;
 }
 
+function getFirebaseAuthErrorCode(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    return error.code;
+  }
+
+  return null;
+}
+
+function buildFirebaseAuthFailureMessage(error: unknown) {
+  const errorCode = getFirebaseAuthErrorCode(error);
+
+  switch (errorCode) {
+    case 'auth/id-token-expired':
+      return 'Firebase ID token expired. Sign out and sign in again to refresh the session.';
+    case 'auth/id-token-revoked':
+      return 'Firebase ID token was revoked. Sign out and sign in again.';
+    case 'auth/invalid-id-token':
+      return 'Firebase ID token is malformed or invalid. The app may be sending a stale or mismatched session token.';
+    case 'auth/invalid-credential':
+      return 'Firebase Admin credentials are not valid for ID token verification. Recheck the Vercel Firebase Admin env vars.';
+    case 'auth/project-not-found':
+      return 'Firebase Admin is pointing at a project that does not exist or is not accessible.';
+    case 'auth/argument-error':
+      return 'Firebase token verification failed because the bearer token format or backend credential input is invalid.';
+    default:
+      return 'Invalid or expired Firebase token. If this keeps happening after signing in again, verify that the backend Firebase Admin project matches the app Firebase project.';
+  }
+}
+
 export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
   async (c, next) => {
     const token = getBearerToken(c);
@@ -128,9 +162,11 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
     } catch (error) {
       const adminProjectId = getFirebaseAdminProjectId();
       const tokenProjectId = getTokenProjectId(token);
+      const errorCode = getFirebaseAuthErrorCode(error);
 
       console.error('Firebase auth verification failed:', {
         error,
+        errorCode,
         tokenProjectId,
         adminProjectId,
       });
@@ -152,8 +188,8 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
       return c.json(
         {
           success: false,
-          message:
-            'Invalid or expired Firebase token. If this keeps happening after signing in again, verify that the backend Firebase Admin project matches the app Firebase project.',
+          message: buildFirebaseAuthFailureMessage(error),
+          errorCode,
         },
         401
       );
