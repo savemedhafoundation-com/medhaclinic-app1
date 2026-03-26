@@ -88,7 +88,8 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
       return c.json(
         {
           success: false,
-          message: 'Invalid or expired Firebase token.',
+          message:
+            'Invalid or expired Firebase token. If this keeps happening after signing in again, verify that the backend Firebase Admin project matches the app Firebase project.',
         },
         401
       );

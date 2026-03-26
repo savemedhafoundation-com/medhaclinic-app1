@@ -46,7 +46,7 @@ function resolveAuthUser(preferredUser?: AppAuthUser | null) {
 }
 
 function isInvalidOrExpiredFirebaseTokenMessage(message: string) {
-  return message.trim().toLowerCase() === 'invalid or expired firebase token.';
+  return message.toLowerCase().includes('invalid or expired firebase token');
 }
 
 function getErrorMessage(payload: unknown, fallback: string) {
