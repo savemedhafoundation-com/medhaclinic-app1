@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { env } from './lib/env.js';
-import aiRouter, { legacyAiRouter } from './routes/ai.js';
+import aiRouter, { legacyAiRouter, publicAiRouter } from './routes/ai.js';
 import healthRouter from './routes/health.js';
 import immunityRouter, { legacyImmunityRouter } from './routes/immunity.js';
 import meRouter from './routes/me.js';
@@ -41,6 +41,7 @@ app.route('/health', healthRouter);
 app.route('/v1/me', meRouter);
 app.route('/v1/immunity', immunityRouter);
 app.route('/v1/reports', reportsRouter);
+app.route('/v1/ai', publicAiRouter);
 app.route('/v1/ai', aiRouter);
 
 app.route('/api/auth', legacyImmunityRouter);
