@@ -5,7 +5,13 @@ import { z } from 'zod';
 import { env } from '../lib/env.js';
 import { getOpenAIClient } from '../lib/openai.js';
 import { prisma } from '../lib/prisma.js';
-import { requireAuth, type AuthEnv } from '../middleware/auth.js';
+import {
+  requireAuth,
+  requireVerifiedAuth,
+  type AuthEnv,
+  type VerifiedAuthEnv,
+  upsertDbUserFromFirebaseUser,
+} from '../middleware/auth.js';
 
 const OPENAI_SUMMARY_TIMEOUT_MS = 15_000;
 
@@ -170,12 +176,27 @@ publicAiRouter.post('/immunity-summary-public', async c =>
   runSummary(c, await c.req.json())
 );
 
-const aiRouter = new Hono<AuthEnv>();
-aiRouter.use('*', requireAuth);
+const aiRouter = new Hono<VerifiedAuthEnv>();
+aiRouter.use('*', requireVerifiedAuth);
 aiRouter.post('/immunity-summary', async c =>
-  runSummary(c, await c.req.json(), {
-    storeForUserId: c.get('dbUser').id,
-  })
+  {
+    const firebaseUser = c.get('firebaseUser');
+    let storeForUserId: string | null = null;
+
+    try {
+      const dbUser = await upsertDbUserFromFirebaseUser(firebaseUser);
+      storeForUserId = dbUser.id;
+    } catch (error) {
+      console.error('AI summary user sync skipped because the database is unavailable:', {
+        error,
+        firebaseUid: firebaseUser.uid,
+      });
+    }
+
+    return runSummary(c, await c.req.json(), {
+      storeForUserId,
+    });
+  }
 );
 
 const legacyAiRouter = new Hono<AuthEnv>();
