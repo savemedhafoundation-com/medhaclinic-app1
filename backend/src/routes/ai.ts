@@ -7,6 +7,8 @@ import { getOpenAIClient } from '../lib/openai.js';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthEnv } from '../middleware/auth.js';
 
+const OPENAI_SUMMARY_TIMEOUT_MS = 15_000;
+
 const legacyPromptSchema = z.object({
   prompt: z.string().trim().min(1).max(6000),
   sourceSubmissionId: z.string().trim().optional(),
@@ -46,8 +48,10 @@ function getAiUpstreamFailure(
   const message =
     error instanceof Error ? error.message : 'OpenAI request failed.';
   const normalized = message.toLowerCase();
+  const errorName = error instanceof Error ? error.name.toLowerCase() : '';
 
   if (
+    errorName.includes('abort') ||
     normalized.includes('timed out') ||
     normalized.includes('timeout') ||
     normalized.includes('aborted')
@@ -63,6 +67,39 @@ function getAiUpstreamFailure(
     message,
     status: 502,
   };
+}
+
+async function createOpenAiSummary(prompt: string) {
+  const openai = getOpenAIClient();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OPENAI_SUMMARY_TIMEOUT_MS);
+
+  try {
+    return await openai.responses.create(
+      {
+        model: env.OPENAI_MODEL,
+        max_output_tokens: 220,
+        input: [
+          {
+            role: 'system',
+            content:
+              'You write short wellness summaries for a health-tracking app. Do not diagnose. Avoid certainty, fear, or emergency language unless explicitly present in the input.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      },
+      {
+        maxRetries: 0,
+        timeout: OPENAI_SUMMARY_TIMEOUT_MS,
+        signal: controller.signal,
+      }
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function runSummary(
@@ -86,26 +123,10 @@ async function runSummary(
   }
 
   const prompt = buildPrompt(parsed.data);
-  const openai = getOpenAIClient();
-
   let response;
 
   try {
-    response = await openai.responses.create({
-      model: env.OPENAI_MODEL,
-      max_output_tokens: 220,
-      input: [
-        {
-          role: 'system',
-          content:
-            'You write short wellness summaries for a health-tracking app. Do not diagnose. Avoid certainty, fear, or emergency language unless explicitly present in the input.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    });
+    response = await createOpenAiSummary(prompt);
   } catch (error) {
     const upstreamFailure = getAiUpstreamFailure(error);
 
@@ -123,15 +144,19 @@ async function runSummary(
   const result = response.output_text.trim();
 
   if (options.storeForUserId) {
-    await prisma.aiSummary.create({
-      data: {
-        userId: options.storeForUserId,
-        sourceSubmissionId: parsed.data.sourceSubmissionId,
-        promptJson: parsed.data,
-        resultText: result,
-        model: env.OPENAI_MODEL,
-      },
-    });
+    try {
+      await prisma.aiSummary.create({
+        data: {
+          userId: options.storeForUserId,
+          sourceSubmissionId: parsed.data.sourceSubmissionId,
+          promptJson: parsed.data,
+          resultText: result,
+          model: env.OPENAI_MODEL,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to store AI summary:', error);
+    }
   }
 
   return c.json({
