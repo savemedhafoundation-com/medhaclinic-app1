@@ -5,6 +5,7 @@ const backendBaseUrl = process.env.EXPO_PUBLIC_BACKEND_URL?.trim()?.replace(
   /\/+$/,
   ''
 );
+const BACKEND_REQUEST_TIMEOUT_MS = 20_000;
 
 export class BackendRequestError extends Error {
   status: number | null;
@@ -34,6 +35,59 @@ type BackendRequestOptions = RequestInit & {
   authRequired?: boolean;
   authUser?: AppAuthUser | null;
 };
+
+function createRequestSignal(
+  timeoutMs: number,
+  externalSignal?: AbortSignal | null
+) {
+  const controller = new AbortController();
+  const abortFromExternalSignal = () => controller.abort();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener('abort', abortFromExternalSignal, {
+        once: true,
+      });
+    }
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup() {
+      clearTimeout(timeoutId);
+
+      if (externalSignal) {
+        externalSignal.removeEventListener('abort', abortFromExternalSignal);
+      }
+    },
+  };
+}
+
+function getFetchFailureMessage(path: string, error: unknown) {
+  const timeoutMessage = `Backend request timed out after ${Math.ceil(
+    BACKEND_REQUEST_TIMEOUT_MS / 1000
+  )}s for ${path}.`;
+
+  if (error instanceof Error) {
+    const normalized = error.message.toLowerCase();
+
+    if (
+      error.name === 'AbortError' ||
+      normalized.includes('aborted') ||
+      normalized.includes('timed out') ||
+      normalized.includes('timeout')
+    ) {
+      return timeoutMessage;
+    }
+
+    return `Could not reach backend ${path}: ${error.message}`;
+  }
+
+  return `Could not reach backend ${path}.`;
+}
 
 function resolveAuthUser(preferredUser?: AppAuthUser | null) {
   const currentAuthUser = getCurrentAuthUser();
@@ -110,6 +164,13 @@ export async function requestBackend<T>(
   let authUser = options.authRequired !== false
     ? resolveAuthUser(options.authUser)
     : null;
+  const {
+    authRequired: _authRequired,
+    authUser: _authUser,
+    headers: _requestHeaders,
+    signal: externalSignal,
+    ...fetchOptions
+  } = options;
 
   if (options.authRequired !== false && !authUser) {
     throw new Error('Please sign in before contacting the backend.');
@@ -131,21 +192,26 @@ export async function requestBackend<T>(
       requestHeaders.Authorization = `Bearer ${token}`;
     }
 
+    const { signal, cleanup } = createRequestSignal(
+      BACKEND_REQUEST_TIMEOUT_MS,
+      externalSignal
+    );
+
     try {
       return await fetch(`${backendBaseUrl}${path}`, {
-        ...options,
+        ...fetchOptions,
         headers: requestHeaders,
+        signal,
       });
     } catch (error) {
       throw new BackendRequestError({
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Backend request failed before reaching the server.',
+        message: getFetchFailureMessage(path, error),
         status: null,
         path,
         payload: error,
       });
+    } finally {
+      cleanup();
     }
   }
 
