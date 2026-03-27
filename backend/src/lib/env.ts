@@ -1,7 +1,12 @@
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-config();
+const isProductionRuntime =
+  process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
+if (!isProductionRuntime) {
+  config();
+}
 
 function readTrimmedEnv(name: string) {
   return process.env[name]?.trim();
@@ -9,6 +14,34 @@ function readTrimmedEnv(name: string) {
 
 function readTrimmedMultilineEnv(name: string) {
   return process.env[name]?.replace(/\\n/g, '\n').trim();
+}
+
+function validateDatabaseUrl(databaseUrl?: string) {
+  if (!databaseUrl || !isProductionRuntime) {
+    return databaseUrl;
+  }
+
+  try {
+    const hostname = new URL(databaseUrl).hostname.toLowerCase();
+
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1'
+    ) {
+      throw new Error(
+        'DATABASE_URL points to localhost in production. Set the Vercel DATABASE_URL environment variable to your hosted Postgres connection string.'
+      );
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return databaseUrl;
+    }
+
+    throw error;
+  }
+
+  return databaseUrl;
 }
 
 const baseEnvSchema = z.object({
@@ -29,7 +62,7 @@ const parsed = baseEnvSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
   CORS_ORIGIN: readTrimmedEnv('CORS_ORIGIN'),
-  DATABASE_URL: readTrimmedEnv('DATABASE_URL'),
+  DATABASE_URL: validateDatabaseUrl(readTrimmedEnv('DATABASE_URL')),
   OPENAI_API_KEY: readTrimmedEnv('OPENAI_API_KEY'),
   OPENAI_MODEL: readTrimmedEnv('OPENAI_MODEL'),
   FIREBASE_PROJECT_ID: readTrimmedEnv('FIREBASE_PROJECT_ID'),
@@ -87,6 +120,14 @@ export function getFirebaseAdminProjectId() {
   }
 
   return null;
+}
+
+export function getDatabaseHost() {
+  try {
+    return new URL(parsed.DATABASE_URL).hostname;
+  } catch {
+    return null;
+  }
 }
 
 export const env = parsed;

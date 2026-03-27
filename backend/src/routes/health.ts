@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import {
   env,
+  getDatabaseHost,
   getFirebaseAdminCredentialSource,
   getFirebaseAdminProjectId,
   hasFirebaseAdminConfig,
@@ -52,6 +53,7 @@ healthRouter.get('/', async c => {
     firebaseAdminCredentialSource: getFirebaseAdminCredentialSource(),
     firebaseAdminProjectId: getFirebaseAdminProjectId(),
     openaiConfigured: Boolean(env.OPENAI_API_KEY),
+    databaseHost: getDatabaseHost(),
     databaseReachable,
     databaseMessage,
   });
