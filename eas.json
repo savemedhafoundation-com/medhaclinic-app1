@@ -6,13 +6,44 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "medhaclinic-3ba87.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "179498638620",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:179498638620:android:d663a80b783b833028eed9",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "179498638620-sv1b07lvisqh5i11j60goko7tgrls2v8.apps.googleusercontent.com"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "medhaclinic-3ba87.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "179498638620",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:179498638620:android:d663a80b783b833028eed9",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "179498638620-sv1b07lvisqh5i11j60goko7tgrls2v8.apps.googleusercontent.com"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "medhaclinic-3ba87.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "179498638620",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:179498638620:android:d663a80b783b833028eed9",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "179498638620-sv1b07lvisqh5i11j60goko7tgrls2v8.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {

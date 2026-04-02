@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { goBackOrReplace } from '../../services/navigation';
 
 type Params = {
   healthScore?: string | string[];
@@ -50,7 +51,9 @@ export default function CertificateScreen() {
         <Text className="text-white font-semibold text-[16px]">Go to Dashboard</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity className="mt-3 items-center" onPress={() => router.back()}>
+      <TouchableOpacity
+        className="mt-3 items-center"
+        onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
         <Text className="text-[#0B4F8A]">Back</Text>
       </TouchableOpacity>
     </View>

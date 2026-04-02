@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SvgHeader from '../../components/Clipperbg';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
+import { goBackOrReplace } from '../../services/navigation';
 import { fetchImmunityResult } from '../../services/openai';
 
 type State = {
@@ -188,8 +189,9 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 mt-4 justify-center">
             <View className="absolute left-4 right-4 flex-row justify-between">
-              <Ionicons name="chevron-back" size={26} color="#fff" />
-              <Ionicons name="menu" size={26} color="#fff" />
+              <TouchableOpacity onPress={() => goBackOrReplace('/immunity/dailyimmunity')}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
             </View>
           </View>
         </SafeAreaView>

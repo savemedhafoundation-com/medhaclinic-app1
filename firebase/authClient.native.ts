@@ -2,6 +2,7 @@ import { getApp as getNativeApp } from '@react-native-firebase/app';
 import {
   type FirebaseAuthTypes,
   GoogleAuthProvider as NativeGoogleAuthProvider,
+  PhoneAuthProvider as NativePhoneAuthProvider,
   getAuth as getNativeAuth,
   onAuthStateChanged as onNativeAuthStateChanged,
   signInWithCredential as signInWithNativeCredential,
@@ -15,11 +16,9 @@ import {
   reload as reloadNativeUser,
   updateProfile as updateNativeProfile,
 } from '@react-native-firebase/auth/lib/modular';
-
-type NativeUser = FirebaseAuthTypes.User;
 import {
   GoogleAuthProvider,
-  PhoneAuthProvider,
+  PhoneAuthProvider as WebPhoneAuthProvider,
   signInWithCredential,
 } from 'firebase/auth';
 
@@ -27,8 +26,11 @@ import type {
   AppAuthUser,
   AppAuthUserCredential,
   AppPhoneConfirmation,
+  PendingPhoneVerification,
 } from './authClient.types';
-import { auth } from './firebaseConfig';
+import { AsyncStorage, auth } from './firebaseConfig';
+
+type NativeUser = FirebaseAuthTypes.User;
 
 const nativeAuth = getNativeAuth(getNativeApp());
 let pendingDataConnectAuthSync: Promise<void> | null = null;
@@ -41,6 +43,15 @@ type NativeWrappedAppAuthUser = AppAuthUser & {
 };
 
 const NATIVE_WEB_PROXY_MARKER = '__medhaNativeWebSdkProxyUser';
+const PENDING_PHONE_VERIFICATION_STORAGE_KEY =
+  'medha_pending_phone_verification';
+const PENDING_PHONE_VERIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
+
+type StoredPendingPhoneVerification = {
+  createdAt: number;
+  phoneNumber: string;
+  verificationId: string;
+};
 
 function getFirebaseErrorCode(error: unknown) {
   if (
@@ -87,6 +98,89 @@ function toAppAuthUser(nativeUser: NativeUser | null): NativeWrappedAppAuthUser 
 
 function unwrapNativeUser(currentUser?: AppAuthUser | null) {
   return (currentUser as NativeWrappedAppAuthUser | null | undefined)?.__nativeUser ?? null;
+}
+
+async function clearPendingPhoneVerificationStorage() {
+  await AsyncStorage.removeItem(PENDING_PHONE_VERIFICATION_STORAGE_KEY);
+}
+
+function clearPendingPhoneVerificationStorageLater() {
+  void clearPendingPhoneVerificationStorage().catch(error => {
+    console.log('[AuthClient] Pending phone verification clear note:', error);
+  });
+}
+
+async function persistPendingPhoneVerification(
+  phoneNumber: string,
+  verificationId: string
+) {
+  const pendingVerification: StoredPendingPhoneVerification = {
+    createdAt: Date.now(),
+    phoneNumber,
+    verificationId,
+  };
+
+  await AsyncStorage.setItem(
+    PENDING_PHONE_VERIFICATION_STORAGE_KEY,
+    JSON.stringify(pendingVerification)
+  );
+}
+
+async function readPendingPhoneVerification() {
+  const rawValue = await AsyncStorage.getItem(
+    PENDING_PHONE_VERIFICATION_STORAGE_KEY
+  );
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as unknown;
+
+    if (
+      !parsedValue ||
+      typeof parsedValue !== 'object' ||
+      Array.isArray(parsedValue)
+    ) {
+      await clearPendingPhoneVerificationStorage();
+      return null;
+    }
+
+    const parsed = parsedValue as Record<string, unknown>;
+    const createdAt = parsed.createdAt;
+    const phoneNumber = parsed.phoneNumber;
+    const verificationId = parsed.verificationId;
+
+    if (
+      typeof createdAt !== 'number' ||
+      typeof phoneNumber !== 'string' ||
+      typeof verificationId !== 'string'
+    ) {
+      await clearPendingPhoneVerificationStorage();
+      return null;
+    }
+
+    if (
+      !Number.isFinite(createdAt) ||
+      !phoneNumber.trim() ||
+      !verificationId.trim() ||
+      Date.now() - createdAt > PENDING_PHONE_VERIFICATION_MAX_AGE_MS
+    ) {
+      await clearPendingPhoneVerificationStorage();
+      return null;
+    }
+
+    return {
+      createdAt,
+      phoneNumber,
+      verificationId,
+    } satisfies StoredPendingPhoneVerification;
+  } catch (error) {
+    console.log('[AuthClient] Pending phone verification read note:', error);
+    await clearPendingPhoneVerificationStorage();
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -315,6 +409,72 @@ function trackDataConnectAuthSync<T>(work: () => Promise<T>) {
   return task;
 }
 
+async function confirmNativePhoneVerificationCode(
+  verificationId: string,
+  code: string
+) {
+  const nativeCredential = NativePhoneAuthProvider.credential(
+    verificationId,
+    code
+  );
+  const webCredential = WebPhoneAuthProvider.credential(verificationId, code);
+
+  const [nativeResult, webResult] = await Promise.allSettled([
+    signInWithNativeCredential(nativeAuth, nativeCredential),
+    signInWithCredential(auth, webCredential),
+  ]);
+
+  if (nativeResult.status === 'rejected') {
+    await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
+    throw nativeResult.reason as Error;
+  }
+
+  const nativeCredentialResult = nativeResult.value as
+    | FirebaseAuthTypes.UserCredential
+    | null;
+
+  if (!nativeCredentialResult?.user) {
+    await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
+    throw new Error(
+      'Phone sign-in finished on the device, but the Firebase app session could not be synced. Please request a new OTP and try again.'
+    );
+  }
+
+  if (webResult.status === 'rejected') {
+    const webError = webResult.reason as { code?: string } | Error;
+    console.log(
+      '[AuthClient] Web SDK phone auth sync note - injecting proxy user:',
+      (webError as { code?: string }).code ?? webError
+    );
+    lastKnownNativeUser = nativeCredentialResult.user;
+    syncWebSdkFromNativeUser(
+      nativeAuth.currentUser ?? nativeCredentialResult.user
+    );
+  }
+
+  await clearPendingPhoneVerificationStorage();
+
+  return {
+    user: toAppAuthUser(nativeCredentialResult.user)!,
+  } satisfies AppAuthUserCredential;
+}
+
+function createPhoneConfirmation(verificationId: string | null) {
+  return {
+    async confirm(code: string) {
+      return trackDataConnectAuthSync(async () => {
+        if (!verificationId) {
+          throw new Error(
+            'Verification session is invalid. Please request a new OTP and try again.'
+          );
+        }
+
+        return confirmNativePhoneVerificationCode(verificationId, code);
+      });
+    },
+  } satisfies AppPhoneConfirmation;
+}
+
 export function getCurrentAuthUser() {
   return toAppAuthUser(nativeAuth.currentUser);
 }
@@ -404,14 +564,18 @@ export function subscribeToAuthChanges(
     lastKnownNativeUser = user;
 
     if (!user) {
-      // Native user signed out — clear the web SDK proxy and sign out web SDK
+      // Native user signed out - clear the web SDK proxy and sign out web SDK
       syncWebSdkFromNativeUser(null);
       void auth.signOut().catch(error => {
         console.log('Firebase JS sign-out sync error:', error);
       });
     } else if (!auth.currentUser || (auth.currentUser as { uid?: string }).uid !== user.uid) {
-      // Native user changed and web SDK is out of sync — inject proxy
+      // Native user changed and web SDK is out of sync - inject proxy
       syncWebSdkFromNativeUser(user);
+    }
+
+    if (user) {
+      clearPendingPhoneVerificationStorageLater();
     }
 
     callback(toAppAuthUser(user));
@@ -450,74 +614,48 @@ export async function sendPhoneVerificationCode(
   phoneNumber: string,
   _recaptchaContainerId?: string
 ) {
-  const confirmation = await signInWithNativePhoneNumber(
-    nativeAuth,
-    phoneNumber
-  );
+  await clearPendingPhoneVerificationStorage();
+
+  try {
+    const confirmation = await signInWithNativePhoneNumber(
+      nativeAuth,
+      phoneNumber
+    );
+    const verificationId = confirmation.verificationId;
+
+    if (verificationId) {
+      await persistPendingPhoneVerification(phoneNumber, verificationId);
+    }
+
+    return createPhoneConfirmation(verificationId);
+  } catch (error) {
+    await clearPendingPhoneVerificationStorage();
+    throw error;
+  }
+}
+
+export async function getPendingPhoneVerification(): Promise<PendingPhoneVerification | null> {
+  if (nativeAuth.currentUser) {
+    await clearPendingPhoneVerificationStorage();
+    return null;
+  }
+
+  const pendingVerification = await readPendingPhoneVerification();
+
+  if (!pendingVerification) {
+    return null;
+  }
 
   return {
-    async confirm(code: string) {
-      return trackDataConnectAuthSync(async () => {
-        const verificationId = confirmation.verificationId;
-
-        if (!verificationId) {
-          throw new Error(
-            'Verification session is invalid. Please request a new OTP and try again.'
-          );
-        }
-
-        // Attempt both sign-ins concurrently. Native SDK uses device-level
-        // attestation; web SDK uses Firebase REST. If the web SDK fails
-        // (OTP already consumed by native), the proxy injection below recovers.
-        const webCredential = PhoneAuthProvider.credential(verificationId, code);
-
-        const [nativeResult, webResult] = await Promise.allSettled([
-          confirmation.confirm(code),
-          signInWithCredential(auth, webCredential),
-        ]);
-
-        if (nativeResult.status === 'rejected') {
-          // Native sign-in failed — roll back any partial web sign-in
-          await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
-          throw nativeResult.reason as Error;
-        }
-
-        const nativeCredential = nativeResult.value as
-          | FirebaseAuthTypes.UserCredential
-          | null;
-
-        if (!nativeCredential?.user) {
-          await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
-          throw new Error(
-            'Phone sign-in finished on the device, but the Firebase app session could not be synced. Please request a new OTP and try again.'
-          );
-        }
-
-        if (webResult.status === 'rejected') {
-          // Web SDK couldn't sign in (OTP consumed by native SDK first).
-          // Inject a proxy user so DataConnect can still get valid tokens.
-          const webError = webResult.reason as { code?: string } | Error;
-          console.log(
-            '[AuthClient] Web SDK phone auth sync note — injecting proxy user:',
-            (webError as { code?: string }).code ?? webError
-          );
-          lastKnownNativeUser = nativeCredential.user;
-          syncWebSdkFromNativeUser(
-            nativeAuth.currentUser ?? nativeCredential.user
-          );
-        }
-
-        return {
-          user: toAppAuthUser(nativeCredential.user)!,
-        } satisfies AppAuthUserCredential;
-      });
-    },
-  } satisfies AppPhoneConfirmation;
+    confirmation: createPhoneConfirmation(pendingVerification.verificationId),
+    phoneNumber: pendingVerification.phoneNumber,
+  };
 }
 
 export async function signOutFromAuth() {
   syncWebSdkFromNativeUser(null);
   await Promise.allSettled([signOutFromNativeAuth(nativeAuth), auth.signOut()]);
+  await clearPendingPhoneVerificationStorage();
   pendingDataConnectAuthSync = null;
   pendingWebSdkSignIn = null;
   suppressWebSdkProxyInjection = false;
@@ -525,5 +663,5 @@ export async function signOutFromAuth() {
 }
 
 export function resetPhoneAuthFlow() {
-  // Native Firebase Auth does not use a web reCAPTCHA verifier.
+  clearPendingPhoneVerificationStorageLater();
 }

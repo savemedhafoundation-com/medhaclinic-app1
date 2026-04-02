@@ -318,9 +318,6 @@ export default function WeeklyReportScreen() {
 
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <Ionicons name="menu" size={26} color="#fff" />
-            </View>
           </View>
         </SafeAreaView>
       </View>

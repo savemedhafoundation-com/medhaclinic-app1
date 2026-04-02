@@ -3,9 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SvgHeader from "../components/Clipperbg";
-import adviceImage from "../assets/images/models/adviceimg.png";
 import { Image } from "react-native";
 import { router } from "expo-router";
+import { goBackOrReplace } from "../services/navigation";
 
 export default function AdviceScreen() {
   return (
@@ -18,11 +18,9 @@ export default function AdviceScreen() {
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => goBackOrReplace("/certification/daily")}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
-
-              <Ionicons name="menu" size={26} color="#fff" />
             </View>
 
    
@@ -84,7 +82,10 @@ export default function AdviceScreen() {
           </TouchableOpacity>
 
           {/* Card 2 */}
-          <TouchableOpacity className="bg-green-600 rounded-2xl p-5 flex-row items-center justify-between mt-10">
+          <TouchableOpacity
+            className="bg-green-600 rounded-2xl p-5 flex-row items-center justify-between mt-10"
+            onPress={() => router.push('/boosterdiet/boosters')}
+          >
             <View className="flex-row items-center">
               <View className="bg-white w-12 h-12 rounded-full items-center justify-center mr-4">
                 <Ionicons name="flask" size={22} color="green" />

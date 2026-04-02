@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { goBackOrReplace } from '../../services/navigation';
 
 export default function DailyDietSwapsScreen() {
   return (
@@ -18,12 +19,8 @@ export default function DailyDietSwapsScreen() {
         {/* ================= HEADER ================= */}
         <View className="bg-green-600 rounded-b-[28px] px-5 pt-6 pb-10">
           <View className="flex-row justify-between items-center mb-4">
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => goBackOrReplace('/analysis/stepanalyst')}>
               <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Ionicons name="menu" size={26} color="#fff" />
             </TouchableOpacity>
           </View>
 

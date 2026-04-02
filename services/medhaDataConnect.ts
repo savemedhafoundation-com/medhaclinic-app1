@@ -16,7 +16,10 @@ import {
   type UpsertCurrentUserData,
   type UpsertCurrentUserVariables,
 } from '../firebase/dataconnect-generated';
-import { firebaseConfig } from '../firebase/firebaseConfig';
+import {
+  firebaseConfig,
+  firebaseDataConnectEmulatorHost,
+} from '../firebase/firebaseConfig';
 
 import {
   createWeeklyReport,
@@ -372,7 +375,7 @@ function getDataConnectConnectorPath() {
 }
 
 function getDataConnectMutationUrl() {
-  const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST?.trim();
+  const emulatorHost = firebaseDataConnectEmulatorHost;
 
   if (emulatorHost) {
     const baseUrl =
@@ -387,7 +390,7 @@ function getDataConnectMutationUrl() {
 }
 
 function getDataConnectQueryUrl() {
-  const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST?.trim();
+  const emulatorHost = firebaseDataConnectEmulatorHost;
 
   if (emulatorHost) {
     const baseUrl =

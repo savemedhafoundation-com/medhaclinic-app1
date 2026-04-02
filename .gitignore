@@ -15,8 +15,9 @@ expo-env.d.ts
 
 # ─── Secrets & local env  (keep .env.example in git) ────────────────────────
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 
 # ─── Android – build output & local config ───────────────────────────────────
 android/.gradle/

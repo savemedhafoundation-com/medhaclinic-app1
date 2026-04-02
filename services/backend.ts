@@ -1,10 +1,6 @@
 import { getCurrentAuthUser } from '../firebase/authClient';
 import type { AppAuthUser } from '../firebase/authClient.types';
-
-const backendBaseUrl = process.env.EXPO_PUBLIC_BACKEND_URL?.trim()?.replace(
-  /\/+$/,
-  ''
-);
+import { backendBaseUrl } from '../firebase/firebaseConfig';
 const BACKEND_REQUEST_TIMEOUT_MS = 20_000;
 
 export class BackendRequestError extends Error {
@@ -148,7 +144,7 @@ export async function requestBackend<T>(
 ) {
   if (!backendBaseUrl) {
     throw new Error(
-      'EXPO_PUBLIC_BACKEND_URL is not configured. Set it in the Expo app .env file.'
+      'Backend URL is not configured. Set EXPO_PUBLIC_BACKEND_URL or embed it in app config.'
     );
   }
 

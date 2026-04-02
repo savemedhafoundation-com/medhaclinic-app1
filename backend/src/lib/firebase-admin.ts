@@ -1,9 +1,12 @@
-import { readFileSync } from 'node:fs';
-
-import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 
-import { env, hasFirebaseAdminConfig } from './env.js';
+import {
+  env,
+  getFirebaseAdminProjectId,
+  hasFirebaseAdminConfig,
+  hasGoogleCloudRuntime,
+} from './env.js';
 
 function getServiceAccount() {
   if (env.FIREBASE_SERVICE_ACCOUNT_JSON) {
@@ -23,29 +26,41 @@ function getServiceAccount() {
     };
   }
 
-  if (env.GOOGLE_APPLICATION_CREDENTIALS) {
-    const parsed = JSON.parse(
-      readFileSync(env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8')
-    ) as {
-      project_id?: string;
-      projectId?: string;
-      client_email?: string;
-      clientEmail?: string;
-      private_key?: string;
-      privateKey?: string;
-    };
-
+  if (
+    env.FIREBASE_PROJECT_ID &&
+    env.FIREBASE_CLIENT_EMAIL &&
+    env.FIREBASE_PRIVATE_KEY
+  ) {
     return {
-      projectId: parsed.projectId ?? parsed.project_id ?? '',
-      clientEmail: parsed.clientEmail ?? parsed.client_email ?? '',
-      privateKey: parsed.privateKey ?? parsed.private_key ?? '',
+      projectId: env.FIREBASE_PROJECT_ID,
+      clientEmail: env.FIREBASE_CLIENT_EMAIL,
+      privateKey: env.FIREBASE_PRIVATE_KEY,
+    };
+  }
+
+  return null;
+}
+
+function getFirebaseAdminOptions() {
+  const projectId = getFirebaseAdminProjectId() ?? undefined;
+  const explicitServiceAccount = getServiceAccount();
+
+  if (explicitServiceAccount) {
+    return {
+      credential: cert(explicitServiceAccount),
+      projectId: explicitServiceAccount.projectId || projectId,
+    };
+  }
+
+  if (env.GOOGLE_APPLICATION_CREDENTIALS || hasGoogleCloudRuntime()) {
+    return {
+      credential: applicationDefault(),
+      projectId,
     };
   }
 
   return {
-    projectId: env.FIREBASE_PROJECT_ID!,
-    clientEmail: env.FIREBASE_CLIENT_EMAIL!,
-    privateKey: env.FIREBASE_PRIVATE_KEY!,
+    projectId,
   };
 }
 
@@ -61,9 +76,7 @@ export function getAdminAuth() {
   if (!adminAuth) {
     const adminApp =
       getApps()[0] ??
-      initializeApp({
-        credential: cert(getServiceAccount()),
-      });
+      initializeApp(getFirebaseAdminOptions());
 
     adminAuth = getAuth(adminApp);
   }

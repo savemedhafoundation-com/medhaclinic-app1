@@ -64,7 +64,7 @@ function getAiUpstreamFailure(
   ) {
     return {
       message:
-        'OpenAI request timed out before Vercel finished the function. Please try again.',
+        'OpenAI request timed out before the backend finished the request. Please try again.',
       status: 504,
     };
   }

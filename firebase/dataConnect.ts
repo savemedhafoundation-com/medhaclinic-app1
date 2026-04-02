@@ -1,11 +1,10 @@
 import { connectDataConnectEmulator, getDataConnect } from 'firebase/data-connect';
 
 import { connectorConfig } from './dataconnect-generated';
-import { firebaseApp } from './firebaseConfig';
+import { firebaseApp, firebaseDataConnectEmulatorHost } from './firebaseConfig';
 
 export const medhaDataConnect = getDataConnect(firebaseApp, connectorConfig);
-
-const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST?.trim();
+const emulatorHost = firebaseDataConnectEmulatorHost;
 
 if (emulatorHost) {
   const [host, portValue] = emulatorHost.split(':');

@@ -67,6 +67,7 @@ function RootNavigator() {
       <Stack.Screen name="process" />
       <Stack.Screen name="advice" />
       <Stack.Screen name="assessment/certificate" />
+      <Stack.Screen name="boosterdiet/boosters" />
       <Stack.Screen name="boosterdiet/dietplan" />
       <Stack.Screen name="analysis/stepanalyst" />
       <Stack.Screen name="certification/daily" />

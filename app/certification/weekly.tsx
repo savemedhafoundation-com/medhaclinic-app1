@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SvgHeader from '../../components/Clipperbg';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
+import { goBackOrReplace } from '../../services/navigation';
 
 /* ===== ASSETS ===== */
 const profileImg = require('../../assets/images/profile.png');
@@ -28,12 +29,8 @@ export default function WeeklyImmunityReport() {
 
         <SafeAreaView className="absolute top-0 w-full px-4">
           <View className="flex-row items-center justify-between mt-4">
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => goBackOrReplace('/immunity/weeklyimmunity')}>
               <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Ionicons name="menu" size={26} color="#fff" />
             </TouchableOpacity>
           </View>
         </SafeAreaView>

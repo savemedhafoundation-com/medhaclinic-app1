@@ -5,6 +5,7 @@ import type {
   AppAuthUser,
   AppAuthUserCredential,
   AppPhoneConfirmation,
+  PendingPhoneVerification,
 } from './authClient.types';
 
 type AuthClientModule = {
@@ -21,6 +22,7 @@ type AuthClientModule = {
     phoneNumber: string,
     recaptchaContainerId?: string
   ) => Promise<AppPhoneConfirmation>;
+  getPendingPhoneVerification: () => Promise<PendingPhoneVerification | null>;
   signOutFromAuth: () => Promise<void>;
   resetPhoneAuthFlow: () => void;
 };
@@ -37,5 +39,7 @@ export const updateCurrentUserPhotoUrl = authClient.updateCurrentUserPhotoUrl;
 export const subscribeToAuthChanges = authClient.subscribeToAuthChanges;
 export const signInWithGoogleIdToken = authClient.signInWithGoogleIdToken;
 export const sendPhoneVerificationCode = authClient.sendPhoneVerificationCode;
+export const getPendingPhoneVerification =
+  authClient.getPendingPhoneVerification;
 export const signOutFromAuth = authClient.signOutFromAuth;
 export const resetPhoneAuthFlow = authClient.resetPhoneAuthFlow;

@@ -11,6 +11,7 @@ import type {
   AppAuthUser,
   AppAuthUserCredential,
   AppPhoneConfirmation,
+  PendingPhoneVerification,
 } from './authClient.types';
 
 let phoneRecaptchaVerifier: RecaptchaVerifier | null = null;
@@ -91,6 +92,10 @@ export async function sendPhoneVerificationCode(
   const verifier = getPhoneRecaptchaVerifier(recaptchaContainerId);
   const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
   return confirmation as AppPhoneConfirmation;
+}
+
+export async function getPendingPhoneVerification(): Promise<PendingPhoneVerification | null> {
+  return null;
 }
 
 export async function signOutFromAuth() {

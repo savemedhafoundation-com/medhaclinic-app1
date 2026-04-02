@@ -2,11 +2,10 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SvgHeader from '../../components/Clipperbg';
-import logo from '../../assets/images/medha_logo.png';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import BottomNav from '../../components/BottomNav';
+import { goBackOrReplace } from '../../services/navigation';
 
 export default function GetStartedScreen() {
   const CHECKUPS = [
@@ -40,19 +39,9 @@ export default function GetStartedScreen() {
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
-
-              <Ionicons name="menu" size={26} color="#fff" />
-            </View>
-
-            <View className="items-center">
-              <Image
-                source={logo}
-                className="w-[150px] h-[100px]"
-                contentFit="contain"
-              />
             </View>
           </View>
         </SafeAreaView>

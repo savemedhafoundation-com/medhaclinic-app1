@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   type ConfirmationResult,
@@ -12,20 +13,101 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
-function readExpoEnv(name: string) {
-  return process.env[name]?.trim() ?? '';
+type EmbeddedFirebaseConfig = {
+  apiKey?: string;
+  authDomain?: string;
+  projectId?: string;
+  storageBucket?: string;
+  messagingSenderId?: string;
+  appId?: string;
+};
+
+type EmbeddedPublicConfig = {
+  backendUrl?: string;
+  firebase?: EmbeddedFirebaseConfig;
+  firebaseDataConnectEmulatorHost?: string;
+  googleWebClientId?: string;
+};
+
+type ConstantsWithLegacyManifest = typeof Constants & {
+  manifest?: {
+    extra?: {
+      publicConfig?: EmbeddedPublicConfig;
+    };
+  };
+  manifest2?: {
+    extra?: {
+      publicConfig?: EmbeddedPublicConfig;
+    };
+  };
+};
+
+function getEmbeddedPublicConfig(): EmbeddedPublicConfig {
+  const constantsWithLegacyManifest = Constants as ConstantsWithLegacyManifest;
+
+  return (
+    (Constants.expoConfig?.extra?.publicConfig as EmbeddedPublicConfig | undefined) ??
+    constantsWithLegacyManifest.manifest2?.extra?.publicConfig ??
+    constantsWithLegacyManifest.manifest?.extra?.publicConfig ??
+    {}
+  );
+}
+
+const embeddedPublicConfig = getEmbeddedPublicConfig();
+
+function readPublicConfigValue(name: string, fallbackValue?: string) {
+  return process.env[name]?.trim() || fallbackValue?.trim() || '';
+}
+
+function normalizeUrl(value: string) {
+  return value.trim().replace(/\/+$/, '');
 }
 
 export const firebaseConfig = {
-  apiKey: readExpoEnv('EXPO_PUBLIC_FIREBASE_API_KEY'),
-  authDomain: readExpoEnv('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN'),
-  projectId: readExpoEnv('EXPO_PUBLIC_FIREBASE_PROJECT_ID'),
-  storageBucket: readExpoEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: readExpoEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: readExpoEnv('EXPO_PUBLIC_FIREBASE_APP_ID'),
+  apiKey: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_API_KEY',
+    embeddedPublicConfig.firebase?.apiKey
+  ),
+  authDomain: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN',
+    embeddedPublicConfig.firebase?.authDomain
+  ),
+  projectId: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_PROJECT_ID',
+    embeddedPublicConfig.firebase?.projectId
+  ),
+  storageBucket: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET',
+    embeddedPublicConfig.firebase?.storageBucket
+  ),
+  messagingSenderId: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+    embeddedPublicConfig.firebase?.messagingSenderId
+  ),
+  appId: readPublicConfigValue(
+    'EXPO_PUBLIC_FIREBASE_APP_ID',
+    embeddedPublicConfig.firebase?.appId
+  ),
 };
 
-export const googleWebClientId = readExpoEnv('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+export const googleWebClientId = readPublicConfigValue(
+  'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
+  embeddedPublicConfig.googleWebClientId
+);
+
+const configuredBackendUrl = readPublicConfigValue(
+  'EXPO_PUBLIC_BACKEND_URL',
+  embeddedPublicConfig.backendUrl
+);
+
+export const backendBaseUrl = configuredBackendUrl
+  ? normalizeUrl(configuredBackendUrl)
+  : '';
+
+export const firebaseDataConnectEmulatorHost = readPublicConfigValue(
+  'EXPO_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_HOST',
+  embeddedPublicConfig.firebaseDataConnectEmulatorHost
+);
 
 const missingFirebaseKeys = Object.entries(firebaseConfig)
   .filter(([, value]) => !value)

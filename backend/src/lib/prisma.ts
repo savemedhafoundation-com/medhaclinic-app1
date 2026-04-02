@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { env } from './env.js';
+
 declare global {
   var __medhaPrisma__: PrismaClient | undefined;
 }
@@ -7,6 +9,11 @@ declare global {
 export const prisma =
   global.__medhaPrisma__ ??
   new PrismaClient({
+    datasources: {
+      db: {
+        url: env.DATABASE_URL,
+      },
+    },
     log: ['warn', 'error'],
   });
 
