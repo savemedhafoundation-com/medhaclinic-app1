@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import bg from '../assets/images/dashbg.png';
 import logo from '../assets/images/medha_logo.png';
+import { goBackOrReplace } from '../services/navigation';
 
 export default function DietLifestyleScreen() {
   const [eating, setEating] = useState('Moderate');
@@ -33,7 +34,7 @@ export default function DietLifestyleScreen() {
           >
             {/* ===== HEADER ===== */}
             <View className="flex-row items-center gap-3">
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
 

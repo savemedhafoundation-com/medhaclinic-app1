@@ -88,6 +88,7 @@ export default function LoginScreen() {
   const {
     confirmPhoneVerificationCode,
     phoneVerificationPending,
+    phoneVerificationPhoneNumber,
     resetPhoneVerification,
     sendPhoneVerificationCode,
     signInWithGoogle,
@@ -103,6 +104,12 @@ export default function LoginScreen() {
   const styles = makeStyles(width, height);
   const cardWidth = Math.min(width - s(48, width), 440);
   const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    if (phoneVerificationPending && phoneVerificationPhoneNumber) {
+      setPhoneNumber(normalizePhoneInput(phoneVerificationPhoneNumber));
+    }
+  }, [phoneVerificationPending, phoneVerificationPhoneNumber]);
 
   useEffect(() => {
     if (phoneVerificationPending) {
@@ -152,11 +159,13 @@ export default function LoginScreen() {
     try {
       setPhoneBusy(true);
       setVerificationCode('');
-      await sendPhoneVerificationCode(phoneNumber);
+      await sendPhoneVerificationCode(
+        phoneVerificationPhoneNumber ?? phoneNumber
+      );
       setResendCountdown(RESEND_INTERVAL_SECONDS);
       Alert.alert(
         isResend ? 'OTP Resent' : 'OTP Sent',
-        `We sent a verification code to +91 ${phoneNumber}.`
+        `We sent a verification code to ${phoneVerificationPhoneNumber ?? `+91 ${phoneNumber}`}.`
       );
     } catch (error) {
       const message =
@@ -184,25 +193,9 @@ export default function LoginScreen() {
     }
   }
 
-  function handleForgotPassword() {
-    Alert.alert(
-      'Password Login Unavailable',
-      'Use your phone number or Google to continue. This screen does not use passwords.'
-    );
-  }
-
   function handleUseDifferentNumber() {
     resetPhoneVerification();
     setVerificationCode('');
-    phoneInputRef.current?.focus();
-  }
-
-  function handleSignUp() {
-    if (phoneVerificationPending) {
-      handleUseDifferentNumber();
-      return;
-    }
-
     phoneInputRef.current?.focus();
   }
 
@@ -336,7 +329,7 @@ export default function LoginScreen() {
               {phoneVerificationPending ? (
                 <View style={styles.otpMetaBlock}>
                   <Text style={styles.otpMetaText}>
-                    Enter the 6-digit OTP sent to +91 {phoneNumber}
+                    Enter the 6-digit OTP sent to {phoneVerificationPhoneNumber ?? `+91 ${phoneNumber}`}
                   </Text>
 
                   <TouchableOpacity
@@ -389,21 +382,15 @@ export default function LoginScreen() {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                activeOpacity={0.86}
-                onPress={
-                  phoneVerificationPending
-                    ? handleUseDifferentNumber
-                    : handleForgotPassword
-                }
-                style={styles.footerLink}
-              >
-                <Text style={styles.footerLinkText}>
-                  {phoneVerificationPending
-                    ? 'Use a different number'
-                    : 'Forget Password?'}
-                </Text>
-              </TouchableOpacity>
+              {phoneVerificationPending ? (
+                <TouchableOpacity
+                  activeOpacity={0.86}
+                  onPress={handleUseDifferentNumber}
+                  style={styles.footerLink}
+                >
+                  <Text style={styles.footerLinkText}>Use a different number</Text>
+                </TouchableOpacity>
+              ) : null}
 
               {Platform.OS === 'web' ? (
                 <View
@@ -413,16 +400,6 @@ export default function LoginScreen() {
               ) : null}
             </View>
 
-            <TouchableOpacity
-              activeOpacity={0.86}
-              onPress={handleSignUp}
-              style={styles.signUpRow}
-            >
-              <Text style={styles.signUpText}>
-                Don&apos;t have an account?{' '}
-                <Text style={styles.signUpAccent}>Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -478,7 +455,7 @@ function makeStyles(width: number, height: number) {
     },
     content: {
       flexGrow: 1,
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
       paddingTop: sv(isSmall ? 36 : 52, height),
       paddingBottom: sv(24, height),
       paddingHorizontal: s(24, width),
@@ -525,6 +502,7 @@ function makeStyles(width: number, height: number) {
     },
     card: {
       alignSelf: 'center',
+      marginTop: sv(isSmall ? 22 : isLarge ? 34 : 28, height),
       backgroundColor: COLORS.card,
       borderColor: COLORS.cardBorder,
       borderRadius: s(34, width),
@@ -654,19 +632,6 @@ function makeStyles(width: number, height: number) {
     },
     otpMetaActionTextDisabled: {
       color: 'rgba(255,255,255,0.7)',
-    },
-    signUpRow: {
-      alignItems: 'center',
-      marginTop: sv(isSmall ? 16 : 24, height),
-    },
-    signUpText: {
-      color: COLORS.white,
-      fontSize: s(isSmall ? 13 : 16, width),
-      fontWeight: '400',
-      textAlign: 'center',
-    },
-    signUpAccent: {
-      fontWeight: '800',
     },
     disabledButton: {
       opacity: 0.72,

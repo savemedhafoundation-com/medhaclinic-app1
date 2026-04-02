@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
+import { goBackOrReplace } from '../../services/navigation';
 
 import SvgHeader from '../../components/Clipperbg';
 
@@ -32,7 +33,7 @@ export default function AnalysisRecommendationScreen() {
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => goBackOrReplace('/process')}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
             </View>

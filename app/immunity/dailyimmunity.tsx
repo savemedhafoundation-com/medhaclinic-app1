@@ -8,9 +8,10 @@ import {
   type ImageSourcePropType,
   Alert,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,6 +35,7 @@ import {
   readAuthoritativeImmunityAssessment,
   saveDailyImmunitySubmission,
 } from "../../services/medhaDataConnect";
+import { goBackOrReplace } from "../../services/navigation";
 
 type QuestionId =
   | "energy"
@@ -70,6 +72,8 @@ type AnimatedOptionProps = {
   opt: QuestionOption;
   selected: boolean;
   onPress: () => void;
+  imageSize: number;
+  labelFontSize: number;
 };
 
 // ---------------------- QUESTIONS ----------------------
@@ -247,13 +251,13 @@ const QUESTIONS: Question[] = [
     title: "Fever",
     options: [
       {
-        key: "none",
-        label: "No Fever",
-        img: require("../../assets/images/immunity/fever1.png"),
+        key: "mild",
+        label: "Mild Fever",
+        img: require("../../assets/images/immunity/fever3.png"),
         score: 10,
       },
       {
-        key: "mild",
+        key: "moderate",
         label: "Moderate Fever",
         img: require("../../assets/images/immunity/fever2.png"),
         score: 6,
@@ -261,7 +265,7 @@ const QUESTIONS: Question[] = [
       {
         key: "high",
         label: "High Fever",
-        img: require("../../assets/images/immunity/fever3.png"),
+        img: require("../../assets/images/immunity/fever1.png"),
         score: 3,
       },
     ],
@@ -474,7 +478,13 @@ const API_FIELD_MAP: Record<
 };
 
 // ---------------------- ANIMATED OPTION ----------------------
-const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
+const AnimatedOption = ({
+  opt,
+  selected,
+  onPress,
+  imageSize,
+  labelFontSize,
+}: AnimatedOptionProps) => {
   const scale = useSharedValue(1);
   const glow = useSharedValue(0);
 
@@ -496,12 +506,16 @@ const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
   });
 
   return (
-    <TouchableOpacity onPress={onPress} className="flex-1 items-center px-1">
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-1 items-center"
+      style={{ paddingHorizontal: imageSize <= 64 ? 2 : 4, minWidth: 0 }}
+    >
       {opt.img && (
         <Animated.View style={animatedStyle}>
           <Image
             source={opt.img}
-            style={{ width: 80, height: 80 }}
+            style={{ width: imageSize, height: imageSize }}
             resizeMode="contain"
           />
         </Animated.View>
@@ -514,7 +528,7 @@ const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
           fontWeight: "700",
           marginTop: 4,
           textAlign: "center",
-          fontSize: 13,
+          fontSize: labelFontSize,
         }}
       >
         {opt.label}
@@ -533,8 +547,27 @@ const AnimatedOption = ({ opt, selected, onPress }: AnimatedOptionProps) => {
 export default function DailyImmunityCheck() {
   const { user } = useAuth();
   const { patientGenderKey } = usePatientProfile();
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [answers, setAnswers] = useState<Answers>({});
   const [loading, setLoading] = useState(false);
+
+  const isCompactPhone = screenWidth < 380 || screenHeight < 760;
+  const isVerySmallPhone = screenWidth < 360 || screenHeight < 700;
+  const horizontalPadding = isVerySmallPhone ? 12 : 16;
+  const headerHeight = isVerySmallPhone ? 148 : isCompactPhone ? 160 : 180;
+  const logoWidth = isVerySmallPhone ? 126 : isCompactPhone ? 142 : 160;
+  const logoHeight = isVerySmallPhone ? 94 : isCompactPhone ? 106 : 120;
+  const logoOffsetY = isVerySmallPhone ? 16 : isCompactPhone ? 14 : 12;
+  const navTop = insets.top + (isVerySmallPhone ? 6 : 10);
+  const contentTopPadding = headerHeight + (isVerySmallPhone ? 18 : 26);
+  const contentBottomPadding = Math.max(60, insets.bottom + 28);
+  const heroTitleSize = isVerySmallPhone ? 22 : isCompactPhone ? 24 : 26;
+  const heroTitleLineHeight = isVerySmallPhone ? 26 : isCompactPhone ? 30 : 32;
+  const heroSubtitleSize = isVerySmallPhone ? 15 : 16;
+  const optionImageSize = isVerySmallPhone ? 64 : isCompactPhone ? 72 : 80;
+  const optionLabelFontSize = isVerySmallPhone ? 12 : 13;
+  const speedometerSize = Math.min(240, screenWidth - horizontalPadding * 2 - 20);
 
   const visibleQuestions = useMemo(() => {
     return QUESTIONS.filter((question) => {
@@ -709,38 +742,65 @@ export default function DailyImmunityCheck() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-          <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
+    <SafeAreaView className="flex-1 bg-white" edges={["left", "right", "bottom"]}>
+      <View className="absolute top-0 left-0 right-0 z-10">
+        <SvgHeader
+          height={headerHeight}
+          logoOffsetY={logoOffsetY}
+          logoWidth={logoWidth}
+          logoHeight={logoHeight}
+        />
 
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
+        <View
+          style={{
+            position: "absolute",
+            top: navTop,
+            left: horizontalPadding,
+            right: horizontalPadding,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => goBackOrReplace('/(tabs)/dashboard')}
+            hitSlop={12}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
-
-              <Ionicons name="menu" size={26} color="#fff" />
-            </View>
-
-         
-          </View>
-        </SafeAreaView>
+          </TouchableOpacity>
+        </View>
       </View>
 
-  
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: contentTopPadding,
+          paddingBottom: contentBottomPadding,
+          paddingHorizontal: horizontalPadding,
+        }}
+      >
+        <Text
+          className="font-extrabold text-green-800"
+          style={{
+            fontSize: heroTitleSize,
+            lineHeight: heroTitleLineHeight,
+            marginTop: isVerySmallPhone ? 10 : 12,
+          }}
+        >
+          Daily Immunity{"\n"}Check
+        </Text>
 
-      <ScrollView contentContainerStyle={{  paddingTop: 110,
-          paddingBottom: 60,
-          paddingHorizontal: 16,}}>
-
-
-            <Text className="text-2xl font-extrabold text-green-800 mx-5 mt-20">
-        Daily Immunity Check
-      </Text>
+        <Text
+          style={{
+            fontSize: heroSubtitleSize,
+            color: "#111827",
+            marginTop: isVerySmallPhone ? 10 : 12,
+          }}
+        >
+          Answer the following questions
+        </Text>
   
       {/* Progress */}
-      <View className="mt-4 mx-5">
+      <View className="mt-5">
         <View className="h-2 bg-green-100 rounded-full overflow-hidden">
           <View
             style={{ width: `${progressPct}%` }}
@@ -761,6 +821,8 @@ export default function DailyImmunityCheck() {
                   key={opt.key}
                   opt={opt}
                   selected={answers[q.id] === opt.key}
+                  imageSize={optionImageSize}
+                  labelFontSize={optionLabelFontSize}
                   onPress={() =>
                     setAnswers((prev) => ({
                       ...prev,
@@ -775,14 +837,14 @@ export default function DailyImmunityCheck() {
 
         {/* Speedometer */}
         <View className="mt-8">
-          <Speedometer score={speedometerValue} />
+          <Speedometer score={speedometerValue} size={speedometerSize} />
         </View>
 
         {/* Button */}
         <TouchableOpacity
           onPress={handleGetResult}
           disabled={loading}
-          className="mt-6 mx-4 bg-green-600 rounded-2xl py-4 items-center shadow-md"
+          className="mt-6 bg-green-600 rounded-2xl py-4 items-center shadow-md"
           style={{
             shadowColor: "#16a34a",
             shadowOffset: { width: 0, height: 4 },
@@ -790,6 +852,7 @@ export default function DailyImmunityCheck() {
             shadowRadius: 6,
             elevation: 5,
             opacity: loading ? 0.7 : 1,
+            marginHorizontal: isVerySmallPhone ? 4 : 8,
           }}
         >
           <View className="flex-row items-center">

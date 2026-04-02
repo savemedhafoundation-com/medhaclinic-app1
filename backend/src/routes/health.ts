@@ -2,9 +2,14 @@ import { Hono } from 'hono';
 
 import {
   env,
+  getDatabaseConnectionMode,
   getDatabaseHost,
+  getDatabaseSocketPath,
   getFirebaseAdminCredentialSource,
   getFirebaseAdminProjectId,
+  getGoogleCloudProjectId,
+  getInstanceConnectionName,
+  hasGoogleCloudRuntime,
   hasFirebaseAdminConfig,
 } from '../lib/env.js';
 import { prisma } from '../lib/prisma.js';
@@ -52,8 +57,13 @@ healthRouter.get('/', async c => {
     firebaseAdminConfigured: hasFirebaseAdminConfig(),
     firebaseAdminCredentialSource: getFirebaseAdminCredentialSource(),
     firebaseAdminProjectId: getFirebaseAdminProjectId(),
+    googleCloudRuntime: hasGoogleCloudRuntime(),
+    googleCloudProjectId: getGoogleCloudProjectId(),
     openaiConfigured: Boolean(env.OPENAI_API_KEY),
     databaseHost: getDatabaseHost(),
+    databaseConnectionMode: getDatabaseConnectionMode(),
+    databaseSocketPath: getDatabaseSocketPath(),
+    instanceConnectionName: getInstanceConnectionName(),
     databaseReachable,
     databaseMessage,
   });

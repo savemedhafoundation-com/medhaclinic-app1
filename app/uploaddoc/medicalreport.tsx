@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SvgHeader from '../../components/Clipperbg';
 import { router } from 'expo-router';
+import { goBackOrReplace } from '../../services/navigation';
 
 export default function MedicalReportsScreen() {
   const HEADER_HEIGHT = 250; // must match SvgHeader height
@@ -22,12 +23,8 @@ export default function MedicalReportsScreen() {
         <View className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
-
-              <TouchableOpacity>
-                <Ionicons name="menu" size={26} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>

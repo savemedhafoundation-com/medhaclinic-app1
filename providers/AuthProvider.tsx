@@ -22,6 +22,7 @@ import {
 } from '../firebase/firebaseConfig';
 import {
   ensureDataConnectAuthReady,
+  getPendingPhoneVerification,
   getCurrentAuthUser,
   resetPhoneAuthFlow,
   sendPhoneVerificationCode as requestPhoneVerificationCode,
@@ -52,6 +53,7 @@ type AuthContextValue = {
   loading: boolean;
   signingIn: boolean;
   phoneVerificationPending: boolean;
+  phoneVerificationPhoneNumber: string | null;
   needsProfile: boolean;
   setNeedsProfile: (v: boolean) => void;
   signInWithGoogle: () => Promise<AuthUserProfile>;
@@ -247,6 +249,14 @@ function toReadableError(error: unknown) {
   }
 
   if (error instanceof Error) {
+    if (
+      error.message.includes('missing initial state') ||
+      error.message.includes('sessionStorage is inaccessible') ||
+      error.message.includes('storage-partitioned browser environment')
+    ) {
+      return 'Firebase phone verification fell back to browser verification and the browser could not return cleanly to the app. On Android dev builds, add the active SHA-1 and SHA-256 in Firebase, then reinstall this build and try again.';
+    }
+
     return error.message;
   }
 
@@ -283,6 +293,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [signingIn, setSigningIn] = useState(false);
   const [phoneConfirmation, setPhoneConfirmation] =
     useState<AppPhoneConfirmation | null>(null);
+  const [phoneVerificationPhoneNumber, setPhoneVerificationPhoneNumber] =
+    useState<string | null>(null);
   const [needsProfile, setNeedsProfile] = useState(false);
   const hydrationRunIdRef = useRef(0);
 
@@ -328,6 +340,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   function resetPhoneVerification() {
     setPhoneConfirmation(null);
+    setPhoneVerificationPhoneNumber(null);
     resetPhoneAuthFlow();
   }
 
@@ -356,6 +369,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
       } catch (error) {
         console.log('Google Sign-In bootstrap error:', error);
+      }
+
+      try {
+        const pendingPhoneVerification = await getPendingPhoneVerification();
+
+        if (pendingPhoneVerification) {
+          setPhoneConfirmation(pendingPhoneVerification.confirmation);
+          setPhoneVerificationPhoneNumber(pendingPhoneVerification.phoneNumber);
+        }
+      } catch (error) {
+        console.log('Pending phone verification restore note:', error);
       }
 
       unsubscribe = subscribeToAuthChanges(async (currentUser: AppAuthUser | null) => {
@@ -418,7 +442,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     return () => {
       hydrationRunIdRef.current += 1;
-      resetPhoneVerification();
       unsubscribe?.();
     };
   }, []);
@@ -484,6 +507,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       );
 
       setPhoneConfirmation(confirmation);
+      setPhoneVerificationPhoneNumber(normalizedPhoneNumber);
     } catch (error) {
       resetPhoneVerification();
       throw new Error(toReadableError(error));
@@ -545,6 +569,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         loading,
         signingIn,
         phoneVerificationPending: Boolean(phoneConfirmation),
+        phoneVerificationPhoneNumber,
         needsProfile,
         setNeedsProfile,
         signInWithGoogle,

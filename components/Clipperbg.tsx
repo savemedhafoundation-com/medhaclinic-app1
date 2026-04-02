@@ -4,9 +4,17 @@ import Svg, { Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 
 interface Props {
   height?: number;
+  logoOffsetY?: number;
+  logoWidth?: number;
+  logoHeight?: number;
 }
 
-function SvgHeader({ height = 180 }: Props) {
+function SvgHeader({
+  height = 180,
+  logoOffsetY = 0,
+  logoWidth = 160,
+  logoHeight = 120,
+}: Props) {
   const { width } = useWindowDimensions();
   const W = 842;
   const H = 347;
@@ -126,11 +134,18 @@ function SvgHeader({ height = 180 }: Props) {
 
       {/* ── Medha Clinic Logo — centered ── */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: logoOffsetY,
+          }}
+        >
           <Image
             source={require('../assets/images/medha_logo.png')}
-            style={{ width: 160, height: 120 }}
-            resizeMode="none"
+            style={{ width: logoWidth, height: logoHeight }}
+            resizeMode="contain"
           />
         </View>
       </View>

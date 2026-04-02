@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { goBackOrReplace } from '../../services/navigation';
 
 export default function NextStepScreen() {
   const router = useRouter();
@@ -18,7 +19,9 @@ export default function NextStepScreen() {
         <Text className="text-white text-[16px] font-semibold">Continue</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity className="mt-3 items-center" onPress={() => router.back()}>
+      <TouchableOpacity
+        className="mt-3 items-center"
+        onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
         <Text className="text-[#0B4F8A]">Back</Text>
       </TouchableOpacity>
     </View>

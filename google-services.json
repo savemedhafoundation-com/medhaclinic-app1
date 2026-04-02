@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "179498638620-m68gpe7ulnqlm579edg072fpsqrensgs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.medhaclinic.app",
+            "certificate_hash": "b0f178c55cc5f4b08b62770e4775fc941076ea7d"
+          }
+        },
+        {
           "client_id": "179498638620-sv1b07lvisqh5i11j60goko7tgrls2v8.apps.googleusercontent.com",
           "client_type": 3
         }

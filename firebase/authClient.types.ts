@@ -14,3 +14,8 @@ export type AppAuthUserCredential = {
 export type AppPhoneConfirmation = {
   confirm: (code: string) => Promise<AppAuthUserCredential>;
 };
+
+export type PendingPhoneVerification = {
+  confirmation: AppPhoneConfirmation;
+  phoneNumber: string | null;
+};

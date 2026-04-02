@@ -1,301 +1,487 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import SvgHeader from "../../components/Clipperbg";
-import BottomNav from "../../components/BottomNav";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import {
+  Image,
+  type ImageSourcePropType,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const mainImage = require("../../assets/images/dietheader.png");
+import BottomNav from '../../components/BottomNav';
+import { goBackOrReplace } from '../../services/navigation';
 
-export default function BoosterDietScreen() {
+const medhaLogo = require('../../assets/images/medha_logo.png');
+const glutathioneBottle = require('../../assets/images/GT-500 1.png');
+const boronBottle = require('../../assets/images/BR-1 1.png');
+
+type Product = {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  dose: string;
+  quantity: string;
+  image: ImageSourcePropType;
+};
+
+const PRODUCTS: Product[] = [
+  {
+    id: 'detox-booster',
+    title: 'Detox Booster',
+    subtitle: 'Health Supplement for Adult Support to cleanse, recharge & revive health',
+    description:
+      "Detox Booster by Natural Immunotherapy is a scientifically balanced formula designed to cleanse, rejuvenate, and awaken the body's natural healing intelligence.",
+    dose: '500mg',
+    quantity: '60 capsule',
+    image: glutathioneBottle,
+  },
+  {
+    id: 'pancreas-booster',
+    title: 'Pancreas Booster',
+    subtitle: '60 vegetable capsules support to cleanse, recharge & revive health',
+    description:
+      'Pancreas Booster is a gentle daily supplement designed to support healthy pancreatic function, balanced blood sugar levels, and enhanced nutrient absorption.',
+    dose: '500mg',
+    quantity: '60 capsule',
+    image: boronBottle,
+  },
+];
+
+const LEAVES = [
+  { left: -8, top: 190, size: 76, rotate: '-16deg', color: 'rgba(116, 232, 86, 0.18)' },
+  { right: -12, top: 286, size: 84, rotate: '18deg', color: 'rgba(255,255,255,0.12)' },
+  { left: -16, top: 586, size: 74, rotate: '-28deg', color: 'rgba(255,255,255,0.1)' },
+  { right: -10, top: 840, size: 92, rotate: '24deg', color: 'rgba(110, 225, 91, 0.2)' },
+];
+
+function SelectorRow({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-1 bg-gray-100">
-
-      {/* ===== HEADER ===== */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 mt-4 flex-row items-center justify-between px-4">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
-            <Ionicons name="menu" size={26} color="#fff" />
-          </View>
-        </SafeAreaView>
-      </View>
-
-      <ScrollView
-        className="flex-1 px-5"
-        contentContainerStyle={{ paddingTop: 200, paddingBottom: 220 }}
-        showsVerticalScrollIndicator={false}
-      >
-
-        {/* MAIN IMAGE */}
-        <View className="items-center">
-          <Image
-            source={mainImage}
-            className="w-156 h-156"
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* TITLE */}
-        <Text className="text-green-700 text-xl font-bold mt-4">
-          30-Day Boosters & Diet Plan
-        </Text>
-
-        <Text className="text-gray-700 mt-2 leading-6">
-          A special 30-day booster & diet plan designed to support thyroid,
-          immunity, anemia, bone strength, liver metabolism, and overall well-being.
-        </Text>
-
-        {/* ===== PART 1 DIET PLAN ===== */}
-        <TouchableOpacity className="bg-green-600 mt-6 py-3 rounded-full items-center">
-          <Text className="text-white font-semibold">
-             Diet Plan (30 day)
-          </Text>
-        </TouchableOpacity>
-
-        <Text className="text-red-600 font-semibold mt-4">
-          Very Important –
-        </Text>
-        <Text className="text-gray-700">
-          Without proper diet, Hb and cholesterol will not improve.
-        </Text>
-
-        {/* Early Morning */}
-        <View className="bg-white rounded-2xl p-4 mt-6 shadow-sm">
-          <Text className="font-semibold text-green-800">
-            Early Morning (6.00 – 7.30 AM)
-          </Text>
-          <Text className="text-gray-600 mt-2">• 1 glass warm water</Text>
-          <Text className="text-gray-600">• 5–7 soaked black raisins</Text>
-        </View>
-
-        {/* Breakfast */}
-        <View className="bg-white rounded-2xl p-4 mt-5 shadow-sm">
-          <Text className="font-semibold text-green-800">
-            Breakfast (8.00 – 9.00 AM)
-          </Text>
-          <Text className="text-gray-600 mt-2">Choose any one:</Text>
-          <Text className="text-gray-600">• Oats / Dalia</Text>
-          <Text className="text-gray-600">• 2 Roti + Boiled vegetables</Text>
-          <Text className="text-gray-600">• Poha (without peanuts)</Text>
-
-          <View className="bg-green-100 mt-3 p-3 rounded-xl">
-            <Text className="text-red-500 font-semibold">Avoid:</Text>
-            <Text className="text-gray-700">
-              Bread, Biscuits, Sugar, Fast Food
-            </Text>
-          </View>
-        </View>
-
-        {/* Lunch */}
-        <View className="bg-white rounded-2xl p-4 mt-5 shadow-sm">
-          <Text className="font-semibold text-green-800">
-            Lunch (1.00 – 2.00 PM)
-          </Text>
-          <Text className="text-gray-600 mt-2">
-            • 2 Roti / Small rice portion
-          </Text>
-          <Text className="text-gray-600">
-            • Vegetable (Lauki, Spinach, Bottle gourd)
-          </Text>
-          <Text className="text-gray-600">
-            • Moong Dal
-          </Text>
-
-          <View className="bg-green-100 mt-3 p-3 rounded-xl">
-            <Text className="text-red-500 font-semibold">Avoid:</Text>
-            <Text className="text-gray-700">
-              Meat, Biryani, Fast Food
-            </Text>
-          </View>
-        </View>
-
-        {/* WATER */}
-        <View className="mt-8">
-          <Text className="text-green-800 font-semibold text-lg">
-            Water
-          </Text>
-          <Text className="text-gray-700 mt-2">
-            Drink 2.5–3 liters daily (in small intervals).
-          </Text>
-        </View>
-
-        {/* STRICTLY AVOID */}
-        <View className="bg-red-100 p-4 rounded-2xl mt-8">
-          <Text className="font-semibold text-red-600">
-            Strictly Avoid for 30 Days
-          </Text>
-          <Text className="text-gray-700 mt-2">
-            Sugar, Cold Drinks, Fried Foods, Bakery Items
-          </Text>
-        </View>
-
-        {/* EXPECTED IMPROVEMENT */}
-        <View className="bg-green-100 p-4 rounded-2xl mt-8">
-          <Text className="font-semibold text-green-800">
-            Expected Improvement Timeline
-          </Text>
-          <Text className="text-gray-700 mt-2">
-            Within 15–20 days:
-          </Text>
-          <Text className="text-gray-600">
-            • Weakness reduces
-          </Text>
-          <Text className="text-gray-600">
-            • Dizziness decreases
-          </Text>
-          <Text className="text-gray-700 mt-3">
-            Within 30 days:
-          </Text>
-          <Text className="text-gray-600">
-            • Hemoglobin improves
-          </Text>
-          <Text className="text-gray-600">
-            • Lipid profile stabilizes
-          </Text>
-        </View>
-{/* ===== BOOSTER SECTION WRAPPER ===== */}
-     <TouchableOpacity className="bg-green-600 mt-6 py-3 rounded-full items-center">
-          <Text className="text-white font-semibold">
-             Booster Plan (30 day)
-          </Text>
-        </TouchableOpacity>
-<View className="bg-green-50 rounded-3xl mt-6 border border-green-200 overflow-hidden">
-
-  {/* ===== Thyroid & Metabolic Support ===== */}
-  <View className="p-5">
-    <View className="flex-row items-start">
-      
-      <View className="w-12 h-12 rounded-full bg-purple-100 items-center justify-center mr-4">
-        <Text className="text-xl">🧠</Text>
-      </View>
-
-      <View className="flex-1">
-        <Text className="text-green-900 font-bold text-base">
-          Thyroid & Metabolic Support
-        </Text>
-
-        <Text className="text-green-800 mt-1 font-medium">
-          Immune Booster
-        </Text>
-
-        <Text className="text-gray-600 mt-1 text-sm">
-          Dosage: 1 tablet at night (after meals)
-        </Text>
-
-        <View className="mt-2">
-          <Text className="text-gray-700 text-sm">
-            • Helps improve T4 levels
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Supports thyroid regulation
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Improves metabolism
-          </Text>
-        </View>
-      </View>
-    </View>
-  </View>
-
-  <View className="border-t border-green-200" />
-
-  {/* ===== Anemia & Bone Marrow Support ===== */}
-  <View className="p-5">
-    <View className="flex-row items-start">
-      
-      <View className="w-12 h-12 rounded-full bg-orange-100 items-center justify-center mr-4">
-        <Text className="text-xl">🩸</Text>
-      </View>
-
-      <View className="flex-1">
-        <Text className="text-green-900 font-bold text-base">
-          Anemia & Bone Marrow Support
-        </Text>
-
-        <Text className="text-green-800 mt-1 font-medium">
-          Bone Marrow Booster
-        </Text>
-
-        <Text className="text-gray-600 mt-1 text-sm">
-          Dosage: 1 capsule morning
-        </Text>
-
-        <View className="mt-2">
-          <Text className="text-gray-700 text-sm">
-            • Helps increase hemoglobin (Hb)
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Improves RBC production
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Supports platelet stability
-          </Text>
-        </View>
-      </View>
-    </View>
-  </View>
-
-  <View className="border-t border-green-200" />
-
-  {/* ===== Bone–Mineral Support ===== */}
-  <View className="p-5">
-    <View className="flex-row items-start">
-      
-      <View className="w-12 h-12 rounded-full bg-indigo-100 items-center justify-center mr-4">
-        <Text className="text-xl">🦴</Text>
-      </View>
-
-      <View className="flex-1">
-        <Text className="text-green-900 font-bold text-base">
-          Bone–Mineral Support & ALP Control
-        </Text>
-
-        <Text className="text-green-800 mt-1 font-medium">
-          Calcium + Mineral Booster
-        </Text>
-
-        <Text className="text-gray-600 mt-1 text-sm">
-          Dosage: 1 tablet after lunch
-        </Text>
-
-        <View className="mt-2">
-          <Text className="text-gray-700 text-sm">
-            • Improves mineral absorption
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Strengthens bones and joints
-          </Text>
-          <Text className="text-gray-700 text-sm">
-            • Reduces muscle weakness
-          </Text>
-        </View>
-      </View>
-    </View>
-  </View>
-
-  {/* ===== See All ===== */}
-  <TouchableOpacity className="border-t border-green-200 py-3 items-center">
-    <Text className="text-green-800 font-semibold">
-      See all
-    </Text>
-  </TouchableOpacity>
-
-</View>
-
-        {/* ACCEPT */}
-        <TouchableOpacity className="bg-green-700 mt-10 py-4 rounded-full items-center" onPress={() => router.push('/(tabs)/healthalert')}>
-          <Text className="text-white font-bold text-lg">
-            Accept
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <BottomNav />
+    <View style={styles.selectorRow}>
+      <Text style={styles.selectorLabel}>{label}</Text>
+      <TouchableOpacity activeOpacity={0.9} style={styles.selectorPill}>
+        <Text style={styles.selectorValue}>{value}</Text>
+        <Ionicons name="chevron-down" size={14} color="#E7FFE5" />
+      </TouchableOpacity>
     </View>
   );
 }
+
+function ProductCard({ product }: { product: Product }) {
+  return (
+    <View style={styles.card}>
+      <TouchableOpacity activeOpacity={0.9} style={styles.favoriteButton}>
+        <Ionicons name="heart" size={14} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <View style={styles.cardTopRow}>
+        <View style={styles.productImageShell}>
+          <Image source={product.image} resizeMode="contain" style={styles.productImage} />
+        </View>
+
+        <View style={styles.productInfo}>
+          <Text style={styles.productTitle}>{product.title}</Text>
+          <Text style={styles.productSubtitle}>{product.subtitle}</Text>
+
+          <SelectorRow label="Dose" value={product.dose} />
+          <SelectorRow label="Quantity" value={product.quantity} />
+        </View>
+      </View>
+
+      <View style={styles.descriptionBox}>
+        <Text style={styles.descriptionHeading}>Description</Text>
+        <Text style={styles.descriptionText}>{product.description}</Text>
+      </View>
+
+      <TouchableOpacity activeOpacity={0.92} style={styles.orderButton}>
+        <Text style={styles.orderButtonText}>Order Now</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function DockButton({
+  active = false,
+  icon,
+  onPress,
+  badge,
+}: {
+  active?: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress?: () => void;
+  badge?: string;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={onPress}
+      style={[styles.dockButton, active && styles.dockButtonActive]}
+    >
+      <Ionicons name={icon} size={20} color={active ? '#168019' : '#FFFFFF'} />
+      {badge ? (
+        <View style={styles.dockBadge}>
+          <Text style={styles.dockBadgeText}>{badge}</Text>
+        </View>
+      ) : null}
+    </TouchableOpacity>
+  );
+}
+
+export default function BoosterDietScreen() {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={styles.screen}>
+      <LinearGradient
+        colors={['#1FB807', '#58C93B']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {LEAVES.map((leaf, index) => (
+        <Ionicons
+          key={`leaf-${index}`}
+          name="leaf"
+          size={leaf.size}
+          color={leaf.color}
+          style={[
+            styles.backgroundLeaf,
+            {
+              left: leaf.left,
+              right: leaf.right,
+              top: leaf.top,
+              transform: [{ rotate: leaf.rotate }],
+            },
+          ]}
+        />
+      ))}
+
+      <View style={[styles.edgeShape, styles.edgeShapeLeft]} />
+      <View style={[styles.edgeShape, styles.edgeShapeRight]} />
+
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <ScrollView
+          bounces={false}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingTop: 14,
+              paddingBottom: insets.bottom + 120,
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => goBackOrReplace('/boosterdiet/boosters')}
+              style={styles.backButton}
+            >
+              <Ionicons name="chevron-back" size={22} color="#2B8C1A" />
+            </TouchableOpacity>
+
+            <Image source={medhaLogo} resizeMode="contain" style={styles.logo} />
+
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.breadcrumbRow}>
+            <Ionicons name="chevron-back" size={12} color="rgba(255,255,255,0.82)" />
+            <Text style={styles.breadcrumbText}>Natural Supplements</Text>
+          </View>
+
+          <TouchableOpacity activeOpacity={0.9} style={styles.tagPill}>
+            <Text style={styles.tagText}>Boosters</Text>
+          </TouchableOpacity>
+
+          <View style={styles.cardsColumn}>
+            {PRODUCTS.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </View>
+
+          <TouchableOpacity activeOpacity={0.92} style={styles.seeAllButton}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        <BottomNav />
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#22B90C',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  backgroundLeaf: {
+    position: 'absolute',
+  },
+  edgeShape: {
+    position: 'absolute',
+    width: 84,
+    height: 110,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  edgeShapeLeft: {
+    left: -36,
+    top: 374,
+    transform: [{ rotate: '-24deg' }],
+  },
+  edgeShapeRight: {
+    right: -30,
+    top: 742,
+    transform: [{ rotate: '22deg' }],
+  },
+  content: {
+    paddingHorizontal: 18,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0A630D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  logo: {
+    width: 138,
+    height: 52,
+  },
+  headerSpacer: {
+    width: 30,
+  },
+  breadcrumbRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  breadcrumbText: {
+    marginLeft: 2,
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  tagPill: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: 'rgba(14, 117, 18, 0.85)',
+    justifyContent: 'center',
+  },
+  tagText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  cardsColumn: {
+    marginTop: 18,
+    gap: 22,
+  },
+  card: {
+    position: 'relative',
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(18, 123, 20, 0.52)',
+    shadowColor: '#0A5B0C',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 2,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  productImageShell: {
+    width: 76,
+    height: 98,
+    borderRadius: 14,
+    backgroundColor: '#F5FFF2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0A5B0C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  productImage: {
+    width: 68,
+    height: 88,
+  },
+  productInfo: {
+    flex: 1,
+    marginLeft: 14,
+    paddingRight: 18,
+  },
+  productTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  productSubtitle: {
+    marginTop: 4,
+    color: 'rgba(240,255,239,0.95)',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  selectorRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectorLabel: {
+    color: '#E6FFE4',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  selectorPill: {
+    minWidth: 122,
+    height: 24,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#136E12',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectorValue: {
+    color: '#E7FFE5',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  descriptionBox: {
+    marginTop: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(9, 106, 14, 0.78)',
+    padding: 10,
+  },
+  descriptionHeading: {
+    color: '#E8FFE6',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  descriptionText: {
+    marginTop: 6,
+    color: 'rgba(235,255,233,0.86)',
+    fontSize: 9,
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  orderButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 18,
+    height: 32,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    shadowColor: '#0A5B0C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  orderButtonText: {
+    color: '#1B7618',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  seeAllButton: {
+    marginTop: 18,
+    alignSelf: 'center',
+    minWidth: 108,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: '#18871A',
+    paddingHorizontal: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seeAllText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  dockWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  dock: {
+    width: '92%',
+    maxWidth: 360,
+    minHeight: 62,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#08490A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  dockButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  dockBadge: {
+    position: 'absolute',
+    top: 7,
+    right: 6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  dockBadgeText: {
+    color: '#0E7611',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+});

@@ -97,7 +97,7 @@ function buildFirebaseAuthFailureMessage(error: unknown) {
     case 'auth/invalid-id-token':
       return 'Firebase ID token is malformed or invalid. The app may be sending a stale or mismatched session token.';
     case 'auth/invalid-credential':
-      return 'Firebase Admin credentials are not valid for ID token verification. Recheck the Vercel Firebase Admin env vars.';
+      return 'Firebase Admin credentials are not valid for ID token verification. Recheck the backend Firebase Admin configuration or Cloud Run service account.';
     case 'auth/project-not-found':
       return 'Firebase Admin is pointing at a project that does not exist or is not accessible.';
     case 'auth/argument-error':
@@ -111,18 +111,18 @@ function buildDatabaseFailureMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
 
   if (message.includes("can't reach database server")) {
-    return 'Database is unreachable. Verify the Vercel DATABASE_URL, network access, and SSL settings.';
+    return 'Database is unreachable. Verify the production database configuration, Cloud SQL connection, and network settings.';
   }
 
   if (message.includes('authentication failed')) {
-    return 'Database authentication failed. Recheck the DATABASE_URL credentials configured in Vercel.';
+    return 'Database authentication failed. Recheck the production database user and password.';
   }
 
   if (message.includes('tls') || message.includes('ssl')) {
-    return 'Database SSL negotiation failed. Verify the DATABASE_URL SSL parameters in Vercel.';
+    return 'Database SSL negotiation failed. Verify the production database SSL configuration.';
   }
 
-  return 'Database is not configured correctly or is currently unreachable. Check the Vercel DATABASE_URL and Prisma migration state.';
+  return 'Database is not configured correctly or is currently unreachable. Check the backend database configuration and Prisma migration state.';
 }
 
 function isPrismaInitializationError(error: unknown) {
@@ -179,13 +179,13 @@ function handleFirebaseVerificationFailure(
     adminProjectId &&
     tokenProjectId !== adminProjectId
   ) {
-    return c.json(
-      {
-        success: false,
-        message: `Firebase token project mismatch. The app token is for "${tokenProjectId}" but the backend is configured for "${adminProjectId}". Update the Vercel Firebase Admin env vars to the same Firebase project as the app.`,
-      },
-      401
-    );
+        return c.json(
+          {
+            success: false,
+            message: `Firebase token project mismatch. The app token is for "${tokenProjectId}" but the backend is configured for "${adminProjectId}". Update the backend Firebase Admin configuration to the same Firebase project as the app.`,
+          },
+          401
+        );
   }
 
   return c.json(

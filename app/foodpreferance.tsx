@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import bg from '../assets/images/dashbg.png';
+import { goBackOrReplace } from '../services/navigation';
 
 const veg = require('../assets/images/veg.png');
 const nonveg = require('../assets/images/nonveg.png');
@@ -34,7 +35,7 @@ export default function FoodPreferencesScreen() {
         resizeMode="stretch"
       >
         <SafeAreaView className="flex-1 justify-center px-4">
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => goBackOrReplace('/dietscreen')}>
             <Ionicons name="chevron-back" size={26} color="#fff" />
           </TouchableOpacity>
         </SafeAreaView>

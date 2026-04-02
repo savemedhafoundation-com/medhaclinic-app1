@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import SvgHeader from '../../components/Clipperbg';
+import { goBackOrReplace } from '../../services/navigation';
 
 /* ================= ASSETS ================= */
 const emojiLow = require('../../assets/images/low.png');
@@ -49,10 +50,9 @@ export default function WeeklyImmunityCheck() {
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
                 <Ionicons name="chevron-back" size={26} color="#fff" />
               </TouchableOpacity>
-              <Ionicons name="menu" size={26} color="#fff" />
             </View>
 
             <View className="items-center">

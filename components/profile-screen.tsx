@@ -543,10 +543,7 @@ export default function ProfileScreen() {
   }
 
   function handleSupport() {
-    Alert.alert(
-      'Patient Support',
-      'Support options will be added next.'
-    );
+    router.push('/support');
   }
 
   function handleAbout() {
