@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
 
+import HeaderBackButton from '../../components/HeaderBackButton';
 import SvgHeader from '../../components/Clipperbg';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
@@ -34,12 +35,27 @@ type State = {
   errorMessage: string | null;
 };
 
+type AssessmentAnswer = {
+  answered?: boolean;
+  title?: string;
+  selectedLabel?: string;
+  score?: number;
+};
 
+type SummaryData = {
+  totalAnswered?: number;
+  totalQuestions?: number;
+  completionPercent?: number;
+};
 
+type SpeedometerData = {
+  score?: number;
+  label?: string;
+};
 
 type Action =
   | { type: 'SET_RESULT'; paragraphs: string[] }
-  | { type: 'SET_ERROR'; message: string };
+  | { type: 'SET_ERROR'; message: string; paragraphs: string[] };
 
 const initialState: State = {
   paragraphs: [],
@@ -49,8 +65,80 @@ const initialState: State = {
   errorMessage: null,
 };
 
+function getScoreTone(score: number) {
+  if (score >= 8) {
+    return {
+      summary: 'strong daily immune resilience and a well-balanced wellness pattern',
+      guidance:
+        'Maintain the same routine with good hydration, steady meals, regular sleep, and light movement to preserve this momentum.',
+    };
+  }
 
+  if (score >= 6) {
+    return {
+      summary: 'generally stable immunity with a few areas that can still be strengthened',
+      guidance:
+        'A little more consistency in sleep, hydration, nutrition, and symptom tracking can help push this result higher over the next few days.',
+    };
+  }
 
+  if (score >= 4) {
+    return {
+      summary: 'mixed daily immunity signals that would benefit from closer self-care today',
+      guidance:
+        'Prioritize rest, hydration, balanced meals, and a calmer routine today, then repeat the check tomorrow to watch for improvement.',
+    };
+  }
+
+  return {
+    summary: 'lower-than-usual daily resilience signals based on the available check-in data',
+    guidance:
+      'Use today as a recovery day with extra rest, fluids, gentle nutrition, and closer symptom observation, and seek medical guidance if concerns are increasing.',
+  };
+}
+
+function buildFallbackParagraphs({
+  answers,
+  completionPercent,
+  immunityLabel,
+  immunityScore,
+  summaryData,
+}: {
+  answers: AssessmentAnswer[];
+  completionPercent: number;
+  immunityLabel: string;
+  immunityScore: number;
+  summaryData: SummaryData;
+}) {
+  const answeredCount = summaryData.totalAnswered ?? answers.filter(item => item.answered).length;
+  const totalQuestions = summaryData.totalQuestions ?? answers.length;
+  const roundedCompletion = Number.isFinite(completionPercent)
+    ? Math.round(completionPercent)
+    : 0;
+  const tone = getScoreTone(immunityScore);
+  const label = immunityLabel.trim() || 'Current';
+  const focusAreas = answers
+    .filter(
+      item =>
+        item.answered &&
+        typeof item.title === 'string' &&
+        typeof item.score === 'number' &&
+        item.score <= 1
+    )
+    .map(item => item.title?.trim())
+    .filter((item): item is string => Boolean(item))
+    .slice(0, 2);
+
+  const focusSentence = focusAreas.length
+    ? `The main areas to watch in the next check-in are ${focusAreas.join(' and ')}.`
+    : 'No single response stands out as an urgent concern from the available assessment answers.';
+
+  return [
+    `Today's assessment suggests ${tone.summary}, with an immunity score of ${immunityScore}/10 and a ${label} status.`,
+    `This report is based on ${answeredCount} of ${totalQuestions} answered questions with ${roundedCompletion}% completion, so it reflects the information available from today's check-in.`,
+    `${focusSentence} ${tone.guidance}`,
+  ];
+}
 
 const defaultProfileImage = require('../../assets/images/profile.png');
 
@@ -70,11 +158,7 @@ function reportReducer(state: State, action: Action): State {
         error: true,
         source: 'fallback',
         errorMessage: action.message,
-        paragraphs: [
-          'Your immunity indicators reflect a stable and balanced internal health state.',
-          'Daily physiological functions are operating within healthy ranges.',
-          'Overall immunity strength suggests strong resilience and wellness.',
-        ],
+        paragraphs: action.paragraphs,
       };
     default:
       return state;
@@ -88,25 +172,30 @@ export default function DailyImmunityReport() {
   const { patientName, patientPhoto, patientAge, patientGender } =
     usePatientProfile();
 
-  const payload = useMemo(() => {
+  const payload = useMemo<AssessmentAnswer[]>(() => {
     try {
-      return JSON.parse(data as string);
+      const parsed = JSON.parse(data as string);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
   }, [data]);
 
-  const summaryData = useMemo(() => {
+  const summaryData = useMemo<SummaryData>(() => {
     try {
-      return JSON.parse(summary as string);
+      const parsed = JSON.parse(summary as string);
+      return parsed && typeof parsed === 'object' ? (parsed as SummaryData) : {};
     } catch {
       return {};
     }
   }, [summary]);
 
-  const speedometerData = useMemo(() => {
+  const speedometerData = useMemo<SpeedometerData>(() => {
     try {
-      return JSON.parse(speedometer as string);
+      const parsed = JSON.parse(speedometer as string);
+      return parsed && typeof parsed === 'object'
+        ? (parsed as SpeedometerData)
+        : {};
     } catch {
       return {};
     }
@@ -153,8 +242,25 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
     `.trim();
   }, [payload, summaryData, completionPercent, immunityScore, immunityLabel]);
 
+  const fallbackParagraphs = useMemo(
+    () =>
+      buildFallbackParagraphs({
+        answers: payload,
+        completionPercent,
+        immunityLabel,
+        immunityScore,
+        summaryData,
+      }),
+    [payload, completionPercent, immunityLabel, immunityScore, summaryData]
+  );
+
   useEffect(() => {
     if (!prompt) {
+      dispatch({
+        type: 'SET_ERROR',
+        message: 'Assessment answers are unavailable for AI summary.',
+        paragraphs: fallbackParagraphs,
+      });
       return;
     }
 
@@ -174,13 +280,13 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
             ? error.message
             : 'Unknown AI summary error.';
 
-        console.log('[DailyReport] AI summary error:', error);
-        dispatch({ type: 'SET_ERROR', message });
+        console.log('[DailyReport] AI summary error:', message);
+        dispatch({ type: 'SET_ERROR', message, paragraphs: fallbackParagraphs });
       }
     }
 
     void generateReport();
-  }, [prompt, user]);
+  }, [fallbackParagraphs, prompt, user]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#f7fff6]">
@@ -189,9 +295,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 mt-4 justify-center">
             <View className="absolute left-4 right-4 flex-row justify-between">
-              <TouchableOpacity onPress={() => goBackOrReplace('/immunity/dailyimmunity')}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
+              <HeaderBackButton onPress={() => goBackOrReplace('/immunity/dailyimmunity')} />
             </View>
           </View>
         </SafeAreaView>

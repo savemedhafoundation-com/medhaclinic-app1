@@ -5,6 +5,12 @@ function getTrimmedEnv(name) {
 }
 
 function buildResolvedDatabaseUrl() {
+  const directMigrationUrl = getTrimmedEnv('DIRECT_DATABASE_URL');
+
+  if (directMigrationUrl) {
+    return directMigrationUrl;
+  }
+
   const directDatabaseUrl = getTrimmedEnv('DATABASE_URL');
 
   if (directDatabaseUrl) {
@@ -57,7 +63,7 @@ if (resolvedDatabaseUrl) {
 
 if (!process.env.DATABASE_URL) {
   console.error(
-    'DATABASE_URL is missing. Set DATABASE_URL directly, or set DB_USER, DB_PASS, DB_NAME, and INSTANCE_CONNECTION_NAME.'
+    'DATABASE_URL is missing. Set DATABASE_URL directly, or set DB_USER, DB_PASS, DB_NAME, and DB_HOST.'
   );
   process.exit(1);
 }

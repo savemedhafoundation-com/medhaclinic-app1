@@ -12,6 +12,7 @@ import { useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { goBackOrReplace } from '../../services/navigation';
 
+import HeaderBackButton from '../../components/HeaderBackButton';
 import SvgHeader from '../../components/Clipperbg';
 
 // IMAGES
@@ -33,9 +34,7 @@ export default function AnalysisRecommendationScreen() {
         <SafeAreaView className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row justify-between">
-              <TouchableOpacity onPress={() => goBackOrReplace('/process')}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
+              <HeaderBackButton onPress={() => goBackOrReplace('/process')} />
             </View>
           </View>
         </SafeAreaView>

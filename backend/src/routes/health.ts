@@ -9,8 +9,9 @@ import {
   getFirebaseAdminProjectId,
   getGoogleCloudProjectId,
   getInstanceConnectionName,
-  hasGoogleCloudRuntime,
+  hasDatabaseConfig,
   hasFirebaseAdminConfig,
+  hasGoogleCloudRuntime,
 } from '../lib/env.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -35,18 +36,26 @@ function getDatabaseHealthMessage(error: unknown) {
     return 'Database SSL negotiation failed.';
   }
 
+  if (message.includes('database configuration is missing')) {
+    return 'Database configuration is missing.';
+  }
+
   return 'Database health check failed.';
 }
 
 healthRouter.get('/', async c => {
-  let databaseReachable = true;
+  let databaseReachable = hasDatabaseConfig();
   let databaseMessage: string | null = null;
 
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-  } catch (error) {
-    databaseReachable = false;
-    databaseMessage = getDatabaseHealthMessage(error);
+  if (!hasDatabaseConfig()) {
+    databaseMessage = 'Database configuration is missing.';
+  } else {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (error) {
+      databaseReachable = false;
+      databaseMessage = getDatabaseHealthMessage(error);
+    }
   }
 
   return c.json({

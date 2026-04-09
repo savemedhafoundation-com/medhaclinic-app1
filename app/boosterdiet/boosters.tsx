@@ -313,7 +313,7 @@ export default function BoostersScreen() {
 
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() => router.push('/boosterdiet/dietplan')}
+              onPress={() => router.push('/boosterdiet/store')}
               style={styles.viewItemsButton}
             >
               <Text style={styles.viewItemsText}>View Items</Text>
