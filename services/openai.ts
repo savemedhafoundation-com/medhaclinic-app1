@@ -7,7 +7,7 @@ import {
   requestBackend,
 } from './backend';
 
-const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-backend.onrender.com';
+const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-app1.onrender.com';
 const PUBLIC_AI_SUMMARY_PATH = '/v1/ai/immunity-summary-public';
 const PUBLIC_AI_TIMEOUT_MS = 20_000;
 

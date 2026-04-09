@@ -57,7 +57,7 @@
         "projectId": "64bd29f2-7c0e-4a35-be76-0702cd8ffbef"
       },
       "publicConfig": {
-        "backendUrl": "https://medhaclinic-backend.onrender.com",
+        "backendUrl": "https://medhaclinic-app1.onrender.com",
         "firebase": {
           "apiKey": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
           "authDomain": "medhaclinic-3ba87.firebaseapp.com",

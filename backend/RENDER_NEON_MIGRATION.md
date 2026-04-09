@@ -77,7 +77,7 @@ while the app runtime still uses the pooled `DATABASE_URL`.
 After Render deploys, open:
 
 ```text
-https://medhaclinic-backend.onrender.com/health
+https://medhaclinic-app1.onrender.com/health
 ```
 
 You should see:
@@ -100,7 +100,7 @@ Update these app-side backend references to the final Render URL:
 This repo now defaults those tracked config files to:
 
 ```text
-https://medhaclinic-backend.onrender.com
+https://medhaclinic-app1.onrender.com
 ```
 
 ## 7. Retest the AI summary flow
