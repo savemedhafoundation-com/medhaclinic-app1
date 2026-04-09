@@ -21,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { router } from "expo-router";
 
+import HeaderBackButton from "../../components/HeaderBackButton";
 import SvgHeader from "../../components/Clipperbg";
 import Speedometer from "../../components/Svgspeedometer";
 import type { SubmitDailyImmunityVariables } from "../../firebase/dataConnect";
@@ -253,13 +254,13 @@ const QUESTIONS: Question[] = [
       {
         key: "mild",
         label: "Mild Fever",
-        img: require("../../assets/images/immunity/fever3.png"),
+        img: require("../../assets/images/immunity/fever2.png"),
         score: 10,
       },
       {
         key: "moderate",
         label: "Moderate Fever",
-        img: require("../../assets/images/immunity/fever2.png"),
+        img: require("../../assets/images/immunity/fever3.png"),
         score: 6,
       },
       {
@@ -762,11 +763,7 @@ export default function DailyImmunityCheck() {
             justifyContent: "space-between",
           }}
         >
-          <TouchableOpacity
-            onPress={() => goBackOrReplace('/(tabs)/dashboard')}
-            hitSlop={12}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-          </TouchableOpacity>
+          <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
         </View>
       </View>
 

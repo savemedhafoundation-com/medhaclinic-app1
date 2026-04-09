@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
   Image,
@@ -9,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SvgHeader from '../../components/Clipperbg';
+import HeaderBackButton from '../../components/HeaderBackButton';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { goBackOrReplace } from '../../services/navigation';
 
@@ -29,9 +29,7 @@ export default function WeeklyImmunityReport() {
 
         <SafeAreaView className="absolute top-0 w-full px-4">
           <View className="flex-row items-center justify-between mt-4">
-            <TouchableOpacity onPress={() => goBackOrReplace('/immunity/weeklyimmunity')}>
-              <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
+            <HeaderBackButton onPress={() => goBackOrReplace('/immunity/weeklyimmunity')} />
           </View>
         </SafeAreaView>
       </View>

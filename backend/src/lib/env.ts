@@ -186,9 +186,7 @@ function resolveDatabaseConfig(rawEnv: RawEnv): ResolvedDatabaseConfig {
 
 function validateResolvedDatabaseConfig(databaseConfig: ResolvedDatabaseConfig) {
   if (!databaseConfig.url) {
-    throw new Error(
-      'Database configuration is missing. Set DATABASE_URL, or set DB_USER, DB_PASS, DB_NAME, and INSTANCE_CONNECTION_NAME for Cloud Run / Cloud SQL.'
-    );
+    return;
   }
 
   if (!isProductionRuntime || !databaseConfig.host) {
@@ -247,18 +245,20 @@ const resolvedDatabaseConfig = resolveDatabaseConfig(rawEnv);
 validateResolvedDatabaseConfig(resolvedDatabaseConfig);
 
 const finalEnvSchema = rawEnvSchema.extend({
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().min(1).optional(),
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
 });
 
 const parsed = finalEnvSchema.parse({
   ...rawEnv,
-  DATABASE_URL: resolvedDatabaseConfig.url!,
+  DATABASE_URL: resolvedDatabaseConfig.url ?? undefined,
   GOOGLE_CLOUD_PROJECT:
     rawEnv.GOOGLE_CLOUD_PROJECT ?? getGoogleCloudProjectIdFromRawEnv(rawEnv) ?? undefined,
 });
 
-process.env.DATABASE_URL = parsed.DATABASE_URL;
+if (parsed.DATABASE_URL) {
+  process.env.DATABASE_URL = parsed.DATABASE_URL;
+}
 
 const hasJsonCredential = !!parsed.FIREBASE_SERVICE_ACCOUNT_JSON;
 const hasSplitCredential =
@@ -339,6 +339,10 @@ export function getGoogleCloudProjectId() {
 
 export function getDatabaseHost() {
   return resolvedDatabaseConfig.host;
+}
+
+export function hasDatabaseConfig() {
+  return Boolean(parsed.DATABASE_URL);
 }
 
 export function getDatabaseConnectionMode() {

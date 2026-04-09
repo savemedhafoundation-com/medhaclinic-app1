@@ -11,11 +11,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import SvgHeader from "../../components/Clipperbg";
+import HeaderBackButton from "../../components/HeaderBackButton";
 import { usePatientProfile } from "../../hooks/use-patient-profile";
 import {
   buildAndStoreWeeklyReport,
   type WeeklyReportStatus,
 } from "../../services/medhaDataConnect";
+import { goBackOrReplace } from "../../services/navigation";
 
 // ---------------- HELPERS ----------------
 
@@ -251,6 +253,8 @@ export default function WeeklyReportScreen() {
       ][]
     ).map(([key, item]) => {
       const meta = getStatusMeta(item.current);
+      const generatedDescription =
+        reportData.insights?.categoryInsights?.[String(key)] ?? null;
 
       return {
         id: String(key),
@@ -258,11 +262,13 @@ export default function WeeklyReportScreen() {
         score: item.current,
         status: meta.status,
         statusColor: meta.statusColor,
-        description: getScoreDescription(
-          labelMap[String(key)],
-          item.current,
-          item.trend
-        ),
+        description:
+          generatedDescription ??
+          getScoreDescription(
+            labelMap[String(key)],
+            item.current,
+            item.trend
+          ),
         delta: formatDelta(item.difference),
         trend: item.trend,
         icon: iconMap[String(key)],
@@ -280,6 +286,23 @@ export default function WeeklyReportScreen() {
     if (!reportData?.overall) return null;
     return getStatusMeta(reportData.overall.current);
   }, [reportData]);
+
+  const trackedDays =
+    reportData?.daysTracked ?? reportData?.currentWindow?.trackedDayCount ?? 7;
+  const overviewText = reportData?.insights?.overview ?? null;
+  const overallProgressText = reportData?.insights?.overallProgress
+    ? reportData.insights.overallProgress
+    : reportData
+    ? getOverallInsight(reportData.overall.trend)
+    : "";
+  const areasToImproveText = reportData?.insights?.areasToImprove
+    ? reportData.insights.areasToImprove
+    : lowestScoreItem
+    ? getImprovementInsight(lowestScoreItem.label)
+    : "No weak area detected.";
+  const encouragementText =
+    reportData?.insights?.encouragement ??
+    "Keep tracking your progress every week!";
 
   if (loading) {
     return (
@@ -316,8 +339,11 @@ export default function WeeklyReportScreen() {
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
 
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
+        <SafeAreaView className="absolute top-0 w-full px-4">
+          <View className="mt-4 flex-row items-center justify-between">
+            <HeaderBackButton
+              onPress={() => goBackOrReplace('/homescreen/basicscreens')}
+            />
           </View>
         </SafeAreaView>
       </View>
@@ -374,12 +400,19 @@ export default function WeeklyReportScreen() {
                   Previous Overall Score - {reportData.overall.previous.toFixed(1)}
                 </Text>
               </View>
+              {overviewText ? (
+                <Text className="text-green-100 text-[12px] mt-3 leading-5">
+                  {overviewText}
+                </Text>
+              ) : null}
             </View>
           </View>
 
           <View className="flex-row mt-4 gap-3">
             <View className="flex-1 bg-white rounded-2xl px-4 py-3 flex-row items-center">
-              <Text className="text-[#166534] text-[22px] font-extrabold">7</Text>
+              <Text className="text-[#166534] text-[22px] font-extrabold">
+                {trackedDays}
+              </Text>
               <Text className="text-gray-500 text-[11px] ml-2 leading-4">
                 Days{"\n"}Tracked
               </Text>
@@ -446,7 +479,7 @@ export default function WeeklyReportScreen() {
                 </Text>
               </View>
               <Text className="text-green-800 text-[12px] leading-5">
-                {getOverallInsight(reportData.overall.trend)}
+                {overallProgressText}
               </Text>
             </View>
 
@@ -460,16 +493,14 @@ export default function WeeklyReportScreen() {
                 </Text>
               </View>
               <Text className="text-blue-800 text-[12px] leading-5">
-                {lowestScoreItem
-                  ? getImprovementInsight(lowestScoreItem.label)
-                  : "No weak area detected."}
+                {areasToImproveText}
               </Text>
             </View>
           </View>
         </View>
 
         <Text className="text-center text-gray-500 text-[14px] mt-6 font-medium">
-          Keep tracking your progress every week!
+          {encouragementText}
         </Text>
 
         <TouchableOpacity

@@ -3,10 +3,11 @@ import {
   BackendRequestError,
   getConfiguredBackendUrl,
   hasConfiguredBackend,
+  readErrorMessage,
   requestBackend,
 } from './backend';
 
-const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-backend2.vercel.app';
+const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-backend.onrender.com';
 const PUBLIC_AI_SUMMARY_PATH = '/v1/ai/immunity-summary-public';
 const PUBLIC_AI_TIMEOUT_MS = 20_000;
 
@@ -30,6 +31,37 @@ function getPublicAiTimeoutMessage() {
   )}s.`;
 }
 
+function normalizeAiSummaryError(error: unknown) {
+  if (error instanceof BackendRequestError) {
+    if (typeof error.status === 'number' && error.status >= 500) {
+      return new Error(
+        `AI summary service is temporarily unavailable (HTTP ${error.status}).`
+      );
+    }
+
+    return new Error(readErrorMessage(error.payload) ?? error.message);
+  }
+
+  if (error instanceof Error) {
+    return new Error(readErrorMessage(error.message) ?? error.message);
+  }
+
+  return new Error(readErrorMessage(error) ?? 'AI summary request failed.');
+}
+
+function combineAiSummaryErrors(primaryError: unknown, fallbackError: unknown) {
+  const primary = normalizeAiSummaryError(primaryError);
+  const fallback = normalizeAiSummaryError(fallbackError);
+
+  if (primary.message === fallback.message) {
+    return primary;
+  }
+
+  return new Error(
+    `${primary.message} Backup AI summary service also failed: ${fallback.message}`
+  );
+}
+
 async function requestPublicAiSummary(baseUrl: string, promptText: string) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), PUBLIC_AI_TIMEOUT_MS);
@@ -49,21 +81,11 @@ async function requestPublicAiSummary(baseUrl: string, promptText: string) {
     );
 
     const responseText = await response.text();
-    let data:
-      | {
-          error?: string;
-          message?: string;
-          result?: string;
-        }
-      | null = null;
+    let data: Record<string, unknown> | null = null;
 
     if (responseText) {
       try {
-        data = JSON.parse(responseText) as {
-          error?: string;
-          message?: string;
-          result?: string;
-        };
+        data = JSON.parse(responseText) as Record<string, unknown>;
       } catch {
         data = null;
       }
@@ -71,13 +93,15 @@ async function requestPublicAiSummary(baseUrl: string, promptText: string) {
 
     if (!response.ok) {
       throw new Error(
-        data?.error ??
-          data?.message ??
+        readErrorMessage(data) ??
+          (response.status >= 500
+            ? `AI summary service is temporarily unavailable (HTTP ${response.status}).`
+            : readErrorMessage(responseText)) ??
           `AI request failed with status ${response.status}.`
       );
     }
 
-    if (!data?.result) {
+    if (typeof data?.result !== 'string' || !data.result.trim()) {
       throw new Error('Invalid response from AI server');
     }
 
@@ -98,7 +122,7 @@ async function requestPublicAiSummary(baseUrl: string, promptText: string) {
       throw error;
     }
 
-    throw new Error('Public AI summary request failed.');
+    throw new Error(readErrorMessage(error) ?? 'Public AI summary request failed.');
   } finally {
     clearTimeout(timeoutId);
   }
@@ -108,56 +132,76 @@ export async function fetchImmunityResult(
   promptText: string,
   authUser?: AppAuthUser | null
 ) {
-  if (!promptText) {
-    throw new Error('Prompt is empty or undefined');
-  }
+  try {
+    if (!promptText) {
+      throw new Error('Prompt is empty or undefined');
+    }
 
-  if (hasConfiguredBackend()) {
-    let data: { result?: string } | null = null;
-    const configuredBackendUrl = getConfiguredBackendUrl();
+    if (hasConfiguredBackend()) {
+      let data: { result?: string } | null = null;
+      const configuredBackendUrl = getConfiguredBackendUrl();
 
-    if (authUser) {
-      try {
-        data = await requestBackend<{ result?: string }>(
-          '/v1/ai/immunity-summary',
-          {
+      if (authUser) {
+        try {
+          data = await requestBackend<{ result?: string }>(
+            '/v1/ai/immunity-summary',
+            {
+              method: 'POST',
+              body: JSON.stringify({ prompt: promptText }),
+              authUser,
+            }
+          );
+        } catch (error) {
+          if (!shouldUsePublicAiSummaryRoute(error)) {
+            throw error;
+          }
+        }
+      }
+
+      if (!data) {
+        let configuredPublicRouteError: unknown = null;
+
+        try {
+          data = await requestBackend<{ result?: string }>(PUBLIC_AI_SUMMARY_PATH, {
             method: 'POST',
             body: JSON.stringify({ prompt: promptText }),
-            authUser,
+            authRequired: false,
+          });
+        } catch (error) {
+          if (
+            configuredBackendUrl === DEFAULT_PUBLIC_AI_BACKEND_URL ||
+            !shouldUseDefaultPublicBackend(error)
+          ) {
+            throw error;
           }
-        );
-      } catch (error) {
-        if (!shouldUsePublicAiSummaryRoute(error)) {
-          throw error;
-        }
-      }
-    }
 
-    if (!data) {
-      try {
-        data = await requestBackend<{ result?: string }>(PUBLIC_AI_SUMMARY_PATH, {
-          method: 'POST',
-          body: JSON.stringify({ prompt: promptText }),
-          authRequired: false,
-        });
-      } catch (error) {
-        if (
-          configuredBackendUrl === DEFAULT_PUBLIC_AI_BACKEND_URL ||
-          !shouldUseDefaultPublicBackend(error)
-        ) {
-          throw error;
+          configuredPublicRouteError = error;
         }
 
-        return requestPublicAiSummary(DEFAULT_PUBLIC_AI_BACKEND_URL, promptText);
+        if (!data && configuredPublicRouteError) {
+          try {
+            return await requestPublicAiSummary(
+              DEFAULT_PUBLIC_AI_BACKEND_URL,
+              promptText
+            );
+          } catch (fallbackError) {
+            throw combineAiSummaryErrors(
+              configuredPublicRouteError,
+              fallbackError
+            );
+          }
+        }
       }
+
+      if (!data.result) {
+        throw new Error('Invalid response from AI server');
+      }
+
+      return data.result;
     }
 
-    if (!data.result) {
-      throw new Error('Invalid response from AI server');
-    }
-
-    return data.result;
+    return requestPublicAiSummary(DEFAULT_PUBLIC_AI_BACKEND_URL, promptText);
+  } catch (error) {
+    throw normalizeAiSummaryError(error);
   }
-
-  return requestPublicAiSummary(DEFAULT_PUBLIC_AI_BACKEND_URL, promptText);
 }

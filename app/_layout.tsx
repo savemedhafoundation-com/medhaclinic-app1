@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
 
+import WelcomeScreen from '../components/WelcomeScreen';
 import { AuthProvider, useAuth } from '../providers/AuthProvider';
 import '../global.css';
 
@@ -47,11 +47,7 @@ function RootNavigator() {
   }, [loading, router, segments, user, needsProfile]);
 
   if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#15803d" size="large" />
-      </View>
-    );
+    return <WelcomeScreen allowStart={false} />;
   }
 
   return (
@@ -68,6 +64,7 @@ function RootNavigator() {
       <Stack.Screen name="advice" />
       <Stack.Screen name="assessment/certificate" />
       <Stack.Screen name="boosterdiet/boosters" />
+      <Stack.Screen name="boosterdiet/store" />
       <Stack.Screen name="boosterdiet/dietplan" />
       <Stack.Screen name="analysis/stepanalyst" />
       <Stack.Screen name="certification/daily" />
