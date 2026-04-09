@@ -11,19 +11,19 @@ Firebase-authenticated API for MedhaClinic using:
 ## Runtime model
 
 - Local development uses `backend/.env` and a local Postgres instance.
-- Preferred production target is `Google Cloud Run`.
-- Preferred production database is `Cloud SQL for PostgreSQL`.
+- Preferred production target is `Render`.
+- Preferred production database is `Neon Postgres`.
 - Firebase Auth stays in Firebase; only the backend hosting and Postgres move.
 
-The backend now supports two production database patterns:
+The backend supports two production database patterns:
 
-1. A fully specified `DATABASE_URL`
-2. A Cloud Run / Cloud SQL socket configuration built from:
+1. A fully specified `DATABASE_URL` and optional `DIRECT_DATABASE_URL`
+2. A computed Postgres connection built from:
    - `DB_USER`
    - `DB_PASS`
    - `DB_NAME`
-   - `INSTANCE_CONNECTION_NAME`
-   - optional `DB_SOCKET_DIR`, `DB_SCHEMA`, `DB_PORT`
+   - `DB_HOST`
+   - optional `DB_SCHEMA`, `DB_PORT`
 
 ## Folder layout
 
@@ -40,6 +40,7 @@ backend/
     app.ts
     index.ts
   Dockerfile
+  RENDER_NEON_MIGRATION.md
   CLOUD_RUN_MIGRATION.md
 ```
 
@@ -78,8 +79,8 @@ The backend supports these credential sources, in order:
 3. `GOOGLE_APPLICATION_CREDENTIALS`
 4. Google Application Default Credentials on Cloud Run
 
-On Cloud Run in the same Google Cloud / Firebase project, ADC is the preferred
-production path so you do not need to ship a JSON key file by default.
+For Render or other non-Google hosting, `FIREBASE_SERVICE_ACCOUNT_JSON` is the
+simplest production setup.
 
 ## Health endpoint
 
@@ -88,7 +89,7 @@ production path so you do not need to ship a JSON key file by default.
 - Firebase Admin credential source
 - Firebase / Google Cloud project IDs
 - database host and connection mode
-- Cloud SQL socket path when applicable
+- database socket path when applicable
 - whether the database is reachable
 - whether OpenAI is configured
 
@@ -107,20 +108,21 @@ Or run both:
 npm run check
 ```
 
-## Cloud Run migration
+## Render + Neon migration
 
-Exact manual steps for Cloud Run + Cloud SQL are in
-`backend/CLOUD_RUN_MIGRATION.md`.
+Exact manual steps for Render + Neon are in
+`backend/RENDER_NEON_MIGRATION.md`.
 
 That guide includes:
 
-- required Google APIs
-- Cloud SQL and DB user setup
-- Cloud Run service account roles
-- Secret Manager / env var setup
-- container build and deploy commands
-- Cloud Run job commands for `prisma migrate deploy`
+- Neon pooled vs direct connection setup
+- Render secret and env var setup
+- Prisma migration setup with `DIRECT_DATABASE_URL`
+- Firebase Admin setup on Render
 - Expo `EXPO_PUBLIC_BACKEND_URL` update steps
+
+Cloud Run guidance remains in `backend/CLOUD_RUN_MIGRATION.md` as a legacy
+reference only.
 
 ## Routes
 
@@ -145,5 +147,5 @@ Legacy compatibility routes:
 - This backend keeps Firebase only for auth and identity.
 - Health and reporting data should live in Postgres.
 - AI calls stay on the backend only.
-- Legacy Vercel and Render files remain in the repo for reference, but Cloud Run
-  is now the preferred production path.
+- Render + Neon is now the preferred production path.
+- Cloud Run remains available as an optional legacy deployment target.

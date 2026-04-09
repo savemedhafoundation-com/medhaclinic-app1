@@ -97,7 +97,7 @@ function buildFirebaseAuthFailureMessage(error: unknown) {
     case 'auth/invalid-id-token':
       return 'Firebase ID token is malformed or invalid. The app may be sending a stale or mismatched session token.';
     case 'auth/invalid-credential':
-      return 'Firebase Admin credentials are not valid for ID token verification. Recheck the backend Firebase Admin configuration or Cloud Run service account.';
+      return 'Firebase Admin credentials are not valid for ID token verification. Recheck the backend Firebase Admin configuration or deployed service credentials.';
     case 'auth/project-not-found':
       return 'Firebase Admin is pointing at a project that does not exist or is not accessible.';
     case 'auth/argument-error':
@@ -111,7 +111,7 @@ function buildDatabaseFailureMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
 
   if (message.includes("can't reach database server")) {
-    return 'Database is unreachable. Verify the production database configuration, Cloud SQL connection, and network settings.';
+    return 'Database is unreachable. Verify the production database configuration, hosted Postgres connection, and network settings.';
   }
 
   if (message.includes('authentication failed')) {

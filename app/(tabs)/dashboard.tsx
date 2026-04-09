@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
+  Alert,
   Image,
   ImageBackground,
+  Linking,
+  Modal,
+  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -21,6 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const logo = require('../../assets/images/medha_logo.png');
 const bgImage = require('../../assets/images/dashbg.png');
+const NATURAL_IMMUNOTHERAPY_URL = 'https://nit.care';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type DashboardRoute = '/homescreen/basicscreens' | '/analysis/stepanalyst' | '/(tabs)/profile';
@@ -29,7 +34,9 @@ type ActionItem = {
   title: string;
   description: string;
   icon: IconName;
-  route: DashboardRoute;
+  route?: DashboardRoute;
+  websiteUrl?: string;
+  comingSoon?: boolean;
 };
 
 type DisclaimerItem = {
@@ -50,18 +57,20 @@ const actionItems: ActionItem[] = [
     description: 'Understand your current health status with a detailed mid-level assessment.',
     icon: 'fitness-outline',
     route: '/homescreen/basicscreens',
+    comingSoon: true,
   },
   {
     title: 'Critical Health Assessment',
     description: 'An advanced evaluation for urgent health concerns and high-risk conditions.',
     icon: 'medkit-outline',
     route: '/homescreen/basicscreens',
+    comingSoon: true,
   },
   {
     title: 'What is Natural Immunotherapy',
     description: 'Learn how healing through natural immunity works.',
     icon: 'leaf-outline',
-    route: '/analysis/stepanalyst',
+    websiteUrl: NATURAL_IMMUNOTHERAPY_URL,
   },
 ];
 
@@ -91,6 +100,32 @@ const disclaimerItems: DisclaimerItem[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null);
+
+  async function handleActionPress(item: ActionItem) {
+    if (item.comingSoon) {
+      setComingSoonTitle(item.title);
+      return;
+    }
+
+    if (item.websiteUrl) {
+      try {
+        await Linking.openURL(item.websiteUrl);
+      } catch (error) {
+        console.log('Website open failed:', error);
+        Alert.alert(
+          'Open Website',
+          `Could not open ${item.websiteUrl}.`
+        );
+      }
+
+      return;
+    }
+
+    if (item.route) {
+      router.push(item.route);
+    }
+  }
 
   return (
     <ImageBackground source={bgImage} resizeMode="cover" style={styles.background}>
@@ -134,7 +169,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={item.title}
                 activeOpacity={0.92}
-                onPress={() => router.push(item.route)}
+                onPress={() => void handleActionPress(item)}
                 style={styles.cardTouch}>
                 <LinearGradient
                   colors={['rgba(29, 185, 28, 0.98)', 'rgba(14, 158, 18, 0.98)']}
@@ -174,6 +209,31 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={comingSoonTitle !== null}
+        onRequestClose={() => setComingSoonTitle(null)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setComingSoonTitle(null)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.modalEyebrow}>Coming Soon</Text>
+            <Text style={styles.modalTitle}>{comingSoonTitle}</Text>
+            <Text style={styles.modalDescription}>
+              This feature is coming soon.
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setComingSoonTitle(null)}
+              style={styles.modalButton}>
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -349,5 +409,61 @@ const styles = StyleSheet.create({
     color: 'rgba(243, 255, 240, 0.94)',
     fontSize: 13,
     lineHeight: 17,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(3, 24, 4, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 22,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+  },
+  modalEyebrow: {
+    color: '#138a16',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  modalTitle: {
+    marginTop: 10,
+    color: '#103b12',
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  modalDescription: {
+    marginTop: 12,
+    color: '#456048',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  modalButton: {
+    marginTop: 20,
+    minWidth: 120,
+    borderRadius: 18,
+    backgroundColor: '#159d00',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 });
