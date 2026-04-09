@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
 import { useState } from 'react';
 import BottomNav from '../components/BottomNav';
 
@@ -15,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import bg from '../assets/images/dashbg.png';
+import logo from '../assets/images/medha_logo.png';
 import { goBackOrReplace } from '../services/navigation';
 
 const veg = require('../assets/images/veg.png');
@@ -22,23 +27,53 @@ const nonveg = require('../assets/images/nonveg.png');
 const vegan = require('../assets/images/vegan.png');
 const mixed = require('../assets/images/mixed_diet.png');
 
+const COLORS = {
+  accent: '#16a34a',
+  accentDark: '#176E18',
+  accentMuted: '#4F7653',
+  accentSoft: '#E7F8DD',
+  accentSoftStrong: '#DFF4D1',
+  card: '#FFFFFF',
+  screen: '#F7FFF2',
+};
+
 export default function FoodPreferencesScreen() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const { activityLevel, eatingHabits, mealsPerDay } = useLocalSearchParams<{
+    activityLevel?: string;
+    eatingHabits?: string;
+    mealsPerDay?: string;
+  }>();
+  const [selected, setSelected] = useState<string | null>('mixed');
   const [other, setOther] = useState('');
 
   return (
-    <View className="flex-1 bg-[#f5f6f8]">
+    <View className="flex-1" style={{ backgroundColor: COLORS.screen }}>
       {/* ===== APP BAR ===== */}
       <ImageBackground
         source={bg}
         className="w-full h-[220px]"
         resizeMode="stretch"
       >
-        <SafeAreaView className="flex-1 justify-center px-4">
-          <TouchableOpacity onPress={() => goBackOrReplace('/dietscreen')}>
-            <Ionicons name="chevron-back" size={26} color="#fff" />
-          </TouchableOpacity>
-        </SafeAreaView>
+        <LinearGradient
+          colors={['rgba(24,184,3,0.92)', 'rgba(24,184,3,0.72)']}
+          className="flex-1"
+        >
+          <SafeAreaView className="flex-1 justify-center px-4">
+            <View className="flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => goBackOrReplace('/dietscreen')}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
+
+              <Image
+                source={logo}
+                className="w-[180px] h-[60px]"
+                resizeMode="contain"
+              />
+
+              <View className="w-[26px]" />
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
       </ImageBackground>
 
       {/* ===== SCROLLABLE CONTENT ===== */}
@@ -48,16 +83,25 @@ export default function FoodPreferencesScreen() {
       >
         {/* ===== TITLE ===== */}
         <Text className="mt-2 mb-5">
-          <Text className="text-[28px] font-bold text-[#0b4ea2]">
+          <Text
+            className="text-[28px] font-bold"
+            style={{ color: COLORS.accentDark }}
+          >
             Your Food Preferences{'\n'}
           </Text>
-          <Text className="text-[16px] text-[#1f3c66]">
+          <Text
+            className="text-[16px]"
+            style={{ color: COLORS.accentMuted }}
+          >
             Please tell us about your dietary preferences
           </Text>
         </Text>
 
         {/* ===== SECTION TITLE ===== */}
-        <Text className="text-[18px] font-bold text-[#0b4ea2] mb-3">
+        <Text
+          className="text-[18px] font-bold mb-3"
+          style={{ color: COLORS.accentDark }}
+        >
           Select your diet type
         </Text>
 
@@ -96,17 +140,26 @@ export default function FoodPreferencesScreen() {
 
         {/* ===== OPTIONAL INPUT ===== */}
         <TextInput
-          className="bg-white rounded-[24px] px-[18px] py-3.5 mt-2.5 text-[14px]"
+          className="rounded-[24px] px-[18px] py-3.5 mt-2.5 text-[14px]"
+          style={{
+            backgroundColor: COLORS.card,
+            color: COLORS.accentDark,
+          }}
           placeholder="Any other dietary preferences? (Optional)"
-          placeholderTextColor="#7a8fb3"
+          placeholderTextColor="#6C8A6C"
           value={other}
           onChangeText={setOther}
         />
 
         {/* ===== CTA ===== */}
         <TouchableOpacity
-          className="flex-row items-center justify-center bg-[#1fa2ff] py-3.5 rounded-[30px] gap-1.5 mt-5"
-          onPress={() => router.push('/assessment/next-step')}
+          className="flex-row items-center justify-center py-3.5 rounded-[30px] gap-1.5 mt-5"
+          style={{ backgroundColor: COLORS.accent }}
+          onPress={() =>
+            router.push(
+              `/boosterdiet/dietplan?activityLevel=${encodeURIComponent(activityLevel ?? 'Lightly active')}&eatingHabits=${encodeURIComponent(eatingHabits ?? 'Moderate')}&mealsPerDay=${encodeURIComponent(mealsPerDay ?? '3')}&dietType=${encodeURIComponent(selected ?? 'mixed')}&otherPreferences=${encodeURIComponent(other.trim())}`
+            )
+          }
         >
           <Text className="text-white text-[16px] font-semibold">
             Next
@@ -115,7 +168,10 @@ export default function FoodPreferencesScreen() {
         </TouchableOpacity>
 
         {/* ===== FOOTER NOTE ===== */}
-        <Text className="text-center text-[12px] text-[#1f3c66] mt-3">
+        <Text
+          className="text-center text-[12px] mt-3"
+          style={{ color: COLORS.accentMuted }}
+        >
           Your body&apos;s needs are unique.{'\n'}
           This helps us know you better.
         </Text>
@@ -146,9 +202,13 @@ function FoodCard({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
-      className={`flex-row bg-[#cfe9ff] rounded-[20px] p-3 mb-3.5 gap-3 ${
-        active ? 'border-2 border-[#1fa2ff]' : ''
+      className={`flex-row rounded-[20px] p-3 mb-3.5 gap-3 ${
+        active ? 'border-2' : ''
       }`}
+      style={{
+        backgroundColor: active ? COLORS.accentSoftStrong : COLORS.accentSoft,
+        borderColor: active ? COLORS.accent : 'transparent',
+      }}
     >
       <Image
         source={image}
@@ -156,15 +216,24 @@ function FoodCard({
       />
 
       <View className="flex-1">
-        <Text className="text-[16px] font-bold text-[#0b4ea2]">
+        <Text
+          className="text-[16px] font-bold"
+          style={{ color: COLORS.accentDark }}
+        >
           {title}
         </Text>
-        <Text className="text-[13px] text-[#1f3c66] mt-1">
+        <Text
+          className="text-[13px] mt-1"
+          style={{ color: COLORS.accentMuted }}
+        >
           {desc}
         </Text>
 
         <View className="mt-2">
-          <Text className="bg-[#1fa2ff] text-white text-[12px] font-semibold px-3.5 py-1.5 rounded-[14px] self-start">
+          <Text
+            className="text-white text-[12px] font-semibold px-3.5 py-1.5 rounded-[14px] self-start"
+            style={{ backgroundColor: COLORS.accent }}
+          >
             Know More
           </Text>
         </View>

@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SvgHeader from '../../components/Clipperbg';
+import HeaderBackButton from '../../components/HeaderBackButton';
 import { router } from 'expo-router';
 import { goBackOrReplace } from '../../services/navigation';
 
@@ -23,9 +24,7 @@ export default function MedicalReportsScreen() {
         <View className="absolute top-0 w-full">
           <View className="h-14 justify-center mt-4">
             <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
+              <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
             </View>
           </View>
         </View>

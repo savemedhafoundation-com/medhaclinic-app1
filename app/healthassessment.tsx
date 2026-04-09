@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import SvgHeader from '../components/Clipperbg';
+import HeaderBackButton from '../components/HeaderBackButton';
+import { goBackOrReplace } from '../services/navigation';
 
 import {
   ScrollView,
@@ -18,6 +20,14 @@ export default function HealthAssessmentScreen() {
       {/* 🔹 SVG HEADER (ABSOLUTE) */}
       <View className="absolute top-0 left-0 right-0 z-10">
         <SvgHeader />
+
+        <SafeAreaView className="absolute top-0 w-full px-4">
+          <View className="mt-4 flex-row items-center justify-between">
+            <HeaderBackButton
+              onPress={() => goBackOrReplace('/(tabs)/dashboard')}
+            />
+          </View>
+        </SafeAreaView>
       </View>
 
       {/* 🔹 CONTENT */}

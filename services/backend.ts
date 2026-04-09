@@ -2,6 +2,7 @@ import { getCurrentAuthUser } from '../firebase/authClient';
 import type { AppAuthUser } from '../firebase/authClient.types';
 import { backendBaseUrl } from '../firebase/firebaseConfig';
 const BACKEND_REQUEST_TIMEOUT_MS = 20_000;
+const MAX_ERROR_MESSAGE_LENGTH = 220;
 
 export class BackendRequestError extends Error {
   status: number | null;
@@ -99,21 +100,74 @@ function isInvalidOrExpiredFirebaseTokenMessage(message: string) {
   return message.toLowerCase().includes('invalid or expired firebase token');
 }
 
-function getErrorMessage(payload: unknown, fallback: string) {
-  if (payload && typeof payload === 'object') {
-    const message =
-      'message' in payload && typeof payload.message === 'string'
-        ? payload.message
-        : 'error' in payload && typeof payload.error === 'string'
-        ? payload.error
-        : null;
+function normalizeErrorText(value: string) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (
+    normalized.startsWith('<!DOCTYPE') ||
+    normalized.startsWith('<!doctype') ||
+    normalized.startsWith('<html')
+  ) {
+    return null;
+  }
+
+  return normalized.length > MAX_ERROR_MESSAGE_LENGTH
+    ? `${normalized.slice(0, MAX_ERROR_MESSAGE_LENGTH - 3)}...`
+    : normalized;
+}
+
+export function readErrorMessage(value: unknown): string | null {
+  if (value instanceof Error) {
+    return readErrorMessage(value.message) ?? value.name;
+  }
+
+  if (typeof value === 'string') {
+    return normalizeErrorText(value);
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const message = readErrorMessage(item);
+
+      if (message) {
+        return message;
+      }
+    }
+
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  for (const key of ['message', 'error', 'detail', 'title', 'reason']) {
+    const message = readErrorMessage(record[key]);
 
     if (message) {
       return message;
     }
   }
 
-  return fallback;
+  for (const key of ['errors', 'details', 'issues']) {
+    const message = readErrorMessage(record[key]);
+
+    if (message) {
+      return message;
+    }
+  }
+
+  return null;
+}
+
+function getErrorMessage(payload: unknown, fallback: string) {
+  return readErrorMessage(payload) ?? fallback;
 }
 
 export function hasConfiguredBackend() {

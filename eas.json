@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_BACKEND_URL": "https://medhaclinic-backend.onrender.com",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",
@@ -22,7 +22,7 @@
       "distribution": "internal",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_BACKEND_URL": "https://medhaclinic-backend.onrender.com",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",
@@ -35,7 +35,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://medha-backend-179498638620.asia-south1.run.app",
+        "EXPO_PUBLIC_BACKEND_URL": "https://medhaclinic-backend.onrender.com",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "medhaclinic-3ba87.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "medhaclinic-3ba87",

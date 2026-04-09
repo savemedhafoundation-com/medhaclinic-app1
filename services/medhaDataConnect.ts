@@ -78,6 +78,7 @@ export type WeeklyReportStatus = {
   message: string;
   currentReportDate: string;
   previousReportDate: string;
+  daysTracked?: number;
   currentScores: Record<CategoryKey, number>;
   previousScores: Record<CategoryKey, number>;
   scoreDifference: Record<
@@ -87,6 +88,8 @@ export type WeeklyReportStatus = {
       previous: number;
       difference: number;
       trend: Trend;
+      currentSampleCount?: number;
+      previousSampleCount?: number;
     }
   >;
   overall: {
@@ -94,6 +97,56 @@ export type WeeklyReportStatus = {
     previous: number;
     difference: number;
     trend: Trend;
+    currentSubmissionCount?: number;
+    previousSubmissionCount?: number;
+  };
+  currentWindow?: {
+    startDate: string;
+    endDate: string;
+    submissionCount: number;
+    trackedDayCount: number;
+    latestSubmissionAt: string | null;
+    days: Array<{
+      date: string;
+      submissionCount: number;
+      averageImmunityScore: number | null;
+      representativeLevel: string | null;
+      categoryScores: Record<string, number | null>;
+    }>;
+  };
+  previousWindow?: {
+    startDate: string;
+    endDate: string;
+    submissionCount: number;
+    trackedDayCount: number;
+    latestSubmissionAt: string | null;
+    days: Array<{
+      date: string;
+      submissionCount: number;
+      averageImmunityScore: number | null;
+      representativeLevel: string | null;
+      categoryScores: Record<string, number | null>;
+    }>;
+  };
+  strongestCategory?: {
+    key: string;
+    label: string;
+    score: number;
+    sampleCount: number;
+  } | null;
+  weakestCategory?: {
+    key: string;
+    label: string;
+    score: number;
+    sampleCount: number;
+  } | null;
+  insights?: {
+    overview: string;
+    overallProgress: string;
+    areasToImprove: string;
+    encouragement: string;
+    categoryInsights: Record<string, string>;
+    generationSource: 'openai' | 'fallback';
   };
 };
 

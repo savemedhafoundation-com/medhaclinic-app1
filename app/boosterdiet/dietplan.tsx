@@ -1,177 +1,366 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import {
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  ActivityIndicator,
   Image,
-  type ImageSourcePropType,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 import BottomNav from '../../components/BottomNav';
+import { usePatientProfile } from '../../hooks/use-patient-profile';
+import { useAuth } from '../../providers/AuthProvider';
+import {
+  prepareHealthAlertNotifications,
+  saveAcceptedHealthAlertPlan,
+} from '../../services/healthAlerts';
+import { getLatestDailyImmunitySummary } from '../../services/medhaDataConnect';
 import { goBackOrReplace } from '../../services/navigation';
+import {
+  fetchPersonalizedDietPlan,
+  type PersonalizedDietInput,
+  type PersonalizedDietPlan,
+} from '../../services/personalizedDiet';
 
 const medhaLogo = require('../../assets/images/medha_logo.png');
-const glutathioneBottle = require('../../assets/images/GT-500 1.png');
-const boronBottle = require('../../assets/images/BR-1 1.png');
 
-type Product = {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  dose: string;
-  quantity: string;
-  image: ImageSourcePropType;
+type RouteParams = {
+  activityLevel?: string | string[];
+  dietType?: string | string[];
+  eatingHabits?: string | string[];
+  mealsPerDay?: string | string[];
+  otherPreferences?: string | string[];
 };
 
-const PRODUCTS: Product[] = [
-  {
-    id: 'detox-booster',
-    title: 'Detox Booster',
-    subtitle: 'Health Supplement for Adult Support to cleanse, recharge & revive health',
-    description:
-      "Detox Booster by Natural Immunotherapy is a scientifically balanced formula designed to cleanse, rejuvenate, and awaken the body's natural healing intelligence.",
-    dose: '500mg',
-    quantity: '60 capsule',
-    image: glutathioneBottle,
-  },
-  {
-    id: 'pancreas-booster',
-    title: 'Pancreas Booster',
-    subtitle: '60 vegetable capsules support to cleanse, recharge & revive health',
-    description:
-      'Pancreas Booster is a gentle daily supplement designed to support healthy pancreatic function, balanced blood sugar levels, and enhanced nutrient absorption.',
-    dose: '500mg',
-    quantity: '60 capsule',
-    image: boronBottle,
-  },
-];
+type ScreenState = {
+  errorMessage: string | null;
+  loading: boolean;
+  plan: PersonalizedDietPlan | null;
+};
 
-const LEAVES = [
-  { left: -8, top: 190, size: 76, rotate: '-16deg', color: 'rgba(116, 232, 86, 0.18)' },
-  { right: -12, top: 286, size: 84, rotate: '18deg', color: 'rgba(255,255,255,0.12)' },
-  { left: -16, top: 586, size: 74, rotate: '-28deg', color: 'rgba(255,255,255,0.1)' },
-  { right: -10, top: 840, size: 92, rotate: '24deg', color: 'rgba(110, 225, 91, 0.2)' },
-];
+function getParam(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0] ?? '';
+  }
 
-function SelectorRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.selectorRow}>
-      <Text style={styles.selectorLabel}>{label}</Text>
-      <TouchableOpacity activeOpacity={0.9} style={styles.selectorPill}>
-        <Text style={styles.selectorValue}>{value}</Text>
-        <Ionicons name="chevron-down" size={14} color="#E7FFE5" />
-      </TouchableOpacity>
-    </View>
-  );
+  return value ?? '';
 }
 
-function ProductCard({ product }: { product: Product }) {
-  return (
-    <View style={styles.card}>
-      <TouchableOpacity activeOpacity={0.9} style={styles.favoriteButton}>
-        <Ionicons name="heart" size={14} color="#FFFFFF" />
-      </TouchableOpacity>
+function formatDietLabel(value: string) {
+  const normalized = value.trim().toLowerCase();
 
-      <View style={styles.cardTopRow}>
-        <View style={styles.productImageShell}>
-          <Image source={product.image} resizeMode="contain" style={styles.productImage} />
-        </View>
+  switch (normalized) {
+    case 'nonveg':
+      return 'Non-vegetarian';
+    case 'veg':
+      return 'Vegetarian';
+    case 'mixed':
+      return 'Mixed diet';
+    case 'vegan':
+      return 'Vegan';
+    default:
+      if (!normalized) {
+        return 'Mixed diet';
+      }
 
-        <View style={styles.productInfo}>
-          <Text style={styles.productTitle}>{product.title}</Text>
-          <Text style={styles.productSubtitle}>{product.subtitle}</Text>
-
-          <SelectorRow label="Dose" value={product.dose} />
-          <SelectorRow label="Quantity" value={product.quantity} />
-        </View>
-      </View>
-
-      <View style={styles.descriptionBox}>
-        <Text style={styles.descriptionHeading}>Description</Text>
-        <Text style={styles.descriptionText}>{product.description}</Text>
-      </View>
-
-      <TouchableOpacity activeOpacity={0.92} style={styles.orderButton}>
-        <Text style={styles.orderButtonText}>Order Now</Text>
-      </TouchableOpacity>
-    </View>
-  );
+      return normalized
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+  }
 }
 
-function DockButton({
-  active = false,
+function InfoChip({
   icon,
-  onPress,
-  badge,
+  label,
 }: {
-  active?: boolean;
   icon: keyof typeof Ionicons.glyphMap;
-  onPress?: () => void;
-  badge?: string;
+  label: string;
 }) {
   return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={onPress}
-      style={[styles.dockButton, active && styles.dockButtonActive]}
-    >
-      <Ionicons name={icon} size={20} color={active ? '#168019' : '#FFFFFF'} />
-      {badge ? (
-        <View style={styles.dockBadge}>
-          <Text style={styles.dockBadgeText}>{badge}</Text>
+    <View style={styles.infoChip}>
+      <Ionicons color="#177A18" name={icon} size={14} />
+      <Text style={styles.infoChipText}>{label}</Text>
+    </View>
+  );
+}
+
+function BulletRow({
+  color = '#1E7D20',
+  text,
+}: {
+  color?: string;
+  text: string;
+}) {
+  return (
+    <View style={styles.bulletRow}>
+      <View style={[styles.bulletDot, { backgroundColor: color }]} />
+      <Text style={styles.bulletText}>{text}</Text>
+    </View>
+  );
+}
+
+function SectionTitle({
+  icon,
+  title,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+}) {
+  return (
+    <View style={styles.sectionTitleRow}>
+      <View style={styles.sectionTitleIcon}>
+        <Ionicons color="#157718" name={icon} size={16} />
+      </View>
+      <Text style={styles.sectionTitleText}>{title}</Text>
+    </View>
+  );
+}
+
+function MealCard({
+  card,
+}: {
+  card: PersonalizedDietPlan['mealCards'][number];
+}) {
+  return (
+    <View style={styles.sectionCard}>
+      <View style={styles.cardHeaderRow}>
+        <View>
+          <Text style={styles.cardTitle}>{card.name}</Text>
+          <Text style={styles.cardTime}>{card.time}</Text>
+        </View>
+
+        <View style={styles.cardHeaderBadge}>
+          <Ionicons color="#157718" name="restaurant" size={15} />
+        </View>
+      </View>
+
+      <View style={styles.foodPillRow}>
+        {card.foods.map(food => (
+          <View key={food} style={styles.foodPill}>
+            <Text style={styles.foodPillText}>{food}</Text>
+          </View>
+        ))}
+      </View>
+
+      {card.boosterTip ? (
+        <View style={styles.inlineNote}>
+          <Ionicons color="#23A127" name="leaf" size={15} />
+          <Text style={styles.inlineNoteText}>{card.boosterTip}</Text>
         </View>
       ) : null}
-    </TouchableOpacity>
+
+      {card.note ? (
+        <Text style={styles.cardFootnote}>{card.note}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+function SupportCard({
+  card,
+}: {
+  card: PersonalizedDietPlan['supportCards'][number];
+}) {
+  return (
+    <View style={styles.supportCard}>
+      <Text style={styles.supportTitle}>{card.title}</Text>
+      <Text style={styles.supportDescription}>{card.description}</Text>
+
+      <View style={styles.supportBullets}>
+        {card.bullets.map(item => (
+          <BulletRow key={item} text={item} />
+        ))}
+      </View>
+    </View>
   );
 }
 
 export default function BoosterDietScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const { patientAge, patientGender, patientName } = usePatientProfile();
+  const params = useLocalSearchParams<RouteParams>();
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [savingAcceptedPlan, setSavingAcceptedPlan] = useState(false);
+  const [state, setState] = useState<ScreenState>({
+    errorMessage: null,
+    loading: true,
+    plan: null,
+  });
+
+  const input = useMemo<PersonalizedDietInput>(() => {
+    const eatingHabits = getParam(params.eatingHabits) || 'Moderate';
+    const mealsPerDay = getParam(params.mealsPerDay) || '3';
+    const activityLevel = getParam(params.activityLevel) || 'Lightly active';
+    const dietType = formatDietLabel(getParam(params.dietType) || 'mixed');
+    const otherPreferences = getParam(params.otherPreferences).trim();
+
+    return {
+      activityLevel,
+      dietType,
+      eatingHabits,
+      mealsPerDay,
+      otherPreferences: otherPreferences || undefined,
+      patient: {
+        age: patientAge,
+        gender: patientGender !== '--' ? patientGender : undefined,
+        name: patientName,
+      },
+    };
+  }, [
+    params.activityLevel,
+    params.dietType,
+    params.eatingHabits,
+    params.mealsPerDay,
+    params.otherPreferences,
+    patientAge,
+    patientGender,
+    patientName,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPlan() {
+      setState(current => ({
+        ...current,
+        errorMessage: null,
+        loading: true,
+      }));
+
+      try {
+        let immunity:
+          | {
+              immunityLevel?: string | null;
+              immunityScore?: number;
+            }
+          | null = null;
+
+        try {
+          immunity = await getLatestDailyImmunitySummary();
+        } catch (error) {
+          console.log('Diet plan immunity context unavailable:', error);
+        }
+
+        const plan = await fetchPersonalizedDietPlan(
+          {
+            ...input,
+            immunity: immunity
+              ? {
+                  level: immunity.immunityLevel ?? undefined,
+                  score: immunity.immunityScore,
+                }
+              : undefined,
+          },
+          user
+        );
+
+        if (!active) {
+          return;
+        }
+
+        setState({
+          errorMessage: null,
+          loading: false,
+          plan,
+        });
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        setState({
+          errorMessage:
+            error instanceof Error
+              ? error.message
+              : 'Could not generate your personalized diet plan.',
+          loading: false,
+          plan: null,
+        });
+      }
+    }
+
+    void loadPlan();
+
+    return () => {
+      active = false;
+    };
+  }, [input, refreshCount, user]);
+
+  const metaChips = useMemo(
+    () => [
+      { icon: 'leaf' as const, label: input.dietType },
+      { icon: 'restaurant' as const, label: `${input.mealsPerDay} meals/day` },
+      { icon: 'walk' as const, label: input.activityLevel },
+      { icon: 'fitness' as const, label: input.eatingHabits },
+    ],
+    [input.activityLevel, input.dietType, input.eatingHabits, input.mealsPerDay]
+  );
+
+  const secondaryChips = useMemo(() => {
+    const chips = [
+      patientAge ? `${patientAge} yrs` : null,
+      patientGender !== '--' ? patientGender : null,
+      input.otherPreferences ? input.otherPreferences : null,
+    ];
+
+    return chips.filter((item): item is string => Boolean(item));
+  }, [input.otherPreferences, patientAge, patientGender]);
+
+  async function handleAcceptPlan() {
+    if (!state.plan || savingAcceptedPlan) {
+      return;
+    }
+
+    try {
+      setSavingAcceptedPlan(true);
+      await saveAcceptedHealthAlertPlan(state.plan, user?.uid);
+      await prepareHealthAlertNotifications(true);
+      router.push('/(tabs)/healthalert');
+    } catch (error) {
+      console.log('Accept plan error:', error);
+    } finally {
+      setSavingAcceptedPlan(false);
+    }
+  }
+
+  function handleRetry() {
+    setRefreshCount(current => current + 1);
+  }
 
   return (
     <View style={styles.screen}>
       <LinearGradient
-        colors={['#1FB807', '#58C93B']}
-        start={{ x: 0, y: 0 }}
+        colors={['#18B803', '#58CC39']}
         end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {LEAVES.map((leaf, index) => (
-        <Ionicons
-          key={`leaf-${index}`}
-          name="leaf"
-          size={leaf.size}
-          color={leaf.color}
-          style={[
-            styles.backgroundLeaf,
-            {
-              left: leaf.left,
-              right: leaf.right,
-              top: leaf.top,
-              transform: [{ rotate: leaf.rotate }],
-            },
-          ]}
-        />
-      ))}
-
-      <View style={[styles.edgeShape, styles.edgeShapeLeft]} />
-      <View style={[styles.edgeShape, styles.edgeShapeRight]} />
-
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         <ScrollView
-          bounces={false}
           contentContainerStyle={[
             styles.content,
             {
-              paddingTop: 14,
-              paddingBottom: insets.bottom + 120,
+              paddingBottom: insets.bottom + 118,
             },
           ]}
           showsVerticalScrollIndicator={false}
@@ -179,10 +368,10 @@ export default function BoosterDietScreen() {
           <View style={styles.headerRow}>
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() => goBackOrReplace('/boosterdiet/boosters')}
+              onPress={() => goBackOrReplace('/foodpreferance')}
               style={styles.backButton}
             >
-              <Ionicons name="chevron-back" size={22} color="#2B8C1A" />
+              <Ionicons color="#1A7A1D" name="chevron-back" size={24} />
             </TouchableOpacity>
 
             <Image source={medhaLogo} resizeMode="contain" style={styles.logo} />
@@ -190,24 +379,164 @@ export default function BoosterDietScreen() {
             <View style={styles.headerSpacer} />
           </View>
 
-          <View style={styles.breadcrumbRow}>
-            <Ionicons name="chevron-back" size={12} color="rgba(255,255,255,0.82)" />
-            <Text style={styles.breadcrumbText}>Natural Supplements</Text>
+          <View style={styles.heroCard}>
+            <View style={styles.heroCopy}>
+              <Text style={styles.heroEyebrow}>Medha Clinic</Text>
+              <Text style={styles.heroTitle}>
+                {state.plan?.title ?? '30-Day Personalized Diet Plan'}
+              </Text>
+              <Text style={styles.heroSubtitle}>
+                {state.plan?.subtitle ??
+                  'We are building your personalized health diet from your lifestyle, food preferences, and recent wellness context.'}
+              </Text>
+            </View>
+
+            <View style={styles.heroIllustration}>
+              <View style={[styles.heroOrb, styles.heroOrbMain]}>
+                <Ionicons color="#FFFFFF" name="nutrition" size={30} />
+              </View>
+              <View style={[styles.heroOrb, styles.heroOrbLeft]}>
+                <Ionicons color="#177A18" name="water" size={18} />
+              </View>
+              <View style={[styles.heroOrb, styles.heroOrbRight]}>
+                <Ionicons color="#177A18" name="leaf" size={18} />
+              </View>
+              <View style={[styles.heroOrb, styles.heroOrbBottom]}>
+                <Ionicons color="#177A18" name="restaurant" size={18} />
+              </View>
+            </View>
           </View>
 
-          <TouchableOpacity activeOpacity={0.9} style={styles.tagPill}>
-            <Text style={styles.tagText}>Boosters</Text>
-          </TouchableOpacity>
+          <View style={styles.metaCard}>
+            <Text style={styles.generatedForText}>Generated for {patientName}</Text>
 
-          <View style={styles.cardsColumn}>
-            {PRODUCTS.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            <View style={styles.infoChipRow}>
+              {metaChips.map(chip => (
+                <InfoChip key={chip.label} icon={chip.icon} label={chip.label} />
+              ))}
+            </View>
+
+            {secondaryChips.length > 0 ? (
+              <View style={styles.secondaryChipRow}>
+                {secondaryChips.map(chip => (
+                  <View key={chip} style={styles.secondaryChip}>
+                    <Text style={styles.secondaryChipText}>{chip}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={styles.metaIntro}>
+              {state.plan?.intro ??
+                'Your plan will focus on practical meals, hydration, and simple routine support that match the inputs you just shared.'}
+            </Text>
           </View>
 
-          <TouchableOpacity activeOpacity={0.92} style={styles.seeAllButton}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
+          {state.loading ? (
+            <View style={styles.loadingCard}>
+              <ActivityIndicator color="#18841A" size="large" />
+              <Text style={styles.loadingTitle}>Creating your plan...</Text>
+              <Text style={styles.loadingSubtitle}>
+                Medha Clinic is turning your inputs into a structured diet and support plan.
+              </Text>
+            </View>
+          ) : null}
+
+          {!state.loading && state.errorMessage ? (
+            <View style={styles.errorCard}>
+              <SectionTitle icon="warning" title="Plan generation paused" />
+              <Text style={styles.errorText}>{state.errorMessage}</Text>
+              <TouchableOpacity activeOpacity={0.92} onPress={handleRetry} style={styles.retryButton}>
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {!state.loading && state.plan ? (
+            <>
+              <View style={styles.focusCard}>
+                <Text style={styles.focusLabel}>30-day plan focus</Text>
+                <Text style={styles.focusText}>{state.plan.focusSummary}</Text>
+              </View>
+
+              <View style={styles.sectionBlock}>
+                <SectionTitle icon="restaurant" title="Your Daily Meal Flow" />
+                {state.plan.mealCards.map(card => (
+                  <MealCard key={`${card.name}-${card.time}`} card={card} />
+                ))}
+              </View>
+
+              <View style={styles.sectionCard}>
+                <SectionTitle icon="water" title="Water" />
+                <Text style={styles.sectionLeadText}>{state.plan.hydration.target}</Text>
+                <View style={styles.sectionBullets}>
+                  {state.plan.hydration.tips.map(tip => (
+                    <BulletRow key={tip} text={tip} />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.sectionCard}>
+                <SectionTitle icon="ban" title={state.plan.avoid.title} />
+                <View style={styles.sectionBullets}>
+                  {state.plan.avoid.items.map(item => (
+                    <BulletRow color="#D44B3E" key={item} text={item} />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.sectionCard}>
+                <SectionTitle
+                  icon="trending-up"
+                  title={state.plan.improvementTimeline.title}
+                />
+
+                <View style={styles.timelineList}>
+                  {state.plan.improvementTimeline.phases.map(phase => (
+                    <View key={phase.label} style={styles.timelineRow}>
+                      <View style={styles.timelineMarker} />
+                      <View style={styles.timelineCopy}>
+                        <Text style={styles.timelineLabel}>{phase.label}</Text>
+                        <Text style={styles.timelineDetail}>{phase.detail}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.sectionBlock}>
+                <SectionTitle icon="sparkles" title="Support You Will Also Get" />
+                {state.plan.supportCards.map(card => (
+                  <SupportCard key={card.title} card={card} />
+                ))}
+              </View>
+
+              <View style={styles.cautionCard}>
+                <Ionicons color="#158019" name="shield-checkmark" size={18} />
+                <Text style={styles.cautionText}>{state.plan.caution}</Text>
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.92}
+                onPress={handleAcceptPlan}
+                style={styles.acceptButton}
+              >
+                <Text style={styles.acceptButtonText}>
+                  {savingAcceptedPlan
+                    ? 'Adding to Health Alerts...'
+                    : state.plan.acceptLabel}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.contactCard}>
+                <Text style={styles.contactTitle}>Availability & Contact</Text>
+                <Text style={styles.contactText}>
+                  Need help adjusting this plan or choosing boosters? Use the Support
+                  section in the app, then manage reminders from Health Alerts.
+                </Text>
+              </View>
+            </>
+          ) : null}
         </ScrollView>
 
         <BottomNav />
@@ -219,269 +548,435 @@ export default function BoosterDietScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#22B90C',
+    backgroundColor: '#19B503',
   },
   safeArea: {
     flex: 1,
   },
-  backgroundLeaf: {
-    position: 'absolute',
-  },
-  edgeShape: {
-    position: 'absolute',
-    width: 84,
-    height: 110,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  edgeShapeLeft: {
-    left: -36,
-    top: 374,
-    transform: [{ rotate: '-24deg' }],
-  },
-  edgeShapeRight: {
-    right: -30,
-    top: 742,
-    transform: [{ rotate: '22deg' }],
-  },
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
+    paddingTop: 14,
   },
   headerRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
   },
   backButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    height: 34,
     justifyContent: 'center',
-    shadowColor: '#0A630D',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 5,
+    width: 34,
   },
   logo: {
-    width: 138,
-    height: 52,
+    height: 40,
+    width: 132,
   },
   headerSpacer: {
-    width: 30,
+    width: 34,
   },
-  breadcrumbRow: {
-    marginTop: 14,
+  heroCard: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 28,
     flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 18,
+    overflow: 'hidden',
+    padding: 18,
   },
-  breadcrumbText: {
-    marginLeft: 2,
-    color: 'rgba(255,255,255,0.88)',
+  heroCopy: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  heroEyebrow: {
+    color: 'rgba(255,255,255,0.84)',
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
-  tagPill: {
-    marginTop: 16,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 16,
-    height: 24,
-    borderRadius: 999,
-    backgroundColor: 'rgba(14, 117, 18, 0.85)',
-    justifyContent: 'center',
-  },
-  tagText: {
+  heroTitle: {
     color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 34,
+    marginTop: 6,
+  },
+  heroSubtitle: {
+    color: 'rgba(255,255,255,0.92)',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 10,
+  },
+  heroIllustration: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    width: 106,
+  },
+  heroOrb: {
+    alignItems: 'center',
+    backgroundColor: '#EFFFF0',
+    borderRadius: 999,
+    justifyContent: 'center',
+    position: 'absolute',
+  },
+  heroOrbMain: {
+    backgroundColor: '#4BCB39',
+    height: 72,
+    width: 72,
+  },
+  heroOrbLeft: {
+    height: 34,
+    left: 2,
+    top: 18,
+    width: 34,
+  },
+  heroOrbRight: {
+    height: 32,
+    right: 0,
+    top: 10,
+    width: 32,
+  },
+  heroOrbBottom: {
+    bottom: 6,
+    height: 34,
+    right: 18,
+    width: 34,
+  },
+  metaCard: {
+    backgroundColor: '#F7FFF2',
+    borderRadius: 24,
+    marginTop: 16,
+    padding: 16,
+  },
+  generatedForText: {
+    color: '#176F18',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  infoChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  infoChip: {
+    alignItems: 'center',
+    backgroundColor: '#E7F8DD',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  infoChipText: {
+    color: '#166C18',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  secondaryChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  secondaryChip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  secondaryChipText: {
+    color: '#267329',
     fontSize: 11,
     fontWeight: '600',
   },
-  cardsColumn: {
-    marginTop: 18,
-    gap: 22,
+  metaIntro: {
+    color: '#255D28',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 12,
   },
-  card: {
-    position: 'relative',
-    padding: 14,
-    borderRadius: 18,
-    backgroundColor: 'rgba(18, 123, 20, 0.52)',
-    shadowColor: '#0A5B0C',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 2,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  productImageShell: {
-    width: 76,
-    height: 98,
-    borderRadius: 14,
-    backgroundColor: '#F5FFF2',
+  loadingCard: {
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0A5B0C',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: '#F8FFF4',
+    borderRadius: 24,
+    marginTop: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 30,
   },
-  productImage: {
-    width: 68,
-    height: 88,
-  },
-  productInfo: {
-    flex: 1,
-    marginLeft: 14,
-    paddingRight: 18,
-  },
-  productTitle: {
-    color: '#FFFFFF',
+  loadingTitle: {
+    color: '#166C18',
     fontSize: 18,
     fontWeight: '800',
-    lineHeight: 22,
+    marginTop: 14,
   },
-  productSubtitle: {
-    marginTop: 4,
-    color: 'rgba(240,255,239,0.95)',
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  selectorRow: {
+  loadingSubtitle: {
+    color: '#4C7050',
+    fontSize: 13,
+    lineHeight: 20,
     marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    textAlign: 'center',
   },
-  selectorLabel: {
-    color: '#E6FFE4',
-    fontSize: 12,
+  errorCard: {
+    backgroundColor: '#FFF8EF',
+    borderRadius: 22,
+    marginTop: 18,
+    padding: 16,
+  },
+  errorText: {
+    color: '#8D4B14',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 12,
+  },
+  retryButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#19811B',
+    borderRadius: 999,
+    marginTop: 14,
+    minWidth: 112,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
   },
-  selectorPill: {
-    minWidth: 122,
-    height: 24,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#136E12',
-    flexDirection: 'row',
+  focusCard: {
+    backgroundColor: '#E6FFD9',
+    borderRadius: 22,
+    marginTop: 18,
+    padding: 16,
+  },
+  focusLabel: {
+    color: '#167519',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  focusText: {
+    color: '#235F29',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 21,
+    marginTop: 8,
+  },
+  sectionBlock: {
+    marginTop: 18,
+  },
+  sectionCard: {
+    backgroundColor: '#F7FFF3',
+    borderRadius: 22,
+    marginTop: 12,
+    padding: 15,
+  },
+  sectionTitleRow: {
     alignItems: 'center',
+    flexDirection: 'row',
+  },
+  sectionTitleIcon: {
+    alignItems: 'center',
+    backgroundColor: '#E5F8DE',
+    borderRadius: 999,
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  sectionTitleText: {
+    color: '#176E18',
+    fontSize: 17,
+    fontWeight: '800',
+    marginLeft: 10,
+  },
+  sectionLeadText: {
+    color: '#246227',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+    marginTop: 12,
+  },
+  sectionBullets: {
+    marginTop: 10,
+  },
+  cardHeaderRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  selectorValue: {
-    color: '#E7FFE5',
+  cardTitle: {
+    color: '#187019',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  cardTime: {
+    color: '#5B815B',
     fontSize: 12,
     fontWeight: '600',
+    marginTop: 2,
   },
-  descriptionBox: {
+  cardHeaderBadge: {
+    alignItems: 'center',
+    backgroundColor: '#E6F8DE',
+    borderRadius: 999,
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  foodPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(9, 106, 14, 0.78)',
-    padding: 10,
   },
-  descriptionHeading: {
-    color: '#E8FFE6',
+  foodPill: {
+    backgroundColor: '#E8FBE1',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  foodPillText: {
+    color: '#28702C',
     fontSize: 12,
     fontWeight: '700',
   },
-  descriptionText: {
-    marginTop: 6,
-    color: 'rgba(235,255,233,0.86)',
-    fontSize: 9,
-    lineHeight: 14,
-    fontWeight: '500',
-  },
-  orderButton: {
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 18,
-    height: 32,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    shadowColor: '#0A5B0C',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  orderButtonText: {
-    color: '#1B7618',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  seeAllButton: {
-    marginTop: 18,
-    alignSelf: 'center',
-    minWidth: 108,
-    height: 30,
-    borderRadius: 999,
-    backgroundColor: '#18871A',
-    paddingHorizontal: 22,
+  inlineNote: {
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F2FFF0',
+    borderRadius: 14,
+    flexDirection: 'row',
+    marginTop: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
-  seeAllText: {
+  inlineNoteText: {
+    color: '#27682B',
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginLeft: 8,
+  },
+  cardFootnote: {
+    color: '#658164',
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 10,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  bulletDot: {
+    borderRadius: 999,
+    height: 8,
+    marginRight: 10,
+    marginTop: 7,
+    width: 8,
+  },
+  bulletText: {
+    color: '#28652C',
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  timelineList: {
+    marginTop: 12,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+  },
+  timelineMarker: {
+    backgroundColor: '#25A62A',
+    borderRadius: 999,
+    height: 12,
+    marginRight: 12,
+    marginTop: 6,
+    width: 12,
+  },
+  timelineCopy: {
+    flex: 1,
+  },
+  timelineLabel: {
+    color: '#176E18',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  timelineDetail: {
+    color: '#4D7450',
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  supportCard: {
+    backgroundColor: '#F7FFF3',
+    borderRadius: 22,
+    marginTop: 12,
+    padding: 15,
+  },
+  supportTitle: {
+    color: '#176E18',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  supportDescription: {
+    color: '#4F7653',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  supportBullets: {
+    marginTop: 8,
+  },
+  cautionCard: {
+    alignItems: 'flex-start',
+    backgroundColor: '#E9FFE0',
+    borderRadius: 18,
+    flexDirection: 'row',
+    marginTop: 18,
+    padding: 14,
+  },
+  cautionText: {
+    color: '#28652C',
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+    marginLeft: 10,
+  },
+  acceptButton: {
+    alignItems: 'center',
+    backgroundColor: '#0E7D12',
+    borderRadius: 999,
+    marginTop: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 15,
+  },
+  acceptButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
-  },
-  dockWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  dock: {
-    width: '92%',
-    maxWidth: 360,
-    minHeight: 62,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#08490A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 10,
-  },
-  dockButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dockButtonActive: {
-    backgroundColor: '#FFFFFF',
-  },
-  dockBadge: {
-    position: 'absolute',
-    top: 7,
-    right: 6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  dockBadgeText: {
-    color: '#0E7611',
-    fontSize: 9,
     fontWeight: '800',
+  },
+  contactCard: {
+    backgroundColor: '#F7FFF3',
+    borderRadius: 20,
+    marginTop: 16,
+    padding: 15,
+  },
+  contactTitle: {
+    color: '#176E18',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  contactText: {
+    color: '#507853',
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 8,
   },
 });
