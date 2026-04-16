@@ -1,14 +1,12 @@
-import { router } from 'expo-router';
 import {
   Image,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import SvgHeader from '../../components/Clipperbg';
-import HeaderBackButton from '../../components/HeaderBackButton';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { goBackOrReplace } from '../../services/navigation';
 
@@ -16,31 +14,22 @@ import { goBackOrReplace } from '../../services/navigation';
 const profileImg = require('../../assets/images/profile.png');
 const badge = require('../../assets/images/badge.png');
 
-const HEADER_HEIGHT = 230;
-
 export default function WeeklyImmunityReport() {
   const { patientName, patientPhoto } = usePatientProfile();
 
   return (
     <View className="flex-1 bg-[#f4f7fb]">
       {/* ===== HEADER ===== */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full px-4">
-          <View className="flex-row items-center justify-between mt-4">
-            <HeaderBackButton onPress={() => goBackOrReplace('/immunity/weeklyimmunity')} />
-          </View>
-        </SafeAreaView>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/immunity/weeklyimmunity')} />
 
       {/* ===== CONTENT ===== */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
+          paddingBottom: 140,
+        }}
       >
-        <View style={{ height: HEADER_HEIGHT }} />
-
         <View className="px-5">
           {/* TITLE */}
           <Text className="text-[30px] font-bold text-[#0b4ea2] mb-6">

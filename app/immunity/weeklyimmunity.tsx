@@ -5,11 +5,11 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import SvgHeader from '../../components/Clipperbg';
-import HeaderBackButton from '../../components/HeaderBackButton';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { goBackOrReplace } from '../../services/navigation';
 
 /* ================= ASSETS ================= */
@@ -44,31 +44,13 @@ export default function WeeklyImmunityCheck() {
   return (
     <View className="flex-1 bg-[#f5f6f8]">
       {/* ================= HEADER ================= */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row justify-between">
-              <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
-            </View>
-
-            <View className="items-center">
-              {/* <Image
-                source={logo}
-                className="w-[150px] h-[100px]"
-                resizeMode="contain"
-              /> */}
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
       {/* ================= CONTENT ================= */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: 240,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
           paddingBottom: 140,
         }}
         className="px-4"

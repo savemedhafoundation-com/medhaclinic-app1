@@ -7,44 +7,31 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { goBackOrReplace } from '../../services/navigation';
 
-import HeaderBackButton from '../../components/HeaderBackButton';
-import SvgHeader from '../../components/Clipperbg';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 
 // IMAGES
-import digestionImg from '../../assets/images/analysis/digestion.png';
-import respiratoryImg from '../../assets/images/analysis/respiratory.png';
-import dietImg from '../../assets/images/analysis/diet.png';
-import supplementImg from '../../assets/images/analysis/supplements.png';
-import relaxImg from '../../assets/images/analysis/relaxation.png';
+const digestionImg = require('../../assets/images/analysis/digestion.png');
+const respiratoryImg = require('../../assets/images/analysis/respiratory.png');
+const dietImg = require('../../assets/images/analysis/diet.png');
+const supplementImg = require('../../assets/images/analysis/supplements.png');
+const relaxImg = require('../../assets/images/analysis/relaxation.png');
 
 export default function AnalysisRecommendationScreen() {
-  const { width } = useWindowDimensions();
-
   return (
     <View className="flex-1 bg-white">
       {/* ================= HEADER ================= */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row justify-between">
-              <HeaderBackButton onPress={() => goBackOrReplace('/process')} />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/process')} />
 
       {/* ================= CONTENT ================= */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          marginTop: 200,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
           paddingBottom: 250,
         }}
       >

@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import SvgHeader from '../../components/Clipperbg';
-import HeaderBackButton from '../../components/HeaderBackButton';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import BottomNav from '../../components/BottomNav';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { goBackOrReplace } from '../../services/navigation';
 
 export default function GetStartedScreen() {
@@ -33,23 +33,13 @@ export default function GetStartedScreen() {
     <View className="flex-1 bg-gray-100">
 
       {/* ===== HEADER ===== */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
       {/* ===== CONTENT ===== */}
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{
-          paddingTop: 200,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
           paddingBottom: 140,
         }}
       >

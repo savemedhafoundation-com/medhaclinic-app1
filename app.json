@@ -44,6 +44,12 @@
           "photosPermission": "Allow MedhaClinic to access your photos so you can upload a profile picture."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow MedhaClinic to use your location to fill delivery address details."
+        }
+      ],
       "expo-web-browser",
       "expo-router"
     ],

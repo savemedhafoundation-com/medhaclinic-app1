@@ -1,21 +1,36 @@
 import { Ionicons } from '@expo/vector-icons';
-import { usePathname, useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  type Href,
+  usePathname,
+  useRouter,
+} from 'expo-router';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useCart } from '../providers/CartProvider';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
 type NavItem = {
-  key: 'dashboard' | 'healthalert' | 'cart' | 'profile';
+  key: 'dashboard' | 'healthalert' | 'cart' | 'store' | 'profile';
   icon: IconName;
-  route?: '/(tabs)/dashboard' | '/(tabs)/healthalert' | '/(tabs)/profile';
-  badge?: string;
+  route: Href;
 };
 
+export const BOTTOM_NAV_HEIGHT = 82;
+export const BOTTOM_NAV_BOTTOM_OFFSET = 14;
+const BOTTOM_NAV_BUTTON_SIZE = 54;
+
 function getActiveTab(pathname: string) {
-  if (pathname.startsWith('/(tabs)/healthalert')) return 'healthalert';
-  if (pathname.startsWith('/(tabs)/profile')) return 'profile';
+  if (pathname.includes('/boosterdiet/cart')) return 'cart';
+  if (pathname.includes('/boosterdiet/checkout')) return 'cart';
+  if (pathname.includes('/boosterdiet/confirmation')) return 'cart';
+  if (pathname.includes('/boosterdiet/ordersection')) return 'store';
+  if (pathname.includes('/boosterdiet/store')) return 'store';
+  if (pathname.includes('/healthalert')) return 'healthalert';
+  if (pathname.includes('/privacy-policy')) return 'profile';
+  if (pathname.includes('/profile')) return 'profile';
   return 'dashboard';
 }
 
@@ -23,17 +38,28 @@ export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const { itemCount } = useCart();
   const activeTab = getActiveTab(pathname);
 
   const tabs: NavItem[] = [
     { key: 'dashboard', icon: 'home', route: '/(tabs)/dashboard' },
-    { key: 'healthalert', icon: 'bar-chart', route: '/(tabs)/healthalert' },
-    { key: 'cart', icon: 'cart', badge: '2' },
+    { key: 'healthalert', icon: 'stats-chart', route: '/(tabs)/healthalert' },
+    { key: 'store', icon: 'bag-handle', route: '/boosterdiet/store' },
     { key: 'profile', icon: 'person', route: '/(tabs)/profile' },
   ];
 
+  if (itemCount > 0) {
+    tabs.splice(2, 0, {
+      key: 'cart',
+      icon: 'cart',
+      route: '/boosterdiet/cart',
+    });
+  }
+
   return (
-    <View style={[styles.wrapper, { bottom: insets.bottom + 14 }]}>
+    <View
+      style={[styles.wrapper, { bottom: insets.bottom + BOTTOM_NAV_BOTTOM_OFFSET }]}
+    >
       <LinearGradient
         colors={['#0C8B18', '#137E15']}
         start={{ x: 0, y: 0 }}
@@ -47,15 +73,14 @@ export default function BottomNav() {
             <TouchableOpacity
               key={tab.key}
               activeOpacity={0.9}
-              onPress={tab.route ? () => router.replace(tab.route) : undefined}
+              onPress={() => router.replace(tab.route)}
               style={[styles.tabButton, isActive && styles.activeTabButton]}
             >
-              <Ionicons name={tab.icon} size={21} color={isActive ? '#168019' : '#FFFFFF'} />
-              {tab.badge ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{tab.badge}</Text>
-                </View>
-              ) : null}
+              <Ionicons
+                name={tab.icon}
+                size={isActive ? 27 : 24}
+                color="#FFFFFF"
+              />
             </TouchableOpacity>
           );
         })}
@@ -73,45 +98,36 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   shell: {
-    width: '88%',
-    maxWidth: 340,
-    minHeight: 76,
+    width: '90%',
+    maxWidth: 420,
+    height: BOTTOM_NAV_HEIGHT,
     paddingHorizontal: 18,
-    borderRadius: 24,
+    paddingVertical: 8,
+    borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#08490A',
+    shadowColor: '#0A530D',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    elevation: 12,
   },
   tabButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
+    width: BOTTOM_NAV_BUTTON_SIZE,
+    height: BOTTOM_NAV_BUTTON_SIZE,
+    borderRadius: BOTTOM_NAV_BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activeTabButton: {
-    backgroundColor: '#FFFFFF',
-  },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    right: 6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: '#0E7611',
-    fontSize: 9,
-    fontWeight: '800',
+    backgroundColor: '#20BC09',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    shadowColor: '#042D06',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.24,
+    shadowRadius: 12,
+    elevation: 6,
   },
 });

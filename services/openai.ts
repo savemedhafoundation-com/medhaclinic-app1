@@ -193,7 +193,7 @@ export async function fetchImmunityResult(
         }
       }
 
-      if (!data.result) {
+      if (!data?.result) {
         throw new Error('Invalid response from AI server');
       }
 
