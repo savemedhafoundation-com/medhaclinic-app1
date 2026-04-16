@@ -21,8 +21,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { router } from "expo-router";
 
-import HeaderBackButton from "../../components/HeaderBackButton";
-import SvgHeader from "../../components/Clipperbg";
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from "../../components/ScreenNav";
 import Speedometer from "../../components/Svgspeedometer";
 import type { SubmitDailyImmunityVariables } from "../../firebase/dataConnect";
 import { usePatientProfile } from "../../hooks/use-patient-profile";
@@ -556,12 +557,7 @@ export default function DailyImmunityCheck() {
   const isCompactPhone = screenWidth < 380 || screenHeight < 760;
   const isVerySmallPhone = screenWidth < 360 || screenHeight < 700;
   const horizontalPadding = isVerySmallPhone ? 12 : 16;
-  const headerHeight = isVerySmallPhone ? 148 : isCompactPhone ? 160 : 180;
-  const logoWidth = isVerySmallPhone ? 126 : isCompactPhone ? 142 : 160;
-  const logoHeight = isVerySmallPhone ? 94 : isCompactPhone ? 106 : 120;
-  const logoOffsetY = isVerySmallPhone ? 16 : isCompactPhone ? 14 : 12;
-  const navTop = insets.top + (isVerySmallPhone ? 6 : 10);
-  const contentTopPadding = headerHeight + (isVerySmallPhone ? 18 : 26);
+  const contentTopPadding = SCREEN_NAV_CONTENT_PADDING_TOP;
   const contentBottomPadding = Math.max(60, insets.bottom + 28);
   const heroTitleSize = isVerySmallPhone ? 22 : isCompactPhone ? 24 : 26;
   const heroTitleLineHeight = isVerySmallPhone ? 26 : isCompactPhone ? 30 : 32;
@@ -744,28 +740,7 @@ export default function DailyImmunityCheck() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["left", "right", "bottom"]}>
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader
-          height={headerHeight}
-          logoOffsetY={logoOffsetY}
-          logoWidth={logoWidth}
-          logoHeight={logoHeight}
-        />
-
-        <View
-          style={{
-            position: "absolute",
-            top: navTop,
-            left: horizontalPadding,
-            right: horizontalPadding,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
-        </View>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

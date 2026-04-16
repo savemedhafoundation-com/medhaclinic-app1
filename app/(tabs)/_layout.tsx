@@ -10,6 +10,7 @@ export default function TabsLayout() {
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="healthalert" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="reports" />
       </Stack>
 

@@ -7,6 +7,7 @@ import healthRouter from './routes/health.js';
 import immunityRouter, { legacyImmunityRouter } from './routes/immunity.js';
 import meRouter from './routes/me.js';
 import reportsRouter, { legacyReportsRouter } from './routes/reports.js';
+import storeRouter from './routes/store.js';
 
 const app = new Hono();
 
@@ -22,7 +23,7 @@ app.use(
   cors({
     origin: allowedOrigins,
     allowHeaders: ['Authorization', 'Content-Type'],
-    allowMethods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+    allowMethods: ['DELETE', 'GET', 'POST', 'PUT', 'OPTIONS'],
   })
 );
 
@@ -41,6 +42,7 @@ app.route('/health', healthRouter);
 app.route('/v1/me', meRouter);
 app.route('/v1/immunity', immunityRouter);
 app.route('/v1/reports', reportsRouter);
+app.route('/v1/store', storeRouter);
 app.route('/v1/ai', publicAiRouter);
 app.route('/v1/ai', aiRouter);
 

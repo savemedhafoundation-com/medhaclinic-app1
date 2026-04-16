@@ -3,12 +3,15 @@ import { useEffect } from 'react';
 
 import WelcomeScreen from '../components/WelcomeScreen';
 import { AuthProvider, useAuth } from '../providers/AuthProvider';
+import { CartProvider } from '../providers/CartProvider';
 import '../global.css';
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootNavigator />
+      <CartProvider>
+        <RootNavigator />
+      </CartProvider>
     </AuthProvider>
   );
 }
@@ -65,6 +68,10 @@ function RootNavigator() {
       <Stack.Screen name="assessment/certificate" />
       <Stack.Screen name="boosterdiet/boosters" />
       <Stack.Screen name="boosterdiet/store" />
+      <Stack.Screen name="boosterdiet/ordersection" />
+      <Stack.Screen name="boosterdiet/cart" />
+      <Stack.Screen name="boosterdiet/checkout" />
+      <Stack.Screen name="boosterdiet/confirmation" />
       <Stack.Screen name="boosterdiet/dietplan" />
       <Stack.Screen name="analysis/stepanalyst" />
       <Stack.Screen name="certification/daily" />

@@ -4,10 +4,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../components/ScreenNav';
 import { goBackOrReplace } from '../services/navigation';
 
 const leaderImage = require('../assets/images/Mask group.png');
@@ -67,24 +69,18 @@ const CORE_VALUES = [
 
 export default function AboutScreen() {
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <ScreenNav
+        onBackPress={() => goBackOrReplace('/(tabs)/profile')}
+        title="About Medha Clinic"
+      />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => goBackOrReplace('/(tabs)/profile')}
-            style={styles.backButton}
-          >
-            <Ionicons name="chevron-back" color="#202320" size={18} />
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>About Medha Clinic</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
         <View style={styles.heroBlock}>
           <Text style={styles.heroTitle}>Healthcare, engineered for you.</Text>
           <Text style={styles.heroSubtitle}>

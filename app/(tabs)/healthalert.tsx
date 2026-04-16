@@ -13,7 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 
-import SvgHeader from '../../components/Clipperbg';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { useAuth } from '../../providers/AuthProvider';
 import {
   type AcceptedHealthAlertPlan,
@@ -278,15 +280,19 @@ export default function HealthAlertsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
-      <View className="absolute left-0 right-0 top-0 z-10">
-        <SvgHeader />
-      </View>
+    <SafeAreaView
+      className="flex-1 bg-gray-100"
+      edges={['left', 'right', 'bottom']}
+    >
+      <ScreenNav />
 
       <ScrollView
-        className="flex-1 px-4 pt-6"
+        className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 150, paddingBottom: 220 }}
+        contentContainerStyle={{
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
+          paddingBottom: 220,
+        }}
       >
         <Text className="text-center text-3xl font-bold text-green-700">
           Health Alerts

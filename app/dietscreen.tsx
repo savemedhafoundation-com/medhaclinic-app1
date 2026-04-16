@@ -3,18 +3,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Image,
   ImageBackground,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import bg from '../assets/images/dashbg.png';
-import logo from '../assets/images/medha_logo.png';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../components/ScreenNav';
 import { goBackOrReplace } from '../services/navigation';
+
+const bg = require('../assets/images/dashbg.png');
 
 const COLORS = {
   accent: '#16a34a',
@@ -35,24 +36,16 @@ export default function DietLifestyleScreen() {
         colors={['rgba(24,184,3,0.94)', 'rgba(247,255,242,0.98)']}
         style={{ flex: 1 }}
       >
-        <SafeAreaView style={{ flex: 1 }}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 20, paddingBottom: 140 }}
-          >
-            {/* ===== HEADER ===== */}
-            <View className="flex-row items-center gap-3">
-              <TouchableOpacity onPress={() => goBackOrReplace('/(tabs)/dashboard')}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
+        <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
-              <Image
-                source={logo}
-                className="w-[180px] h-[60px]"
-                resizeMode="contain"
-              />
-            </View>
-
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            padding: 20,
+            paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
+            paddingBottom: 140,
+          }}
+        >
             {/* ===== TITLE + SUBTITLE (REORDERED) ===== */}
             <Text className="mt-4 mb-5">
               <Text
@@ -182,8 +175,7 @@ export default function DietLifestyleScreen() {
               Your body&apos;s needs are unique.{'\n'}
               This helps us know you better.
             </Text>
-          </ScrollView>
-        </SafeAreaView>
+        </ScrollView>
       </LinearGradient>
     </ImageBackground>
   );
