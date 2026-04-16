@@ -10,6 +10,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../components/ScreenNav';
 import { goBackOrReplace } from '../services/navigation';
 
 const CLINIC_PHONE_NUMBER = '+91 9800808595';
@@ -105,25 +108,19 @@ const QUESTIONS = [
 
 export default function SupportScreen() {
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <ScreenNav
+        onBackPress={() => goBackOrReplace('/(tabs)/profile')}
+        title="Patient Support"
+      />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroCard}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => goBackOrReplace('/(tabs)/profile')}
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" color="#2A342A" size={18} />
-            </TouchableOpacity>
-
-            <Text style={styles.headerTitle}>Patient Support</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>How can we help?</Text>
             <Text style={styles.heroSubtitle}>

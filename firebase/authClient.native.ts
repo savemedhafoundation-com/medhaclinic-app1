@@ -583,31 +583,38 @@ export function subscribeToAuthChanges(
 }
 
 export async function signInWithGoogleIdToken(idToken: string) {
-  return trackDataConnectAuthSync(async () => {
-    suppressWebSdkProxyInjection = true;
-    const credential = NativeGoogleAuthProvider.credential(idToken);
-    try {
-      const userCredential = await signInWithNativeCredential(
-        nativeAuth,
-        credential
-      );
-      lastKnownNativeUser = userCredential.user;
+  suppressWebSdkProxyInjection = true;
+  const credential = NativeGoogleAuthProvider.credential(idToken);
 
-      await trackPendingWebSdkSignIn(
-        signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
-      );
+  try {
+    const userCredential = await signInWithNativeCredential(
+      nativeAuth,
+      credential
+    );
+    lastKnownNativeUser = userCredential.user;
 
-      return {
-        user: toAppAuthUser(userCredential.user)!,
-      } satisfies AppAuthUserCredential;
-    } catch (error) {
-      lastKnownNativeUser = null;
-      await signOutFromNativeAuth(nativeAuth).catch(() => null);
-      throw error;
-    } finally {
-      suppressWebSdkProxyInjection = false;
-    }
-  });
+    const appUser = toAppAuthUser(userCredential.user)!;
+    const webSignInTask = trackPendingWebSdkSignIn(
+      signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
+    );
+
+    void webSignInTask
+      .then(() => ensureDataConnectAuthReadyInternal(appUser, false))
+      .catch(error => {
+        console.log('[AuthClient] Google web SDK sync note:', error);
+        syncWebSdkFromNativeUser(userCredential.user);
+      });
+
+    return {
+      user: appUser,
+    } satisfies AppAuthUserCredential;
+  } catch (error) {
+    lastKnownNativeUser = null;
+    await signOutFromNativeAuth(nativeAuth).catch(() => null);
+    throw error;
+  } finally {
+    suppressWebSdkProxyInjection = false;
+  }
 }
 
 export async function sendPhoneVerificationCode(

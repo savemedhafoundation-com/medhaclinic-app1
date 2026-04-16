@@ -69,8 +69,36 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 let googleIsConfigured = false;
+const AUTH_PROFILE_SYNC_TIMEOUT_MS = 2_500;
 
 type StoredUserData = Record<string, unknown>;
+
+class AuthProfileSyncTimeoutError extends Error {
+  constructor() {
+    super('Profile sync is taking longer than expected.');
+    this.name = 'AuthProfileSyncTimeoutError';
+  }
+}
+
+function createProfileSyncTimeout() {
+  return new Promise<never>((_, reject) => {
+    setTimeout(
+      () => reject(new AuthProfileSyncTimeoutError()),
+      AUTH_PROFILE_SYNC_TIMEOUT_MS
+    );
+  });
+}
+
+function isProfileSyncTimeout(error: unknown) {
+  return error instanceof AuthProfileSyncTimeoutError;
+}
+
+function shouldAskForProfile(
+  cachedNeedsProfile: boolean,
+  remoteNeedsProfile: boolean
+) {
+  return cachedNeedsProfile && remoteNeedsProfile;
+}
 
 function getProfileFromUser(user: AppAuthUser): AuthUserProfile {
   return {
@@ -298,7 +326,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [needsProfile, setNeedsProfile] = useState(false);
   const hydrationRunIdRef = useRef(0);
 
-  async function hydrateSignedInUser(currentUser: AppAuthUser) {
+  async function readRemoteNeedsProfile(currentUser: AppAuthUser) {
+    await syncAuthenticatedUser(currentUser);
+    const currentUserData = await getCurrentUserData();
+    return !hasCompletedHealthProfile(currentUserData);
+  }
+
+  async function hydrateSignedInUser(
+    currentUser: AppAuthUser,
+    shouldApplyHydration = () => true
+  ) {
     const nextProfile = getProfileFromUser(currentUser);
 
     // For phone-auth users, displayName is null so getProfileFromUser falls back
@@ -324,15 +361,45 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     await persistLocalProfile(nextProfile);
-    setProfile(nextProfile);
+    const cachedNeedsProfile = !(await hasCachedHealthProfile());
 
+    if (!shouldApplyHydration()) {
+      return nextProfile;
+    }
+
+    setProfile(nextProfile);
+    setNeedsProfile(false);
+
+    const remoteNeedsProfileTask = readRemoteNeedsProfile(currentUser);
     try {
-      await syncAuthenticatedUser(currentUser);
-      const currentUserData = await getCurrentUserData();
-      setNeedsProfile(!hasCompletedHealthProfile(currentUserData));
+      const remoteNeedsProfile = await Promise.race([
+        remoteNeedsProfileTask,
+        createProfileSyncTimeout(),
+      ]);
+
+      if (shouldApplyHydration()) {
+        setNeedsProfile(
+          shouldAskForProfile(cachedNeedsProfile, remoteNeedsProfile)
+        );
+      }
     } catch (error) {
-      console.log('Post sign-in sync error:', error);
-      setNeedsProfile(!(await hasCachedHealthProfile()));
+      if (isProfileSyncTimeout(error)) {
+        console.log('[Auth] Profile sync deferred after sign-in.');
+
+        void remoteNeedsProfileTask
+          .then(remoteNeedsProfile => {
+            if (shouldApplyHydration()) {
+              setNeedsProfile(
+                shouldAskForProfile(cachedNeedsProfile, remoteNeedsProfile)
+              );
+            }
+          })
+          .catch(syncError => {
+            console.log('Post sign-in sync error:', syncError);
+          });
+      } else {
+        console.log('Post sign-in sync error:', error);
+      }
     }
 
     return nextProfile;
@@ -392,13 +459,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         try {
           if (currentUser) {
             resetPhoneVerification();
-            await ensureDataConnectAuthReady(currentUser);
-
-            if (!isLatestHydrationRun()) {
-              return;
-            }
-
-            await hydrateSignedInUser(currentUser);
+            void ensureDataConnectAuthReady(currentUser).catch(error => {
+              console.log('[Auth] DataConnect ready check deferred:', error);
+            });
+            await hydrateSignedInUser(currentUser, isLatestHydrationRun);
           } else {
             setProfile(null);
             setNeedsProfile(false);
@@ -425,7 +489,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             const nextProfile = getProfileFromUser(currentUser);
             await persistLocalProfile(nextProfile);
             setProfile(nextProfile);
-            setNeedsProfile(!(await hasCachedHealthProfile()));
+            setNeedsProfile(false);
           } else {
             setProfile(null);
             setNeedsProfile(false);
@@ -486,7 +550,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       const credentialResult = await signInWithGoogleIdToken(idToken);
-      await ensureDataConnectAuthReady(credentialResult.user);
       return getProfileFromUser(credentialResult.user);
     } catch (error) {
       throw new Error(toReadableError(error));

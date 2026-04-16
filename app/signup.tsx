@@ -16,10 +16,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import commonimg from '../assets/images/common_bgpage.png';
-import medha from '../assets/images/medha_logo.png';
 import { useAuth } from '../providers/AuthProvider';
 import { saveHealthProfile } from '../services/medhaDataConnect';
+
+const commonimg = require('../assets/images/common_bgpage.png');
+const medha = require('../assets/images/medha_logo.png');
 
 async function getStoredUserData() {
   try {

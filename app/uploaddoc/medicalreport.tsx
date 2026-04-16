@@ -7,34 +7,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import SvgHeader from '../../components/Clipperbg';
-import HeaderBackButton from '../../components/HeaderBackButton';
-import { router } from 'expo-router';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { goBackOrReplace } from '../../services/navigation';
 
 export default function MedicalReportsScreen() {
-  const HEADER_HEIGHT = 250; // must match SvgHeader height
-
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView
+      className="flex-1 bg-white"
+      edges={['left', 'right', 'bottom']}
+    >
       {/* ================= HEADER ================= */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <View className="absolute top-0 w-full">
-          <View className="h-14 justify-center mt-4">
-            <View className="absolute left-4 right-4 flex-row items-center justify-between">
-              <HeaderBackButton onPress={() => goBackOrReplace('/(tabs)/dashboard')} />
-            </View>
-          </View>
-        </View>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
       {/* ================= SCROLL CONTENT ================= */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: HEADER_HEIGHT,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
           paddingHorizontal: 20,
           paddingBottom: 120,
           flexGrow: 1,

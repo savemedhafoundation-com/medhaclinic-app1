@@ -20,8 +20,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
 
-import HeaderBackButton from '../../components/HeaderBackButton';
-import SvgHeader from '../../components/Clipperbg';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import { goBackOrReplace } from '../../services/navigation';
@@ -289,23 +290,17 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
   }, [fallbackParagraphs, prompt, user]);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f7fff6]">
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-        <SafeAreaView className="absolute top-0 w-full">
-          <View className="h-14 mt-4 justify-center">
-            <View className="absolute left-4 right-4 flex-row justify-between">
-              <HeaderBackButton onPress={() => goBackOrReplace('/immunity/dailyimmunity')} />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
+    <SafeAreaView
+      className="flex-1 bg-[#f7fff6]"
+      edges={['left', 'right', 'bottom']}
+    >
+      <ScreenNav onBackPress={() => goBackOrReplace('/immunity/dailyimmunity')} />
 
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: 20,
-          paddingTop: 220,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
         }}
       >
         <View className="px-5 mt-8">
