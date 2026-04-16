@@ -458,10 +458,6 @@ export default function ProfileScreen() {
     }
   }
 
-  function handleBack() {
-    router.replace('/(tabs)/dashboard');
-  }
-
   async function persistUploadedPhoto(photoUrl: string) {
     let nextStoredUser: StoredUser = {
       ...(storedUser ?? {}),
@@ -550,6 +546,10 @@ export default function ProfileScreen() {
     router.push('/about');
   }
 
+  function handlePrivacyPolicy() {
+    router.push('/(tabs)/privacy-policy');
+  }
+
   const actionItems: ActionCardItem[] = [
     {
       key: 'support',
@@ -559,6 +559,15 @@ export default function ProfileScreen() {
       iconColor: '#2563EB',
       iconBackground: '#EFF6FF',
       onPress: handleSupport,
+    },
+    {
+      key: 'privacy',
+      title: 'Privacy Policy',
+      subtitle: 'How we protect your data',
+      icon: 'shield-checkmark-outline',
+      iconColor: '#16A34A',
+      iconBackground: '#F0FDF4',
+      onPress: handlePrivacyPolicy,
     },
     {
       key: 'about',
@@ -783,23 +792,6 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.content}
         >
           <View style={styles.headerCard}>
-            <View style={styles.headerTopRow}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleBack}
-                style={styles.circleButton}
-              >
-                <Ionicons name="chevron-back" size={20} color="#475569" />
-              </TouchableOpacity>
-
-              <View style={styles.headerCenter}>
-                <Text style={styles.brandLabel}>MedhaClinic</Text>
-                <Text style={styles.headerTitle}>My Profile</Text>
-              </View>
-
-              <View style={styles.headerSpacer} />
-            </View>
-
             <View style={styles.profileBlock}>
               <TouchableOpacity
                 activeOpacity={photoBusy ? 1 : 0.9}

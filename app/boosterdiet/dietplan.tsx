@@ -11,7 +11,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +23,9 @@ import {
 } from 'react-native-safe-area-context';
 
 import BottomNav from '../../components/BottomNav';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import {
@@ -37,8 +39,6 @@ import {
   type PersonalizedDietInput,
   type PersonalizedDietPlan,
 } from '../../services/personalizedDiet';
-
-const medhaLogo = require('../../assets/images/medha_logo.png');
 
 type RouteParams = {
   activityLevel?: string | string[];
@@ -355,30 +355,19 @@ export default function BoosterDietScreen() {
         style={StyleSheet.absoluteFillObject}
       />
 
-      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+      <SafeAreaView edges={['bottom']} style={styles.safeArea}>
+        <ScreenNav onBackPress={() => goBackOrReplace('/foodpreferance')} />
+
         <ScrollView
           contentContainerStyle={[
             styles.content,
             {
+              paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
               paddingBottom: insets.bottom + 118,
             },
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => goBackOrReplace('/foodpreferance')}
-              style={styles.backButton}
-            >
-              <Ionicons color="#1A7A1D" name="chevron-back" size={24} />
-            </TouchableOpacity>
-
-            <Image source={medhaLogo} resizeMode="contain" style={styles.logo} />
-
-            <View style={styles.headerSpacer} />
-          </View>
-
           <View style={styles.heroCard}>
             <View style={styles.heroCopy}>
               <Text style={styles.heroEyebrow}>Medha Clinic</Text>

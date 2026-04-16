@@ -19,11 +19,12 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import patternImage from '../assets/images/bg_pattern.png';
-import backgroundImage from '../assets/images/common_bgpage.png';
-import googleIcon from '../assets/images/google.png';
-import medhaLogo from '../assets/images/medha_logo.png';
 import { useAuth } from '../providers/AuthProvider';
+
+const patternImage = require('../assets/images/bg_pattern.png');
+const backgroundImage = require('../assets/images/common_bgpage.png');
+const googleIcon = require('../assets/images/google.png');
+const medhaLogo = require('../assets/images/medha_logo.png');
 
 const COLORS = {
   backgroundTop: '#2CC700',

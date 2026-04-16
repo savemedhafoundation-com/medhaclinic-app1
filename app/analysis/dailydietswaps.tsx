@@ -7,32 +7,39 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { goBackOrReplace } from '../../services/navigation';
 
 export default function DailyDietSwapsScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-[#F6FFF5]">
+    <SafeAreaView
+      className="flex-1 bg-[#F6FFF5]"
+      edges={['left', 'right', 'bottom']}
+    >
+      <ScreenNav
+        onBackPress={() => goBackOrReplace('/analysis/stepanalyst')}
+        title="Daily Diet Swaps"
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
+          paddingBottom: 120,
+        }}
       >
-        {/* ================= HEADER ================= */}
-        <View className="bg-green-600 rounded-b-[28px] px-5 pt-6 pb-10">
-          <View className="flex-row justify-between items-center mb-4">
-            <TouchableOpacity onPress={() => goBackOrReplace('/analysis/stepanalyst')}>
-              <Ionicons name="chevron-back" size={26} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <Text className="text-white/80 text-sm">
+        <View className="mx-5 mt-4">
+          <Text className="text-green-700 text-sm font-semibold">
             Step-by-Step Analysis & Recommendations
           </Text>
 
-          <Text className="text-white text-[26px] font-extrabold mt-2">
+          <Text className="text-green-800 text-[26px] font-extrabold mt-2">
             Daily Diet Swaps
           </Text>
 
-          <Text className="text-white/90 mt-2">
+          <Text className="text-green-700 mt-2">
             Select your foods in order to know your health better.
           </Text>
 

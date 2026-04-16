@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import SvgHeader from '../components/Clipperbg';
-import HeaderBackButton from '../components/HeaderBackButton';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../components/ScreenNav';
 import { goBackOrReplace } from '../services/navigation';
 
 import {
@@ -12,30 +13,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const HEADER_HEIGHT = 155; // 👈 must match SvgHeader height
-
 export default function HealthAssessmentScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* 🔹 SVG HEADER (ABSOLUTE) */}
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full px-4">
-          <View className="mt-4 flex-row items-center justify-between">
-            <HeaderBackButton
-              onPress={() => goBackOrReplace('/(tabs)/dashboard')}
-            />
-          </View>
-        </SafeAreaView>
-      </View>
+      <ScreenNav onBackPress={() => goBackOrReplace('/(tabs)/dashboard')} />
 
       {/* 🔹 CONTENT */}
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
         <ScrollView
           contentContainerStyle={{
             padding: 20,
-            paddingTop: HEADER_HEIGHT + 30, // 👈 push content below header
+            paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
             paddingBottom: 30,
           }}
           showsVerticalScrollIndicator={false}
@@ -106,3 +95,4 @@ export default function HealthAssessmentScreen() {
     </View>
   );
 }
+

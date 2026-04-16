@@ -8,8 +8,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StoreProductCategory {
+  BOOSTERS
+  SUPPLEMENTS
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum OrderStatus {
+  PAYMENT_PENDING
+  PAID
+  PAYMENT_FAILED
+}
+
 model User {
-  id          String                   @id @default(cuid())
+  id          String                   @id @default(uuid())
   firebaseUid String                   @unique
   email       String?                  @unique
   name        String?
@@ -22,6 +38,8 @@ model User {
   submissions DailyImmunitySubmission[]
   reports     WeeklyReport[]
   aiSummaries AiSummary[]
+  addresses   Address[]
+  orders      Order[]
 }
 
 model PatientProfile {
@@ -97,4 +115,115 @@ model AiSummary {
   sourceSubmission DailyImmunitySubmission? @relation(fields: [sourceSubmissionId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+}
+
+model Product {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug              String               @unique
+  title             String
+  shortTitle        String               @map("short_title")
+  capacity          String
+  pricePaise        Int                  @map("price_paise")
+  mrpPaise          Int                  @map("mrp_paise")
+  category          StoreProductCategory
+  description       String
+  detailDescription String               @map("detail_description")
+  howToUse          String               @map("how_to_use")
+  subtitle          String
+  supportLine       String               @map("support_line")
+  active            Boolean              @default(true)
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Address {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @map("user_id")
+  label         String
+  recipientName String   @map("recipient_name")
+  phone         String
+  line1         String   @map("line_1")
+  line2         String?  @map("line_2")
+  city          String
+  state         String
+  postalCode    String   @map("postal_code")
+  country       String   @default("India")
+  latitude      Float?
+  longitude     Float?
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Coupon {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String             @unique
+  discountType      CouponDiscountType @map("discount_type")
+  discountValue     Int                @map("discount_value")
+  minSubtotalPaise  Int                @default(0) @map("min_subtotal_paise")
+  maxDiscountPaise  Int?               @map("max_discount_paise")
+  active            Boolean            @default(true)
+  expiresAt         DateTime?          @map("expires_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+model Order {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String      @map("user_id")
+  addressId         String?     @map("address_id") @db.Uuid
+  couponId          String?     @map("coupon_id") @db.Uuid
+  status            OrderStatus @default(PAYMENT_PENDING)
+  subtotalPaise     Int         @map("subtotal_paise")
+  discountPaise     Int         @default(0) @map("discount_paise")
+  totalPaise        Int         @map("total_paise")
+  couponCode        String?     @map("coupon_code")
+  addressSnapshot   Json        @map("address_snapshot")
+  razorpayOrderId   String      @unique @map("razorpay_order_id")
+  razorpayPaymentId String      @unique @map("razorpay_payment_id")
+  razorpaySignature String      @map("razorpay_signature")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address   Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  coupon    Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+
+  @@index([userId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  productSlug    String   @map("product_slug")
+  title          String
+  capacity       String
+  quantity       Int
+  unitPricePaise Int      @map("unit_price_paise")
+  lineTotalPaise Int      @map("line_total_paise")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
 }

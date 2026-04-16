@@ -22,9 +22,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import BottomNav from '../../components/BottomNav';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../../components/ScreenNav';
 import { goBackOrReplace } from '../../services/navigation';
 
-const medhaLogo = require('../../assets/images/medha_logo.png');
 const glutathioneBottle = require('../../assets/images/GT-500 1.png');
 const boronBottle = require('../../assets/images/BR-1 1.png');
 
@@ -197,32 +199,20 @@ export default function BoostersScreen() {
         />
       ))}
 
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <ScreenNav onBackPress={() => goBackOrReplace('/advice')} />
+
         <ScrollView
           bounces={false}
           contentContainerStyle={[
             styles.content,
             {
-              paddingTop: heroTopPadding,
+              paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP + heroTopPadding,
               paddingBottom: insets.bottom + 120,
             },
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              activeOpacity={0.88}
-              onPress={() => goBackOrReplace('/advice')}
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={24} color="#2A8F19" />
-            </TouchableOpacity>
-
-            <Image source={medhaLogo} resizeMode="contain" style={styles.logo} />
-
-            <View style={styles.headerSpacer} />
-          </View>
-
           <View style={styles.segmentRow}>
             <TouchableOpacity
               activeOpacity={0.9}

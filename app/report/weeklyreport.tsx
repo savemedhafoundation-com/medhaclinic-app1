@@ -10,8 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import SvgHeader from "../../components/Clipperbg";
-import HeaderBackButton from "../../components/HeaderBackButton";
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from "../../components/ScreenNav";
 import { usePatientProfile } from "../../hooks/use-patient-profile";
 import {
   buildAndStoreWeeklyReport,
@@ -335,22 +336,15 @@ export default function WeeklyReportScreen() {
   }
 
   return (                  
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="absolute top-0 left-0 right-0 z-10">
-        <SvgHeader />
-
-        <SafeAreaView className="absolute top-0 w-full px-4">
-          <View className="mt-4 flex-row items-center justify-between">
-            <HeaderBackButton
-              onPress={() => goBackOrReplace('/homescreen/basicscreens')}
-            />
-          </View>
-        </SafeAreaView>
-      </View>
+    <SafeAreaView
+      className="flex-1 bg-white"
+      edges={['left', 'right', 'bottom']}
+    >
+      <ScreenNav onBackPress={() => goBackOrReplace('/homescreen/basicscreens')} />
 
       <ScrollView
         contentContainerStyle={{
-          paddingTop: 200,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
           paddingBottom: 140,
         }}
         showsVerticalScrollIndicator={false}

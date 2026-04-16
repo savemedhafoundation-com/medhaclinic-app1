@@ -1,25 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   router,
   useLocalSearchParams,
 } from 'expo-router';
 import { useState } from 'react';
 import BottomNav from '../components/BottomNav';
+import ScreenNav, {
+  SCREEN_NAV_CONTENT_PADDING_TOP,
+} from '../components/ScreenNav';
 
 import {
   Image,
-  ImageBackground,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import bg from '../assets/images/dashbg.png';
-import logo from '../assets/images/medha_logo.png';
 import { goBackOrReplace } from '../services/navigation';
 
 const veg = require('../assets/images/veg.png');
@@ -49,37 +47,16 @@ export default function FoodPreferencesScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.screen }}>
       {/* ===== APP BAR ===== */}
-      <ImageBackground
-        source={bg}
-        className="w-full h-[220px]"
-        resizeMode="stretch"
-      >
-        <LinearGradient
-          colors={['rgba(24,184,3,0.92)', 'rgba(24,184,3,0.72)']}
-          className="flex-1"
-        >
-          <SafeAreaView className="flex-1 justify-center px-4">
-            <View className="flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => goBackOrReplace('/dietscreen')}>
-                <Ionicons name="chevron-back" size={26} color="#fff" />
-              </TouchableOpacity>
-
-              <Image
-                source={logo}
-                className="w-[180px] h-[60px]"
-                resizeMode="contain"
-              />
-
-              <View className="w-[26px]" />
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </ImageBackground>
+      <ScreenNav onBackPress={() => goBackOrReplace('/dietscreen')} />
 
       {/* ===== SCROLLABLE CONTENT ===== */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20, paddingBottom: 140 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP,
+          paddingBottom: 140,
+        }}
       >
         {/* ===== TITLE ===== */}
         <Text className="mt-2 mb-5">

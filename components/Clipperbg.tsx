@@ -13,6 +13,7 @@ interface Props {
   logoOffsetY?: number;
   logoWidth?: number;
   logoHeight?: number;
+  showLogo?: boolean;
 }
 
 function SvgHeader({
@@ -20,6 +21,7 @@ function SvgHeader({
   logoOffsetY = 0,
   logoWidth = 158,
   logoHeight = 84,
+  showLogo = true,
 }: Props) {
   const { width } = useWindowDimensions();
 
@@ -36,21 +38,23 @@ function SvgHeader({
       <View style={styles.edgeGlowRight} />
       <View style={styles.bottomCurveShadow} />
 
-      <View
-        pointerEvents="none"
-        style={[
-          styles.logoWrap,
-          {
-            marginTop: logoOffsetY,
-          },
-        ]}
-      >
-        <Image
-          source={require('../assets/images/medha_logo.png')}
-          style={{ width: logoWidth, height: logoHeight }}
-          resizeMode="contain"
-        />
-      </View>
+      {showLogo ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.logoWrap,
+            {
+              marginTop: logoOffsetY,
+            },
+          ]}
+        >
+          <Image
+            source={require('../assets/images/medha_logo.png')}
+            style={{ width: logoWidth, height: logoHeight }}
+            resizeMode="contain"
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
