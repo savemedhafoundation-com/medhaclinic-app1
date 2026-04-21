@@ -33,14 +33,14 @@ export default function AdviceScreen() {
 
         {/* Title */}
         <Text className="text-center text-3xl font-bold text-green-700 mt-6">
-          Advice
+          Wellness Ideas
         </Text>
 
         {/* Description */}
         <Text className="text-center text-gray-700 text-lg mt-4 leading-7">
-          Get expert guidance tailored to your health needs. Our specialists
-          provide personalized recommendations diets, lifestyle tips, and
-          boosters to support your recovery and overall well-being.
+          Get supportive ideas tailored to your wellness goals. Our team shares
+          personalized food, lifestyle, and booster suggestions for everyday
+          well-being.
         </Text>
 
         {/* ===== ACTION CARDS ===== */}
@@ -56,7 +56,7 @@ export default function AdviceScreen() {
 
               <View>
                 <Text className="text-white text-lg font-semibold">
-                  Personalized Health Diet
+                  Personalized Wellness Diet
                 </Text>
                 <Text className="text-green-100 mt-1">
                   Guidance tailored for you
@@ -82,7 +82,7 @@ export default function AdviceScreen() {
                   Get your Boosters
                 </Text>
                 <Text className="text-green-100 mt-1">
-                  Extra support for better health
+                  Extra support for daily wellness
                 </Text>
               </View>
             </View>

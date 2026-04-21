@@ -16,6 +16,7 @@ import * as Notifications from 'expo-notifications';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
+import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { useAuth } from '../../providers/AuthProvider';
 import {
   type AcceptedHealthAlertPlan,
@@ -216,10 +217,10 @@ export default function HealthAlertsScreen() {
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Health Booster Reminder',
+          title: 'Wellness Booster Reminder',
           body:
             reminderNote?.trim() ||
-            `Time for ${title}. Please follow your accepted health plan.`,
+            `Time for ${title}. Please follow your accepted wellness plan.`,
           sound: 'default',
         },
         trigger: {
@@ -273,7 +274,7 @@ export default function HealthAlertsScreen() {
       <SafeAreaView className="flex-1 items-center justify-center bg-gray-100">
         <ActivityIndicator color="#16a34a" size="large" />
         <Text className="mt-4 text-base font-semibold text-green-700">
-          Loading health alerts...
+          Loading wellness alerts...
         </Text>
       </SafeAreaView>
     );
@@ -295,7 +296,7 @@ export default function HealthAlertsScreen() {
         }}
       >
         <Text className="text-center text-3xl font-bold text-green-700">
-          Health Alerts
+          Wellness Alerts
         </Text>
 
         <Text className="mt-3 text-center text-gray-700">
@@ -402,12 +403,14 @@ export default function HealthAlertsScreen() {
           <Text className="font-semibold text-white">Cancel All Alarms</Text>
         </TouchableOpacity>
 
+        <WellnessDisclaimer className="mb-5" />
+
         <Text className="mb-3 text-center text-gray-800">
-          Your accepted plan stays saved for future health alerts.
+          Your accepted plan stays saved for future wellness alerts.
         </Text>
 
         <Text className="mb-16 text-center text-gray-700">
-          Alerts stay private on your device and are used only for your health guidance.
+          Alerts stay private on your device and are used only for your wellness guidance.
         </Text>
       </ScrollView>
     </SafeAreaView>

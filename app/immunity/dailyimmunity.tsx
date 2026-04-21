@@ -368,9 +368,9 @@ const QUESTIONS: Question[] = [
       },
     ],
   },
-  {
-    id: "hair",
-    title: "Hair Health",
+    {
+      id: "hair",
+      title: "Hair Wellness",
     options: [
       {
         key: "strong",
@@ -674,7 +674,7 @@ export default function DailyImmunityCheck() {
     if (totalAnswered === 0) {
       Alert.alert(
         "No Answers",
-        "Please answer at least one question before viewing results."
+        "Please answer at least one question before viewing your Personal Wellness Insights."
       );
       return;
     }

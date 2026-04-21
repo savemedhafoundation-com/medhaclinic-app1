@@ -49,7 +49,7 @@ const SHOWCASES: Record<ShowcaseTab, ShowcaseCard[]> = {
       id: 'powerful-boosters',
       eyebrow: 'Flexible solution\nfor all people',
       title: 'Powerful\nBoosters',
-      description: 'Helping humans\nbecome happier &\nhealthier!',
+      description: 'Helping people\nbuild brighter\nwellness routines!',
     },
     {
       id: 'daily-support',
@@ -63,7 +63,7 @@ const SHOWCASES: Record<ShowcaseTab, ShowcaseCard[]> = {
       id: 'essential-supplements',
       eyebrow: 'Practical choices\nfor modern routines',
       title: 'Essential\nSupplements',
-      description: 'Simple daily items\nthat strengthen your\nrecovery journey.',
+      description: 'Simple daily items\nthat support your\nwellness journey.',
     },
     {
       id: 'wellness-stack',

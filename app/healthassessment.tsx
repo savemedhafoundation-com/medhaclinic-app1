@@ -31,10 +31,10 @@ export default function HealthAssessmentScreen() {
         >
           {/* TITLE */}
           <Text className="text-[30px] font-extrabold text-[#0b4ea2]">
-            Health Assessment
+            Wellness Assessment
           </Text>
           <Text className="text-[16px] text-[#1f3c66] mt-1.5 mb-6">
-            Answer a few questions to get your personalized health insights.
+            Answer a few questions to get your personal wellness insights.
           </Text>
 
           {/* PROGRESS */}
@@ -64,7 +64,7 @@ export default function HealthAssessmentScreen() {
             <View className="flex-row gap-1.5 mb-2">
               <Text className="text-white text-[18px]">•</Text>
               <Text className="text-[#e6f1ff] text-[14px] flex-1">
-                Answer honestly for the most accurate health guidance.
+                Answer honestly for the most useful wellness guidance.
               </Text>
             </View>
 
@@ -82,7 +82,7 @@ export default function HealthAssessmentScreen() {
             onPress={() => router.push('/process')}
           >
             <Text className="text-white text-[16px] font-bold">
-              Start Health Assessment
+              Start Wellness Assessment
             </Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>

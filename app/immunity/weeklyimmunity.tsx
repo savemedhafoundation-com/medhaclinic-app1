@@ -57,12 +57,12 @@ export default function WeeklyImmunityCheck() {
       >
         {/* ===== HEADING (MATCHES IMAGE) ===== */}
         <Text className="text-[#0b4ea2] text-[26px] font-bold mb-2">
-          Weekly Immunity check
+          Weekly Wellness Check
         </Text>
 
         <Text className="text-[#1fa2ff] text-[15px] mb-6 leading-6">
           Please assess the status of these points for the past week for a clear
-          immunity report.
+          wellness summary.
         </Text>
 
         {/* ===== QUESTIONS ===== */}
@@ -134,7 +134,7 @@ export default function WeeklyImmunityCheck() {
           onPress={() => router.push('/certification/weekly')}
         >
           <Text className="text-white text-[18px] font-semibold">
-            Prepare Status Report
+            Prepare Wellness Summary
           </Text>
         </TouchableOpacity>
       </ScrollView>

@@ -40,7 +40,7 @@ export default function DailyDietSwapsScreen() {
           </Text>
 
           <Text className="text-green-700 mt-2">
-            Select your foods in order to know your health better.
+            Select your foods to understand your wellness habits better.
           </Text>
 
           <TouchableOpacity className="bg-white self-start mt-4 px-5 py-2 rounded-full flex-row items-center">

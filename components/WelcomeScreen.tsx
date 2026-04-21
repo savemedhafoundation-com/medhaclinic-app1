@@ -181,7 +181,7 @@ export default function WelcomeScreen({
             <Text className="text-white text-[18px]">Welcome to</Text>
             <Text className="text-white text-[30px] font-bold my-1">Medha Clinic</Text>
             <Text className="text-[#EAF2FF] text-[15px] text-center">
-              Your Family&apos;s Health, Our Priority
+              Your Family&apos;s Wellness, Our Priority
             </Text>
           </View>
 

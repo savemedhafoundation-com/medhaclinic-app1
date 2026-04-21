@@ -950,7 +950,7 @@ export async function buildAndStoreWeeklyReport() {
       });
 
       if (!response.data) {
-        throw new Error('Invalid weekly report response from backend.');
+        throw new Error('Invalid weekly wellness summary response from backend.');
       }
 
       return response.data;
@@ -1017,8 +1017,8 @@ export async function buildAndStoreWeeklyReport() {
       success: true,
       message:
         currentSubmissions.length > 0
-          ? 'Weekly report fetched successfully.'
-          : 'No submissions found in the current week. Returning an empty report.',
+          ? 'Weekly wellness summary fetched successfully.'
+          : 'No submissions found in the current week. Returning an empty wellness summary.',
       currentReportDate: currentStart.toISOString(),
       previousReportDate: previousStart.toISOString(),
       currentScores,
@@ -1104,8 +1104,8 @@ export async function buildAndStoreWeeklyReport() {
     success: true,
     message:
       currentSubmissions.length > 0
-        ? 'Weekly report fetched successfully.'
-        : 'No submissions found in the current week. Returning an empty report.',
+        ? 'Weekly wellness summary fetched successfully.'
+        : 'No submissions found in the current week. Returning an empty wellness summary.',
     currentReportDate: currentStart.toISOString(),
     previousReportDate: previousStart.toISOString(),
     currentScores,

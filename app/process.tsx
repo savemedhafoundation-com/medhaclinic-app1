@@ -216,7 +216,7 @@ export default function ProcessSection() {
         ],
       },
       {
-        title: '9. Skin Health',
+        title: '9. Skin Wellness',
         options: [
           { source: EMOJI.veryGood, label: 'Normal' },
           { source: EMOJI.bad, label: 'High' },

@@ -35,7 +35,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'scope',
     title: 'Scope of Policy',
     paragraphs: [
-      'This Privacy Policy applies to all users of the Medha Clinic platform, including patients, caregivers, and visitors accessing our Services.',
+      'This Privacy Policy applies to all users of the Medha Clinic platform, including members, caregivers, and visitors accessing our Services.',
       'By accessing or using our Services, you agree to the terms of this Privacy Policy and consent to the collection and use of your information as described herein.',
     ],
   },
@@ -43,7 +43,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'information',
     title: 'Information We Collect',
     paragraphs: [
-      'We collect only the information necessary to provide healthcare services effectively.',
+      'We collect only the information necessary to provide wellness services effectively.',
     ],
     groups: [
       {
@@ -59,10 +59,10 @@ const POLICY_SECTIONS: PolicySection[] = [
       {
         title: 'As defined under the SPDI Rules, this includes:',
         items: [
-          'Medical history and health conditions',
-          'Symptoms and diagnoses',
-          'Prescriptions and treatment records',
-          'Diagnostic reports and lab results',
+          'Wellness history and self-reported conditions',
+          'Self-reported wellness signals',
+          'Current routines and care records',
+          'Uploaded records and lab results',
           'Consultation notes',
         ],
       },
@@ -78,7 +78,7 @@ const POLICY_SECTIONS: PolicySection[] = [
         title: 'Appointment & Transaction Data',
         items: [
           'Appointment bookings and history',
-          'Doctor preferences',
+          'Care preferences',
           'Payment details processed via secure third-party gateways',
         ],
       },
@@ -93,11 +93,11 @@ const POLICY_SECTIONS: PolicySection[] = [
     groups: [
       {
         items: [
-          'Provide healthcare consultations, nutrition support, and wellness recommendations',
-          'Maintain your account, health profile, reports, and service history',
+          'Provide wellness consultations, nutrition support, and wellness recommendations',
+          'Maintain your account, wellness profile, summaries, and service history',
           'Schedule appointments and respond to support requests',
           'Send important service updates, reminders, and safety notices',
-          'Improve app performance, security, and patient experience',
+          'Improve app performance, security, and user experience',
         ],
       },
     ],
@@ -106,15 +106,15 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'sharing',
     title: 'Data Sharing and Disclosure',
     paragraphs: [
-      'We do not sell your personal or health information. We may share information only when it is needed to provide Services, comply with law, or protect users and the platform.',
-      'This may include sharing with authorized doctors, healthcare staff, technical service providers, payment partners, or government authorities when required by applicable law.',
+      'We do not sell your personal or wellness information. We may share information only when it is needed to provide Services, comply with law, or protect users and the platform.',
+      'This may include sharing with the authorized care team, technical service providers, payment partners, or government authorities when required by applicable law.',
     ],
   },
   {
     key: 'security',
     title: 'Data Security',
     paragraphs: [
-      'We use reasonable security practices to protect personal and sensitive health information from unauthorized access, misuse, disclosure, alteration, or destruction.',
+      'We use reasonable security practices to protect personal and sensitive wellness information from unauthorized access, misuse, disclosure, alteration, or destruction.',
       'Access to sensitive information is limited to authorized personnel and service providers who need it to perform their duties.',
     ],
   },
@@ -122,7 +122,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'retention',
     title: 'Data Retention',
     paragraphs: [
-      'We retain your information only for as long as necessary to provide Services, meet legal requirements, resolve disputes, and maintain accurate medical or transaction records.',
+      'We retain your information only for as long as necessary to provide Services, meet legal requirements, resolve disputes, and maintain accurate service or transaction records.',
       'When information is no longer required, we may delete, anonymize, or securely archive it as permitted by law.',
     ],
   },
@@ -130,8 +130,8 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'rights',
     title: 'User Rights',
     paragraphs: [
-      'You may request access, correction, update, or deletion of your personal information, subject to applicable law and medical record requirements.',
-      'You may also withdraw consent for optional communications where available, while understanding that some information is necessary to continue providing healthcare services.',
+      'You may request access, correction, update, or deletion of your personal information, subject to applicable law and record-retention requirements.',
+      'You may also withdraw consent for optional communications where available, while understanding that some information is necessary to continue providing wellness services.',
     ],
   },
   {
@@ -154,7 +154,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'grievance',
     title: 'Grievance Officer',
     paragraphs: [
-      'For privacy concerns, data requests, or complaints, contact Medha Clinic support at info@savemedha.com or through Patient Support in the app.',
+      'For privacy concerns, data requests, or complaints, contact Medha Clinic support at info@savemedha.com or through Wellness Support in the app.',
     ],
   },
 ];
@@ -201,7 +201,7 @@ export default function PrivacyPolicyScreen() {
 
           <Text style={styles.introText}>
             Medha Clinic is committed to protecting the privacy and security of
-            your personal and health information. This Privacy Policy describes
+            your personal and wellness information. This Privacy Policy describes
             how we collect, use, disclose, store, and protect your information
             when you access or use the Medha Clinic mobile application,
             website, and related services, collectively called the Services.

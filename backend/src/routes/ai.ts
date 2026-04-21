@@ -101,7 +101,8 @@ function buildPrompt(input: z.infer<typeof summarySchema>) {
 
   return [
     'Create exactly 3 short paragraphs for a wellness status summary.',
-    'Tone: calm, positive, medically responsible, non-alarmist.',
+    'Tone: calm, positive, wellness-focused, non-alarmist.',
+    'Use lifestyle wording only. Do not present the result as formal eligibility, diagnosis, treatment, cure, prevention, or fitness-to-participate guidance.',
     input.immunityScore !== undefined
       ? `Immunity score: ${input.immunityScore}`
       : null,
@@ -254,7 +255,7 @@ async function createOpenAiDietPlan(input: z.infer<typeof personalizedDietSchema
           {
             role: 'system',
             content:
-              'You are Medha Clinic\'s personalized nutrition planner. Create a practical 30-day diet and wellness support plan for a mobile app. Tailor the plan to the provided eating habits, meals per day, activity level, diet type, optional preferences, age, gender, and immunity context. Keep the tone warm, positive, and medically responsible. Do not diagnose, prescribe medicines, mention cure claims, suggest extreme fasting, or recommend unsafe detox routines. Prefer realistic Indian household-friendly foods unless the preferences clearly indicate another pattern. Keep meal items short, practical, and easy to follow. "Support" cards may mention food-based nutrient support or gentle wellness routines, but must not prescribe medical treatment. Return valid JSON that matches the schema exactly.',
+              'You are Medha Clinic\'s personalized wellness nutrition planner. Create a practical 30-day food and lifestyle support plan for a mobile app. Tailor the plan to the provided eating habits, meals per day, activity level, diet type, optional preferences, age, gender, and immunity lifestyle context. Keep the tone warm, positive, and wellness-focused. Do not diagnose, prescribe medicines, mention cure claims, suggest extreme fasting, recommend unsafe detox routines, or present the output as fitness eligibility guidance. Prefer realistic Indian household-friendly foods unless the preferences clearly indicate another pattern. Keep meal items short, practical, and easy to follow. "Support" cards may mention food-based nutrient support or gentle wellness routines, but must not prescribe clinical treatment. Return valid JSON that matches the schema exactly.',
           },
           {
             role: 'user',

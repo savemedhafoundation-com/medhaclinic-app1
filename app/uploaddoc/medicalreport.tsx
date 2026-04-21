@@ -33,7 +33,7 @@ export default function MedicalReportsScreen() {
       >
         <View>
           <Text className="text-[#166534] text-[28px] font-bold text-center mb-4">
-            Medical Reports
+            Wellness Records
           </Text>
 
           <Text className="text-center text-[16px] mb-1">
@@ -41,37 +41,38 @@ export default function MedicalReportsScreen() {
           </Text>
 
           <Text className="text-center text-[15px] text-gray-700 mb-4">
-            For detailed guidance, please upload relevant medical reports.
+            For more personalized wellness ideas, add any relevant records you
+            want the care team to review.
           </Text>
 
           <Text className="text-center text-[14px] text-gray-500 mb-8">
-            (Reports help to provide personalized, accurate advice)
+            (Records help us tailor general wellness support)
           </Text>
 
           {/* Upload title */}
           <Text className="text-[20px] font-bold text-[#166534] mb-2">
-            Upload Reports <Text className="text-red-500 text-[16px]">(Required)</Text>
+            Add Wellness Records <Text className="text-red-500 text-[16px]">(Optional)</Text>
           </Text>
 
           <Text className="text-gray-700 mb-6">
-            Please upload recent medical reports so our doctor can review them.
+            Add recent wellness records if you would like the care team to review
+            them.
           </Text>
 
           {/* Blood Test */}
           <ReportCard
             icon="water"
             iconColor="#991b1b"
-            title="Blood Test"
-            subtitle="CBC, LFT & IgE Test Reports"
-            required
+            title="Lab Records"
+            subtitle="CBC, LFT & IgE records"
           />
 
           {/* Scan */}
           <ReportCard
             icon="scan"
             iconColor="#2563eb"
-            title="Scanned X-Ray"
-            subtitle="MRI, CT Scan"
+            title="Imaging Records"
+            subtitle="Imaging files, if available"
           />
 
           {/* Others */}
@@ -79,13 +80,13 @@ export default function MedicalReportsScreen() {
             icon="document-text"
             iconColor="#065f46"
             title="Others"
-            subtitle="Prescription, treatment history etc"
+            subtitle="Current routine or past wellness notes"
           />
 
           {/* Submit */}
           <TouchableOpacity className="bg-[#22c55e] py-4 rounded-full items-center mb-6">
             <Text className="text-white text-[18px] font-bold">
-              Submit Reports
+              Submit Wellness Records
             </Text>
           </TouchableOpacity>
 
@@ -97,7 +98,7 @@ export default function MedicalReportsScreen() {
           </Text>
 
           <Text className="text-center text-[13px] text-gray-500 leading-5">
-            Reports are confidential and used only for your health guidance.
+            Records are confidential and used only for your wellness guidance.
           </Text>
         </View>
       </ScrollView>

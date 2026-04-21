@@ -83,7 +83,7 @@ export default function DietLifestyleScreen() {
               </Text>
 
               <View className="flex-row gap-2.5 mb-4">
-                {['Very Healthy', 'Moderate', 'Not Healthy'].map(item => (
+                {['Very Balanced', 'Moderate', 'Needs Support'].map(item => (
                   <SelectCard
                     key={item}
                     text={item}

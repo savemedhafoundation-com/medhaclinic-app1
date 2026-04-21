@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
+import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import { goBackOrReplace } from '../../services/navigation';
@@ -94,7 +95,7 @@ function getScoreTone(score: number) {
   return {
     summary: 'lower-than-usual daily resilience signals based on the available check-in data',
     guidance:
-      'Use today as a recovery day with extra rest, fluids, gentle nutrition, and closer symptom observation, and seek medical guidance if concerns are increasing.',
+      'Use today as a lighter routine day with extra rest, fluids, gentle nutrition, and closer self-observation, and consult a qualified doctor if concerns increase.',
   };
 }
 
@@ -136,7 +137,7 @@ function buildFallbackParagraphs({
 
   return [
     `Today's assessment suggests ${tone.summary}, with an immunity score of ${immunityScore}/10 and a ${label} status.`,
-    `This report is based on ${answeredCount} of ${totalQuestions} answered questions with ${roundedCompletion}% completion, so it reflects the information available from today's check-in.`,
+    `This summary is based on ${answeredCount} of ${totalQuestions} answered questions with ${roundedCompletion}% completion, so it reflects the information available from today's check-in.`,
     `${focusSentence} ${tone.guidance}`,
   ];
 }
@@ -229,7 +230,7 @@ export default function DailyImmunityReport() {
       .join('\n');
 
     return `
-Patient answered ${summaryData.totalAnswered} of ${summaryData.totalQuestions} questions.
+User answered ${summaryData.totalAnswered} of ${summaryData.totalQuestions} questions.
 Completion: ${completionPercent}%
 
 Answers:
@@ -239,7 +240,7 @@ Speedometer Score: ${immunityScore}/10
 Immunity Level: ${immunityLabel}
 Summary: ${JSON.stringify(summaryData)}
 
-Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medical-report tone.
+Provide ONLY 3 short paragraphs for a wellness-summary tone. Use lifestyle-focused wording only. Do not use formal eligibility wording or make diagnosis, treatment, cure, prevention, or fitness-to-participate claims.
     `.trim();
   }, [payload, summaryData, completionPercent, immunityScore, immunityLabel]);
 
@@ -305,15 +306,15 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
       >
         <View className="px-5 mt-8">
           <Text className="text-[#166534] text-[30px] font-bold leading-[38px]">
-            Daily Immunity Status
+            Daily Wellness
           </Text>
-          <Text className="text-[#166534] text-[30px] font-bold">Report</Text>
+          <Text className="text-[#166534] text-[30px] font-bold">Summary</Text>
         </View>
 
         <View className="mx-5 mt-6 bg-[#147a0a] rounded-[24px] p-5">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text className="text-[#dcfce7] text-[14px]">Patient Name</Text>
+              <Text className="text-[#dcfce7] text-[14px]">Profile Name</Text>
               <Text className="text-white text-[22px] font-bold mt-1">
                 {patientName}
               </Text>
@@ -343,7 +344,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
 
               <View className="bg-white mt-3 px-4 py-1.5 rounded-full self-start">
                 <Text className="text-[#166534] text-[14px] font-semibold">
-                  Immunity Score - {immunityScore} / 10
+                  Immunity Lifestyle Score - {immunityScore} / 10
                 </Text>
               </View>
             </View>
@@ -392,9 +393,9 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
 
         <View className="mx-5 mt-5">
           <Text className="text-[#1f2937] text-[16px] leading-[26px]">
-            The Health Immunity Checkup Clearance Certificate is a wellness-based
-            digital assessment summary designed to reflect your current immunity
-            and overall health balance based on daily physiological indicators.
+            The Daily Wellness Summary is a lifestyle-based check-in designed to
+            reflect your current immunity habits and overall wellness balance
+            based on the information you shared today.
           </Text>
         </View>
 
@@ -403,7 +404,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
             <View className="items-center py-6">
               <ActivityIndicator size="large" color="#16a34a" />
               <Text className="text-[#166534] mt-3">
-                Generating immunity insights...
+                Preparing personal wellness insights...
               </Text>
             </View>
           ) : (
@@ -419,14 +420,14 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
                   }`}
                 >
                   {state.source === 'ai'
-                    ? 'Source: AI-generated summary'
-                    : 'Source: Template fallback summary'}
+                    ? 'Source: AI-generated wellness summary'
+                    : 'Source: Template wellness summary'}
                 </Text>
               </View>
 
               {state.errorMessage ? (
                 <Text className="mb-4 text-[12px] leading-[18px] text-[#92400e]">
-                  AI request failed: {state.errorMessage}
+                  Insight request failed: {state.errorMessage}
                 </Text>
               ) : null}
 
@@ -447,12 +448,15 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
           )}
         </View>
 
+        <WellnessDisclaimer className="mx-5 mt-5" />
+
         <View className="items-center mt-10">
           <View className="bg-[#16a34a] w-[56px] h-[56px] rounded-full items-center justify-center">
             <Ionicons name="checkmark" size={32} color="#fff" />
           </View>
           <Text className="text-[#166534] text-[16px] mt-4 text-center px-10">
-            Certified healthy and fit for all normal activities and travel.
+            Your Personal Wellness Insights are ready for daily self-care
+            planning.
           </Text>
         </View>
 
@@ -461,7 +465,7 @@ Provide ONLY 3 short paragraphs summarizing immunity status in a positive, medic
           className="mx-5 mt-8 bg-[#16a34a] py-4 rounded-full items-center shadow-lg shadow-green-900/30"
           onPress={() => router.push('/advice')}
         >
-          <Text className="text-white text-[18px] font-bold">Get Advice</Text>
+          <Text className="text-white text-[18px] font-bold">View Wellness Ideas</Text>
         </TouchableOpacity>
 
         <View className="h-28" />

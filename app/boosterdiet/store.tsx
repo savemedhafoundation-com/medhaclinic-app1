@@ -189,7 +189,7 @@ export default function BoosterStoreScreen() {
               <Ionicons color="#6B7280" name="search" size={24} />
               <TextInput
                 onChangeText={setSearchQuery}
-                placeholder="Bone Marrow Booster"
+                placeholder="Strength Support Booster"
                 placeholderTextColor="#6B7280"
                 style={styles.searchInput}
                 value={searchQuery}

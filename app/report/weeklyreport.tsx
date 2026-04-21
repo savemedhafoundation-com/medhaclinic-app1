@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from "../../components/ScreenNav";
+import WellnessDisclaimer from "../../components/WellnessDisclaimer";
 import { usePatientProfile } from "../../hooks/use-patient-profile";
 import {
   buildAndStoreWeeklyReport,
@@ -79,17 +80,17 @@ const getScoreDescription = (label: string, score: number, trend: string) => {
 
   switch (label) {
     case "Energy & Recovery":
-      return `Your energy and recovery pattern ${trendText}`;
-    case "Digestive Health":
-      return `Your digestive condition ${trendText}`;
-    case "Cardiovascular":
-      return `Your cardiovascular health ${trendText}`;
-    case "Immune Response":
-      return `Your immune response ${trendText}`;
-    case "Respiratory":
-      return `Your respiratory condition ${trendText}`;
-    case "Hormonal Health":
-      return `Your hormonal balance ${trendText}`;
+      return `Your energy and rest pattern ${trendText}`;
+    case "Digestive Comfort":
+      return `Your digestive comfort pattern ${trendText}`;
+    case "Circulation & Stamina":
+      return `Your circulation and stamina pattern ${trendText}`;
+    case "Immunity Lifestyle":
+      return `Your immunity lifestyle pattern ${trendText}`;
+    case "Breathing Comfort":
+      return `Your breathing comfort pattern ${trendText}`;
+    case "Body Rhythm":
+      return `Your body rhythm pattern ${trendText}`;
     default:
       return `Current score is ${score}.`;
   }
@@ -102,7 +103,7 @@ const getOverallInsight = (overallTrend: string) => {
   if (overallTrend === "down") {
     return "Some core areas declined this week. More consistency, hydration, rest, and symptom tracking are recommended.";
   }
-  return "Your overall health pattern remained stable this week. Continue your present routine.";
+  return "Your overall wellness pattern remained stable this week. Continue your present routine.";
 };
 
 const getImprovementInsight = (lowestScoreLabel: string) => {
@@ -124,11 +125,11 @@ const iconMap: Record<string, any> = {
 
 const labelMap: Record<string, string> = {
   energyLevels: "Energy & Recovery",
-  digestiveHealth: "Digestive Health",
-  cardiovascular: "Cardiovascular",
-  immuneResponse: "Immune Response",
-  respiratory: "Respiratory",
-  hormonalHealth: "Hormonal Health",
+  digestiveHealth: "Digestive Comfort",
+  cardiovascular: "Circulation & Stamina",
+  immuneResponse: "Immunity Lifestyle",
+  respiratory: "Breathing Comfort",
+  hormonalHealth: "Body Rhythm",
 };
 
 const defaultProfileImage = require("../../assets/images/profile.png");
@@ -234,9 +235,9 @@ export default function WeeklyReportScreen() {
       const data = await buildAndStoreWeeklyReport();
       setReportData(data);
     } catch (err) {
-      console.log("Weekly report fetch error:", err);
+      console.log("Weekly wellness summary fetch error:", err);
       const message =
-        err instanceof Error ? err.message : "Failed to load weekly report";
+        err instanceof Error ? err.message : "Failed to load weekly wellness summary";
       setError(message);
       Alert.alert("Error", message);
     } finally {
@@ -310,7 +311,7 @@ export default function WeeklyReportScreen() {
       <SafeAreaView className="flex-1 bg-white items-center justify-center">
         <ActivityIndicator size="large" color="#166534" />
         <Text className="text-gray-600 mt-4 text-[15px]">
-          Loading weekly report...
+          Loading weekly wellness summary...
         </Text>
       </SafeAreaView>
     );
@@ -321,9 +322,11 @@ export default function WeeklyReportScreen() {
       <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
         <Ionicons name="alert-circle-outline" size={48} color="#dc2626" />
         <Text className="text-red-600 text-[18px] font-bold mt-4">
-          Failed to load report
+          Failed to load summary
         </Text>
         <Text className="text-gray-500 text-center mt-2">{error}</Text>
+
+        <WellnessDisclaimer className="mt-5" />
 
         <TouchableOpacity
           onPress={fetchWeeklyReport}
@@ -351,10 +354,10 @@ export default function WeeklyReportScreen() {
       >
         <View className="px-5 mt-6">
           <Text className="text-[#166534] text-[32px] font-extrabold leading-9">
-            Weekly Report{"\n"}Status
+            Weekly Wellness{"\n"}Summary
           </Text>
           <Text className="text-gray-500 text-[15px] mt-3 leading-6">
-            Here is your health report{"\n"}for the last 7 days
+            Here is your Wellness Check Summary{"\n"}for the last 7 days
           </Text>
         </View>
 
@@ -378,7 +381,7 @@ export default function WeeklyReportScreen() {
             />
             <View className="ml-4 flex-1">
               <Text className="text-white text-[20px] font-extrabold">
-                Weekly Summary
+                Personal Wellness Insights
               </Text>
               <Text
                 className="text-green-100 text-[14px] mt-1 font-semibold"
@@ -388,10 +391,10 @@ export default function WeeklyReportScreen() {
               </Text>
               <View className="mt-1">
                 <Text className="text-green-200 text-[13px]">
-                  Current Overall Score - {reportData.overall.current.toFixed(1)}
+                  Current Wellness Score - {reportData.overall.current.toFixed(1)}
                 </Text>
                 <Text className="text-green-200 text-[13px] mt-1">
-                  Previous Overall Score - {reportData.overall.previous.toFixed(1)}
+                  Previous Wellness Score - {reportData.overall.previous.toFixed(1)}
                 </Text>
               </View>
               {overviewText ? (
@@ -435,7 +438,7 @@ export default function WeeklyReportScreen() {
         <View className="mx-4 mt-6 bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
           <View className="flex-row items-center mb-4">
             <Text className="text-gray-900 text-[20px] font-extrabold flex-1">
-              Health Scores
+              Wellness Scores
             </Text>
             <View className="bg-gray-100 rounded-full px-3 py-1">
               <Text className="text-gray-500 text-[12px] font-medium">
@@ -483,7 +486,7 @@ export default function WeeklyReportScreen() {
                   <Ionicons name="alert" size={14} color="#fff" />
                 </View>
                 <Text className="text-blue-700 font-bold text-[13px]">
-                  Areas to Improve
+                  Lifestyle Areas to Support
                 </Text>
               </View>
               <Text className="text-blue-800 text-[12px] leading-5">
@@ -497,6 +500,8 @@ export default function WeeklyReportScreen() {
           {encouragementText}
         </Text>
 
+        <WellnessDisclaimer className="mx-5 mt-5" />
+
         <TouchableOpacity
           activeOpacity={0.85}
           className="mx-6 mt-4 bg-[#166534] rounded-full py-4 items-center"
@@ -509,7 +514,7 @@ export default function WeeklyReportScreen() {
           }}
         >
           <Text className="text-white text-[16px] font-extrabold tracking-wide">
-            Download PDF Report
+            Save Wellness Summary
           </Text>
         </TouchableOpacity>
       </ScrollView>
