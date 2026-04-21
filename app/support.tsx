@@ -61,7 +61,7 @@ const CONTACT_OPTIONS = [
   {
     key: 'chat',
     title: 'Live Chat Support',
-    subtitle: 'Connect with a health advisor',
+    subtitle: 'Connect with a wellness support advisor',
     icon: 'chatbubble-ellipses-outline',
     iconColor: '#2FB36E',
     iconBackground: '#EAFBF1',
@@ -102,7 +102,7 @@ const QUESTIONS = [
     key: 'nutrition',
     title: 'Can I change my daily nutrition target?',
     description:
-      'Your recommended intake is set by your healthcare provider. To request an adjustment, please reach out via Live Chat or during your next consultation.',
+      'Your recommended intake is based on your shared wellness profile. To request an adjustment, please reach out via Live Chat or during your next consultation.',
   },
 ] as const;
 
@@ -111,7 +111,7 @@ export default function SupportScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <ScreenNav
         onBackPress={() => goBackOrReplace('/(tabs)/profile')}
-        title="Patient Support"
+        title="Wellness Support"
       />
       <ScrollView
         contentContainerStyle={[
@@ -124,7 +124,7 @@ export default function SupportScreen() {
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>How can we help?</Text>
             <Text style={styles.heroSubtitle}>
-              We are here to support your health journey
+              We are here to support your wellness journey
             </Text>
           </View>
         </View>
@@ -185,7 +185,7 @@ export default function SupportScreen() {
         </View>
 
         <Text style={styles.footerText}>
-          Medha Clinic Support - Your Partner in Health
+          Medha Clinic Support - Your Partner in Wellness
         </Text>
       </ScrollView>
     </SafeAreaView>

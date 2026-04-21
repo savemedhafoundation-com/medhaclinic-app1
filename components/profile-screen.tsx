@@ -307,7 +307,7 @@ function calculateBmi(weightKg?: number, heightCm?: number) {
   if (bmi < 25) {
     return {
       score: bmi.toFixed(1),
-      status: 'Healthy',
+      status: 'Balanced',
       note: 'Calculated from your saved height and weight.',
     };
   }
@@ -377,7 +377,7 @@ function getNutritionSubtitle(purpose?: string | null) {
   }
 
   if (purpose === 'concern') {
-    return 'Condition support nutrition';
+    return 'Wellness support nutrition';
   }
 
   if (purpose === 'preventive') {
@@ -553,8 +553,8 @@ export default function ProfileScreen() {
   const actionItems: ActionCardItem[] = [
     {
       key: 'support',
-      title: 'Patient Support',
-      subtitle: 'Get help with your treatment',
+      title: 'Wellness Support',
+      subtitle: 'Get support for your wellness routine',
       icon: 'help-circle-outline',
       iconColor: '#2563EB',
       iconBackground: '#EFF6FF',

@@ -47,28 +47,28 @@ type DisclaimerItem = {
 
 const actionItems: ActionItem[] = [
   {
-    title: 'Basic Health Assessment',
+    title: 'Basic Wellness Assessment',
     description: "Tell us about your body, lifestyle, and how you're feeling.",
     icon: 'document-text-outline',
     route: '/homescreen/basicscreens',
   },
   {
-    title: 'Moderate Health Assessment',
-    description: 'Understand your current health status with a detailed mid-level assessment.',
+    title: 'Moderate Wellness Assessment',
+    description: 'Understand your current wellness patterns with a detailed mid-level assessment.',
     icon: 'fitness-outline',
     route: '/homescreen/basicscreens',
     comingSoon: true,
   },
   {
-    title: 'Critical Health Assessment',
-    description: 'An advanced evaluation for urgent health concerns and high-risk conditions.',
+    title: 'Advanced Wellness Assessment',
+    description: 'A deeper lifestyle review for people who want more structured support.',
     icon: 'medkit-outline',
     route: '/homescreen/basicscreens',
     comingSoon: true,
   },
   {
-    title: 'What is Natural Immunotherapy',
-    description: 'Learn how healing through natural immunity works.',
+    title: 'What is Natural Immunity Support',
+    description: 'Learn how daily habits can support natural immunity.',
     icon: 'leaf-outline',
     websiteUrl: NATURAL_IMMUNOTHERAPY_URL,
   },
@@ -76,12 +76,12 @@ const actionItems: ActionItem[] = [
 
 const disclaimerItems: DisclaimerItem[] = [
   {
-    title: 'Replace emergency treatment',
+    title: 'Replace emergency care',
     icon: 'close-circle',
     accent: '#f97316',
   },
   {
-    title: 'Promise instant cure',
+    title: 'Promise instant results',
     icon: 'flash-off',
     accent: '#2dd4bf',
   },
@@ -158,7 +158,7 @@ export default function HomeScreen() {
               Medha Clinic
             </Text>
             <Text style={styles.heroDescription}>
-              We are here to understand your body and guide recovery naturally
+              We are here to understand your lifestyle and support wellness naturally
             </Text>
           </View>
 

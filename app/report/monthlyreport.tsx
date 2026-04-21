@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
+import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { goBackOrReplace } from '../../services/navigation';
 
 export default function MonthlyReportScreen() {
@@ -27,19 +28,21 @@ export default function MonthlyReportScreen() {
           </View>
 
           <Text className="text-center text-[30px] font-extrabold text-[#14532d]">
-            Monthly Report
+            Monthly Wellness Summary
           </Text>
 
           <Text className="mt-3 max-w-[280px] text-center text-[15px] leading-6 text-[#4b6352]">
             This screen is ready as a valid Expo Router route. You can plug in the full
-            monthly report experience here next.
+            monthly wellness summary experience here next.
           </Text>
+
+          <WellnessDisclaimer className="mt-6 max-w-[320px]" />
 
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => router.push('/report/weeklyreport')}
             className="mt-8 rounded-full bg-[#16a34a] px-6 py-4">
-            <Text className="text-[15px] font-bold text-white">Open Weekly Report</Text>
+            <Text className="text-[15px] font-bold text-white">Open Weekly Summary</Text>
           </TouchableOpacity>
         </View>
       </View>

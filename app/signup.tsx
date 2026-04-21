@@ -328,13 +328,13 @@ export default function SignupScreen() {
               </Text>
 
               <Radio
-                text="I have health concern"
+                text="I want support for a wellness concern"
                 selected={purpose === 'concern'}
                 onPress={() => setPurpose('concern')}
               />
 
               <Radio
-                text="General health check / Preventive assessment"
+                text="General wellness check / Lifestyle assessment"
                 selected={purpose === 'preventive'}
                 onPress={() => setPurpose('preventive')}
               />
@@ -380,7 +380,7 @@ export default function SignupScreen() {
             {/* FOOTER */}
 
             <Text className="text-[#D6E6FF] text-[18px] text-center mt-4 px-8">
-              Your information is confidential and used only for your health guidance
+              Your information is confidential and used only for your wellness guidance
             </Text>
 
             </ScrollView>

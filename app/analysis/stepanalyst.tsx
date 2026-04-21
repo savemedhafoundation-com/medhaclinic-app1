@@ -13,6 +13,7 @@ import { goBackOrReplace } from '../../services/navigation';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
+import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 
 // IMAGES
 const digestionImg = require('../../assets/images/analysis/digestion.png');
@@ -42,8 +43,10 @@ export default function AnalysisRecommendationScreen() {
           </Text>
 
           <Text className="text-gray-700 text-center mt-4 text-[15px] leading-5">
-            Based on what you shared,{'\n'}here is your personalized analysis.
+            Based on what you shared,{'\n'}here are your Personal Wellness Insights.
           </Text>
+
+          <WellnessDisclaimer className="mt-5" />
 
           {/* PROGRESS */}
           <View className="mt-6">
@@ -116,14 +119,14 @@ export default function AnalysisRecommendationScreen() {
             <View className="bg-green-100 rounded-[24px] p-5 flex-row">
               <View className="w-14 h-14 bg-white rounded-2xl mr-4" />
               <Text className="flex-1 text-gray-900 text-[14px] font-semibold">
-                Our NIT system can analyze your medical reports and suggest a
-                tailored Natural Immunotherapy plan.
+                Our wellness review can organize your shared records and suggest
+                lifestyle support ideas.
               </Text>
             </View>
 
             <TouchableOpacity className="bg-green-600 py-4 rounded-full items-center mt-5">
               <Text className="text-white text-[16px] font-bold">
-                Upload Medical Reports Now →
+                Add Wellness Records Now
               </Text>
             </TouchableOpacity>
 

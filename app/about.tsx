@@ -18,7 +18,7 @@ const STATS = [
   {
     key: 'experts',
     value: '20+',
-    label: 'Active Patients',
+    label: 'Active Members',
   },
   {
     key: 'members',
@@ -43,9 +43,9 @@ const CORE_VALUES = [
     icon: 'heart-outline',
     iconColor: '#6D5EF5',
     iconBackground: '#F1EEFF',
-    title: 'Patient First',
+    title: 'People First',
     description:
-      "Every decision we make starts with what leads to our patients' well-being.",
+      "Every decision we make starts with what supports people's well-being.",
   },
   {
     key: 'trust',
@@ -54,7 +54,7 @@ const CORE_VALUES = [
     iconBackground: '#EAFBF1',
     title: 'Radical Trust',
     description:
-      'We protect your health data with the highest security and responsibility standards.',
+      'We protect your wellness data with strong privacy and responsibility standards.',
   },
   {
     key: 'innovation',
@@ -63,7 +63,7 @@ const CORE_VALUES = [
     iconBackground: '#FFF1E4',
     title: 'Continuous Innovation',
     description:
-      'We constantly evolve our platform to deliver smarter, more accessible care.',
+      'We constantly evolve our platform to deliver smarter, more accessible wellness support.',
   },
 ] as const;
 
@@ -82,10 +82,10 @@ export default function AboutScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroBlock}>
-          <Text style={styles.heroTitle}>Healthcare, engineered for you.</Text>
+          <Text style={styles.heroTitle}>Wellness, guided for you.</Text>
           <Text style={styles.heroSubtitle}>
-            We are a team of medical experts, and designers building the future
-            of proactive primary care.
+            We are a team of wellness guides and designers building supportive
+            everyday care experiences.
           </Text>
         </View>
 
@@ -107,9 +107,8 @@ export default function AboutScreen() {
             </View>
 
             <Text style={styles.missionText}>
-              To democratize access to world-class healthcare by blending
-              empathetic medical expertise with cutting-edge technology,
-              ensuring everyone can live a healthier, longer life.
+              To make thoughtful wellness support easier to access by blending
+              empathetic guidance with practical technology for everyday life.
             </Text>
           </View>
         </View>
@@ -159,9 +158,9 @@ export default function AboutScreen() {
 
               <View style={styles.leaderCopy}>
                 <Text style={styles.leaderName}>Mr. Subhankar Sarkar</Text>
-                <Text style={styles.leaderRole}>
-                  Founder & Chief Researcher of MedhaClinic
-                </Text>
+              <Text style={styles.leaderRole}>
+                  Founder & Wellness Research Lead of MedhaClinic
+              </Text>
               </View>
             </View>
           </View>

@@ -10,20 +10,20 @@ import { goBackOrReplace } from '../../services/navigation';
 export default function GetStartedScreen() {
   const CHECKUPS = [
     {
-      title: "Daily Immunity Checkup",
-      sub: "Know your daily health reports",
+      title: "Daily Wellness Check",
+      sub: "View your Daily Wellness Summary",
       route: "immunity/dailyimmunity",
       type: "daily",
     },
     {
-      title: "Weekly Immunity Report",
-      sub: "Know your weekly health reports",
+      title: "Weekly Wellness Summary",
+      sub: "View your weekly wellness patterns",
       route: "report/weeklyreport",       // ✅ fixed
       type: "report",
     },
     {
-      title: "Monthly Immunity Report",
-      sub: "Know your monthly health reports",
+      title: "Monthly Wellness Summary",
+      sub: "View your monthly wellness patterns",
       route: "/immunity/dailyimmunity",
       type: "report",
     },
@@ -45,7 +45,7 @@ export default function GetStartedScreen() {
       >
         {/* Section Title */}
         <Text className="text-gray-500 text-base mb-2">
-          {'<'} Basic Health Assessment
+          {'<'} Basic Wellness Assessment
         </Text>
 
         <Text className="text-green-700 text-3xl font-bold">
@@ -53,7 +53,7 @@ export default function GetStartedScreen() {
         </Text>
 
         <Text className="text-gray-700 text-lg mt-3 leading-6">
-          Please tell us a bit about yourself so we can guide your health journey.
+          Please tell us a bit about yourself so we can guide your wellness journey.
         </Text>
 
         {/* Progress */}
@@ -89,7 +89,7 @@ export default function GetStartedScreen() {
               {/* 🔥 Conditional Button Text */}
               <View className="bg-white px-4 py-2 rounded-full">
                 <Text className="text-green-700 font-semibold">
-                  {item.type === "daily" ? "Get Started" : "Get Report"}
+                  {item.type === "daily" ? "Get Started" : "View Summary"}
                 </Text>
               </View>
             </TouchableOpacity>

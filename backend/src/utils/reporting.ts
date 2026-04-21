@@ -17,12 +17,12 @@ export const CATEGORY_KEYS = [
 export type CategoryKey = (typeof CATEGORY_KEYS)[number];
 
 export const CATEGORY_LABELS: Record<CategoryKey, string> = {
-  energyLevels: 'Energy & Recovery',
-  digestiveHealth: 'Digestive Health',
-  cardiovascular: 'Cardiovascular',
-  immuneResponse: 'Immune Response',
-  respiratory: 'Respiratory',
-  hormonalHealth: 'Hormonal Health',
+  energyLevels: 'Energy & Rest',
+  digestiveHealth: 'Digestive Comfort',
+  cardiovascular: 'Circulation & Stamina',
+  immuneResponse: 'Immunity Lifestyle',
+  respiratory: 'Breathing Comfort',
+  hormonalHealth: 'Body Rhythm',
 };
 
 export type ScoreDifferenceItem = {
@@ -271,7 +271,7 @@ function buildMessage(daysTracked: number) {
     return 'No daily immunity check-ins were found in the last 7 days.';
   }
 
-  return `Weekly report generated from ${countDaysLabel(daysTracked)} in the last 7 days.`;
+  return `Weekly wellness summary generated from ${countDaysLabel(daysTracked)} in the last 7 days.`;
 }
 
 function buildFallbackCategoryInsight(
@@ -326,7 +326,7 @@ export function buildFallbackWeeklyInsights(
   const strongestLabel = report.strongestCategory?.label ?? null;
   const limitedData = report.daysTracked < 3;
 
-  let overview = 'Your weekly report is ready.';
+  let overview = 'Your weekly wellness summary is ready.';
   if (report.daysTracked === 0) {
     overview =
       'Add a few daily immunity check-ins to unlock a more meaningful weekly view.';
@@ -358,7 +358,7 @@ export function buildFallbackWeeklyInsights(
   }
 
   let areasToImprove =
-    'Stay consistent with sleep, hydration, and daily tracking to make the next report more useful.';
+    'Stay consistent with sleep, hydration, and daily tracking to make the next wellness summary more useful.';
   if (report.daysTracked === 0) {
     areasToImprove =
       'Start with a few daily immunity check-ins so we can identify the main area to improve.';
@@ -369,7 +369,7 @@ export function buildFallbackWeeklyInsights(
   const encouragement =
     report.daysTracked >= 5
       ? 'Keep tracking daily to build steady week-by-week progress.'
-      : 'A few more daily check-ins will make your next weekly report even more precise.';
+      : 'A few more daily check-ins will make your next weekly wellness summary even more useful.';
 
   return {
     overview,

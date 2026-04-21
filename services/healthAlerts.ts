@@ -157,7 +157,7 @@ export async function prepareHealthAlertNotifications(promptForPermission = fals
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(HEALTH_REMINDER_CHANNEL_ID, {
-        name: 'Health Reminders',
+        name: 'Wellness Reminders',
         importance: Notifications.AndroidImportance.HIGH,
         sound: 'default',
       });

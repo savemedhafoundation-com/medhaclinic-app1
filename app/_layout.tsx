@@ -37,7 +37,7 @@ function RootNavigator() {
       return;
     }
 
-    // Logged in but health profile not completed -> force to signup
+    // Logged in but wellness profile not completed -> force to signup
     if (user && needsProfile && !onSignupScreen) {
       router.replace('/signup');
       return;

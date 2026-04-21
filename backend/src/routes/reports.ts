@@ -34,11 +34,11 @@ const weeklyAiInsightsSchema = z.object({
 });
 
 const WEEKLY_REPORT_SYSTEM_PROMPT = [
-  'You write Medha Clinic weekly health summaries for a mobile app.',
+  'You write Medha Clinic weekly wellness summaries for a mobile app.',
   "You receive a JSON payload with a user's last 7 days of daily immunity checks plus the previous comparison window.",
   'Return JSON that matches the schema exactly.',
-  'The tone must feel like a supportive weekly report written by the app: calm, concise, medically responsible, and specific to the provided data.',
-  'Use only facts grounded in the payload. Do not invent symptoms, causes, numbers, diagnoses, treatments, emergency advice, or cure claims.',
+  'The tone must feel like a supportive weekly wellness summary written by the app: calm, concise, lifestyle-focused, and specific to the provided data.',
+  'Use only facts grounded in the payload. Do not invent symptoms, causes, numbers, diagnoses, treatments, emergency advice, cure claims, prevention claims, formal eligibility wording, or fitness-to-participate statements.',
   'If tracking is limited, acknowledge that gently without sounding technical.',
   'Overall progress and areas to improve should each be one or two short sentences.',
   'Encouragement should be one short motivating sentence.',
@@ -176,7 +176,7 @@ async function createOpenAiWeeklyInsights(
     );
 
     if (!response.output_parsed) {
-      throw new Error('OpenAI returned an invalid weekly report payload.');
+      throw new Error('OpenAI returned an invalid weekly wellness summary payload.');
     }
 
     return response.output_parsed;
@@ -240,7 +240,7 @@ async function generateWeeklyReportForUser(userId: string) {
       insights = mergeWeeklyInsights(aiInsights, fallbackInsights);
     } catch (error) {
       console.error(
-        'Weekly report AI generation failed. Falling back to deterministic insights.',
+        'Weekly wellness summary AI generation failed. Falling back to deterministic insights.',
         {
           userId,
           model: env.OPENAI_MODEL,
@@ -287,7 +287,7 @@ reportsRouter.post('/weekly/generate', async c => {
 
   return c.json({
     success: true,
-    message: 'Weekly report generated successfully.',
+    message: 'Weekly wellness summary generated successfully.',
     data: report,
   });
 });

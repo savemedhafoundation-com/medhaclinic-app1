@@ -26,6 +26,7 @@ import BottomNav from '../../components/BottomNav';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
+import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import {
@@ -372,11 +373,11 @@ export default function BoosterDietScreen() {
             <View style={styles.heroCopy}>
               <Text style={styles.heroEyebrow}>Medha Clinic</Text>
               <Text style={styles.heroTitle}>
-                {state.plan?.title ?? '30-Day Personalized Diet Plan'}
+                {state.plan?.title ?? '30-Day Personalized Wellness Plan'}
               </Text>
               <Text style={styles.heroSubtitle}>
                 {state.plan?.subtitle ??
-                  'We are building your personalized health diet from your lifestyle, food preferences, and recent wellness context.'}
+                  'We are building your personalized wellness plan from your lifestyle, food preferences, and recent wellness context.'}
               </Text>
             </View>
 
@@ -421,12 +422,14 @@ export default function BoosterDietScreen() {
             </Text>
           </View>
 
+          <WellnessDisclaimer className="mt-4" />
+
           {state.loading ? (
             <View style={styles.loadingCard}>
               <ActivityIndicator color="#18841A" size="large" />
               <Text style={styles.loadingTitle}>Creating your plan...</Text>
               <Text style={styles.loadingSubtitle}>
-                Medha Clinic is turning your inputs into a structured diet and support plan.
+                Medha Clinic is turning your inputs into a structured wellness support plan.
               </Text>
             </View>
           ) : null}
@@ -512,7 +515,7 @@ export default function BoosterDietScreen() {
               >
                 <Text style={styles.acceptButtonText}>
                   {savingAcceptedPlan
-                    ? 'Adding to Health Alerts...'
+                    ? 'Adding to Wellness Alerts...'
                     : state.plan.acceptLabel}
                 </Text>
               </TouchableOpacity>
@@ -521,7 +524,7 @@ export default function BoosterDietScreen() {
                 <Text style={styles.contactTitle}>Availability & Contact</Text>
                 <Text style={styles.contactText}>
                   Need help adjusting this plan or choosing boosters? Use the Support
-                  section in the app, then manage reminders from Health Alerts.
+                  section in the app, then manage reminders from Wellness Alerts.
                 </Text>
               </View>
             </>
