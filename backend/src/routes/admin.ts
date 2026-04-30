@@ -58,8 +58,13 @@ const userStatusSchema = z.object({
   note: z.string().trim().max(500).optional(),
 });
 
+const optionalTrimmedSlug = z.preprocess(
+  value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().min(1).max(120).optional()
+);
+
 const productSchema = z.object({
-  slug: z.string().trim().min(1).max(120).optional(),
+  slug: optionalTrimmedSlug,
   title: z.string().trim().min(1).max(160),
   shortTitle: z.string().trim().min(1).max(80).optional(),
   capacity: z.string().trim().min(1).max(80),
@@ -225,6 +230,32 @@ function buildVariantData(productId: string, variants: z.infer<typeof productSch
     sku: variant.sku,
     active: variant.active,
     sortOrder: variant.sortOrder ?? index,
+  }));
+}
+
+function buildNestedVariantData(variants: z.infer<typeof productSchema>['variants']) {
+  return variants.map((variant, index) => ({
+    title: variant.title,
+    pricePaise: paise(variant.price),
+    stock: variant.stock,
+    sku: variant.sku,
+    active: variant.active,
+    sortOrder: variant.sortOrder ?? index,
+  }));
+}
+
+function buildProductImageData(productId: string, images: string[]) {
+  return images.map((url, index) => ({
+    productId,
+    url,
+    sortOrder: index,
+  }));
+}
+
+function buildNestedProductImageData(images: string[]) {
+  return images.map((url, index) => ({
+    url,
+    sortOrder: index,
   }));
 }
 
@@ -741,34 +772,30 @@ adminRouter.get('/products/:id', async c => {
 
 adminRouter.post('/products', requireAdminRole(WRITE_ROLES), async c => {
   const body = productSchema.parse(await c.req.json());
-  const product = await prisma.$transaction(async tx => {
-    const created = await tx.product.create({
-      data: {
-        id: randomUUID(),
-        ...buildProductWriteData(body),
-      },
-    });
-
-    if (body.variants.length > 0) {
-      await tx.productVariant.createMany({
-        data: buildVariantData(created.id, body.variants),
-      });
-    }
-
-    if (body.images.length > 0) {
-      await tx.productImage.createMany({
-        data: body.images.map((url, index) => ({
-          productId: created.id,
-          url,
-          sortOrder: index,
-        })),
-      });
-    }
-
-    return tx.product.findUniqueOrThrow({
-      where: { id: created.id },
-      include: { variants: true, gallery: true },
-    });
+  const productId = randomUUID();
+  const product = await prisma.product.create({
+    data: {
+      id: productId,
+      ...buildProductWriteData(body),
+      ...(body.variants.length > 0
+        ? {
+            variants: {
+              create: buildNestedVariantData(body.variants),
+            },
+          }
+        : {}),
+      ...(body.images.length > 0
+        ? {
+            gallery: {
+              create: buildNestedProductImageData(body.images),
+            },
+          }
+        : {}),
+    },
+    include: {
+      variants: true,
+      gallery: true,
+    },
   });
   await audit(c, 'product.create', 'Product', product.id);
   return c.json({ success: true, data: product }, 201);
@@ -777,34 +804,29 @@ adminRouter.post('/products', requireAdminRole(WRITE_ROLES), async c => {
 adminRouter.put('/products/:id', requireAdminRole(WRITE_ROLES), async c => {
   const body = productSchema.parse(await c.req.json());
   const productId = c.req.param('id');
-  const product = await prisma.$transaction(async tx => {
-    await tx.product.update({
-      where: { id: productId },
-      data: buildProductWriteData(body),
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: buildProductWriteData(body),
+  });
+  await prisma.productVariant.deleteMany({ where: { productId } });
+  await prisma.productImage.deleteMany({ where: { productId } });
+
+  if (body.variants.length > 0) {
+    await prisma.productVariant.createMany({
+      data: buildVariantData(productId, body.variants),
     });
-    await tx.productVariant.deleteMany({ where: { productId } });
-    await tx.productImage.deleteMany({ where: { productId } });
+  }
 
-    if (body.variants.length > 0) {
-      await tx.productVariant.createMany({
-        data: buildVariantData(productId, body.variants),
-      });
-    }
-
-    if (body.images.length > 0) {
-      await tx.productImage.createMany({
-        data: body.images.map((url, index) => ({
-          productId,
-          url,
-          sortOrder: index,
-        })),
-      });
-    }
-
-    return tx.product.findUniqueOrThrow({
-      where: { id: productId },
-      include: { variants: true, gallery: true },
+  if (body.images.length > 0) {
+    await prisma.productImage.createMany({
+      data: buildProductImageData(productId, body.images),
     });
+  }
+
+  const product = await prisma.product.findUniqueOrThrow({
+    where: { id: productId },
+    include: { variants: true, gallery: true },
   });
   await audit(c, 'product.update', 'Product', product.id);
   return c.json({ success: true, data: product });

@@ -74,6 +74,11 @@ function parseVariants(text?: string) {
     });
 }
 
+function optionalText(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function ProductForm({ product, onClose }: { product?: Product; onClose: () => void }) {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -88,6 +93,18 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
       const images = values.imagesText?.split('\n').map(item => item.trim()).filter(Boolean) ?? [];
       const payload = {
         ...values,
+        slug: optionalText(values.slug),
+        shortTitle: optionalText(values.shortTitle),
+        subtitle: optionalText(values.subtitle),
+        supportLine: optionalText(values.supportLine),
+        description: optionalText(values.description),
+        detailDescription: optionalText(values.detailDescription),
+        benefits: optionalText(values.benefits),
+        usage: optionalText(values.usage),
+        howToUse: optionalText(values.howToUse),
+        sku: optionalText(values.sku),
+        seoTitle: optionalText(values.seoTitle),
+        seoDescription: optionalText(values.seoDescription),
         images,
         tags: values.tagsText?.split(',').map(item => item.trim()).filter(Boolean) ?? [],
         variants: parseVariants(values.variantsText),
