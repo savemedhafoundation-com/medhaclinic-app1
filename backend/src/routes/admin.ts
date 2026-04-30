@@ -289,6 +289,23 @@ async function audit(
   });
 }
 
+function auditLater(
+  c: { get: (name: 'adminUser') => { uid: string } },
+  action: string,
+  entity: string,
+  entityId?: string | null,
+  metadata?: Prisma.InputJsonValue
+) {
+  void audit(c, action, entity, entityId, metadata).catch(error => {
+    console.error('Admin audit log write failed:', {
+      error,
+      action,
+      entity,
+      entityId,
+    });
+  });
+}
+
 const adminRouter = new Hono<AdminAuthEnv>();
 adminRouter.use('*', requireAdmin);
 
@@ -508,7 +525,7 @@ adminRouter.patch('/users/:id', requireAdminRole(SUPPORT_ROLES), async c => {
     });
   }
 
-  await audit(c, 'user.update', 'User', userId, { fields: Object.keys(body) });
+  auditLater(c, 'user.update', 'User', userId, { fields: Object.keys(body) });
   return c.json({ success: true, data: user });
 });
 
@@ -526,7 +543,7 @@ adminRouter.patch('/users/:id/status', requireAdminRole(SUPPORT_ROLES), async c 
     });
   }
 
-  await audit(c, body.disabled ? 'user.disable' : 'user.enable', 'User', userId);
+  auditLater(c, body.disabled ? 'user.disable' : 'user.enable', 'User', userId);
   return c.json({ success: true, data: user });
 });
 
@@ -536,7 +553,7 @@ adminRouter.delete('/users/:id', requireAdminRole(SUPER_ADMIN_ONLY), async c => 
     where: { id: userId },
     data: { disabled: true, deletedAt: new Date() },
   });
-  await audit(c, 'user.soft_delete', 'User', userId);
+  auditLater(c, 'user.soft_delete', 'User', userId);
   return c.json({ success: true, data: user });
 });
 
@@ -655,7 +672,7 @@ adminRouter.get('/reports/:id', async c => {
 adminRouter.post('/users/:id/reports/generate', requireAdminRole(WRITE_ROLES), async c => {
   const userId = c.req.param('id');
   const report = await generateWeeklyReportForUser(userId);
-  await audit(c, 'report.generate', 'User', userId);
+  auditLater(c, 'report.generate', 'User', userId);
   return c.json({ success: true, data: report });
 });
 
@@ -667,7 +684,7 @@ adminRouter.post('/reports/:id/regenerate', requireAdminRole(WRITE_ROLES), async
   }
 
   const report = await generateWeeklyReportForUser(existing.userId);
-  await audit(c, 'report.regenerate', 'WeeklyReport', existing.id);
+  auditLater(c, 'report.regenerate', 'WeeklyReport', existing.id);
   return c.json({ success: true, data: report });
 });
 
@@ -797,7 +814,7 @@ adminRouter.post('/products', requireAdminRole(WRITE_ROLES), async c => {
       gallery: true,
     },
   });
-  await audit(c, 'product.create', 'Product', product.id);
+  auditLater(c, 'product.create', 'Product', product.id);
   return c.json({ success: true, data: product }, 201);
 });
 
@@ -828,7 +845,7 @@ adminRouter.put('/products/:id', requireAdminRole(WRITE_ROLES), async c => {
     where: { id: productId },
     include: { variants: true, gallery: true },
   });
-  await audit(c, 'product.update', 'Product', product.id);
+  auditLater(c, 'product.update', 'Product', product.id);
   return c.json({ success: true, data: product });
 });
 
@@ -846,7 +863,7 @@ adminRouter.post('/products/:id/images', requireAdminRole(WRITE_ROLES), async c 
       ...body,
     },
   });
-  await audit(c, 'product.image.add', 'Product', c.req.param('id'), body);
+  auditLater(c, 'product.image.add', 'Product', c.req.param('id'), body);
   return c.json({ success: true, data: image }, 201);
 });
 
@@ -909,7 +926,7 @@ adminRouter.post('/products/bulk-import', requireAdminRole(WRITE_ROLES), async c
     imported += 1;
   }
 
-  await audit(c, 'product.bulk_import', 'Product', null, { imported });
+  auditLater(c, 'product.bulk_import', 'Product', null, { imported });
   return c.json({ success: true, data: { imported } });
 });
 
@@ -919,7 +936,7 @@ adminRouter.patch('/products/:id/status', requireAdminRole(WRITE_ROLES), async c
     where: { id: c.req.param('id') },
     data: body,
   });
-  await audit(c, 'product.status', 'Product', product.id, body);
+  auditLater(c, 'product.status', 'Product', product.id, body);
   return c.json({ success: true, data: product });
 });
 
@@ -928,7 +945,7 @@ adminRouter.delete('/products/:id', requireAdminRole(WRITE_ROLES), async c => {
     where: { id: c.req.param('id') },
     data: { archived: true, active: false, hidden: true, deletedAt: new Date() },
   });
-  await audit(c, 'product.archive', 'Product', product.id);
+  auditLater(c, 'product.archive', 'Product', product.id);
   return c.json({ success: true, data: product });
 });
 
@@ -965,7 +982,7 @@ adminRouter.post('/coupons', requireAdminRole(WRITE_ROLES), async c => {
       active: body.active,
     },
   });
-  await audit(c, 'coupon.create', 'Coupon', coupon.id);
+  auditLater(c, 'coupon.create', 'Coupon', coupon.id);
   return c.json({ success: true, data: coupon }, 201);
 });
 
@@ -984,14 +1001,14 @@ adminRouter.put('/coupons/:id', requireAdminRole(WRITE_ROLES), async c => {
       active: body.active,
     },
   });
-  await audit(c, 'coupon.update', 'Coupon', coupon.id);
+  auditLater(c, 'coupon.update', 'Coupon', coupon.id);
   return c.json({ success: true, data: coupon });
 });
 
 adminRouter.patch('/coupons/:id/status', requireAdminRole(WRITE_ROLES), async c => {
   const body = z.object({ active: z.boolean() }).parse(await c.req.json());
   const coupon = await prisma.coupon.update({ where: { id: c.req.param('id') }, data: body });
-  await audit(c, 'coupon.status', 'Coupon', coupon.id, body);
+  auditLater(c, 'coupon.status', 'Coupon', coupon.id, body);
   return c.json({ success: true, data: coupon });
 });
 
@@ -1038,7 +1055,7 @@ adminRouter.get('/orders/:id', async c => {
 adminRouter.patch('/orders/:id/status', requireAdminRole(WRITE_ROLES), async c => {
   const body = orderStatusSchema.parse(await c.req.json());
   const order = await prisma.order.update({ where: { id: c.req.param('id') }, data: body });
-  await audit(c, 'order.status', 'Order', order.id, body);
+  auditLater(c, 'order.status', 'Order', order.id, body);
   return c.json({ success: true, data: order });
 });
 
@@ -1054,7 +1071,7 @@ adminRouter.patch('/orders/:id/fulfillment', requireAdminRole(SUPPORT_ROLES), as
       ...(body.shippingStatus === ShippingStatus.DELIVERED ? { deliveredAt: now } : {}),
     },
   });
-  await audit(c, 'order.fulfillment', 'Order', order.id, body);
+  auditLater(c, 'order.fulfillment', 'Order', order.id, body);
   return c.json({ success: true, data: order });
 });
 
