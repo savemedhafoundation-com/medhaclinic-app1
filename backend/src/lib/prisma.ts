@@ -20,11 +20,33 @@ function createPrismaClient() {
   return new PrismaClient({
     datasources: {
       db: {
-        url: env.DATABASE_URL,
+        url: getPrismaDatabaseUrl(env.DATABASE_URL),
       },
     },
     log: ['warn', 'error'],
   });
+}
+
+function getPrismaDatabaseUrl(databaseUrl: string) {
+  if (process.env.VERCEL !== '1') {
+    return databaseUrl;
+  }
+
+  try {
+    const url = new URL(databaseUrl);
+
+    if (!url.searchParams.has('connection_limit')) {
+      url.searchParams.set('connection_limit', '1');
+    }
+
+    if (!url.searchParams.has('pool_timeout')) {
+      url.searchParams.set('pool_timeout', '10');
+    }
+
+    return url.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 export function getPrismaClient() {
