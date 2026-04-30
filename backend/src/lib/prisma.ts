@@ -33,10 +33,7 @@ export function getPrismaClient() {
   }
 
   const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== 'production') {
-    global.__medhaPrisma__ = client;
-  }
+  global.__medhaPrisma__ = client;
 
   return client;
 }
