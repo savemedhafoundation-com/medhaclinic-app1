@@ -130,6 +130,7 @@ Primary routes:
 
 - `GET /health`
 - `GET /v1/me`
+- `DELETE /v1/me`
 - `PUT /v1/me/profile`
 - `POST /v1/immunity/daily`
 - `GET /v1/reports/weekly`

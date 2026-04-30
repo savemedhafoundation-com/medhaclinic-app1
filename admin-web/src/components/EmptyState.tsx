@@ -1,31 +1,8 @@
-import type { ReactNode } from 'react';
-import { Stack, Typography } from '@mui/material';
-
-type EmptyStateProps = {
-  icon: ReactNode;
-  title: string;
-  description: string;
-};
-
-export function EmptyState({ icon, title, description }: EmptyStateProps) {
+export function EmptyState({ title = 'No records', description }: { title?: string; description?: string }) {
   return (
-    <Stack alignItems="center" spacing={1.5} sx={{ py: 6 }}>
-      <Stack
-        alignItems="center"
-        justifyContent="center"
-        sx={{
-          width: 60,
-          height: 60,
-          borderRadius: 4,
-          bgcolor: theme => (theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.05)'),
-          color: 'text.secondary',
-        }}>
-        {icon}
-      </Stack>
-      <Typography variant="h6">{title}</Typography>
-      <Typography color="text.secondary" maxWidth={420} textAlign="center">
-        {description}
-      </Typography>
-    </Stack>
+    <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+      <p className="font-semibold text-zinc-900 dark:text-zinc-50">{title}</p>
+      {description ? <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
+    </div>
   );
 }

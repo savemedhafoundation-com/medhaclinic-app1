@@ -37,6 +37,7 @@ const addressUpdateSchema = addressSchema.partial().refine(
 
 const cartItemSchema = z.object({
   productId: z.string().trim().min(1),
+  variantId: z.string().uuid().optional().nullable(),
   quantity: z.coerce.number().int().min(1).max(99),
 });
 
@@ -57,109 +58,8 @@ const orderCreateSchema = paymentSessionSchema.extend({
   razorpaySignature: z.string().trim().min(1),
 });
 
-const STORE_PRODUCT_SEED = [
-  {
-    slug: 'skin-booster',
-    title: 'Skin Booster',
-    shortTitle: 'Skin Booster',
-    capacity: '60 cap',
-    pricePaise: 337_500,
-    mrpPaise: 675_000,
-    category: StoreProductCategory.BOOSTERS,
-    description: 'Support skin wellness and daily glow care.',
-    detailDescription:
-      'Skin Booster is a focused beauty-from-within supplement built to support clearer looking skin, better texture, and everyday radiance. Its wellness-led formulation is positioned for customers looking to strengthen their long-term skin routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. For best results, use consistently with your recommended nutrition routine.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to refresh, recharge & revive wellness',
-  },
-  {
-    slug: 'immune-booster',
-    title: 'Immunity Lifestyle Booster',
-    shortTitle: 'Immunity Booster',
-    capacity: '90 cap',
-    pricePaise: 337_500,
-    mrpPaise: 675_000,
-    category: StoreProductCategory.BOOSTERS,
-    description: 'Daily immunity lifestyle support for resilience.',
-    detailDescription:
-      'Immunity Lifestyle Booster is a focused wellness supplement built to support everyday resilience and immunity-focused routines. Its wellness-led formulation is positioned for customers looking to strengthen their long-term wellness routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. Pair with your daily diet and hydration plan.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to recharge, protect & revive wellness',
-  },
-  {
-    slug: 'bone-marrow-booster',
-    title: 'Strength Support Booster',
-    shortTitle: 'Strength Booster',
-    capacity: '120 cap',
-    pricePaise: 337_500,
-    mrpPaise: 675_000,
-    category: StoreProductCategory.BOOSTERS,
-    description: 'Everyday strength and resilience support.',
-    detailDescription:
-      'Strength Support Booster is a focused wellness supplement built to support strength routines and everyday resilience. Its wellness-led formulation is positioned for customers looking to strengthen their long-term wellness routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. Use consistently with your recommended diet and wellness plan.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to refresh, recharge & revive wellness',
-  },
-  {
-    slug: 'liver-booster',
-    title: 'Daily Balance Booster',
-    shortTitle: 'Balance Booster',
-    capacity: '90 cap',
-    pricePaise: 337_500,
-    mrpPaise: 675_000,
-    category: StoreProductCategory.BOOSTERS,
-    description: 'Routine daily balance and vitality support.',
-    detailDescription:
-      'Daily Balance Booster is a focused wellness supplement built to support daily balance and everyday vitality. Its wellness-led formulation is positioned for customers looking to strengthen their long-term wellness routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. Use alongside your recommended nutrition and hydration routine.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to refresh, balance & revive wellness',
-  },
-  {
-    slug: 'gt-500-booster',
-    title: 'GT-500 Booster',
-    shortTitle: 'GT-500',
-    capacity: '60 cap',
-    pricePaise: 287_500,
-    mrpPaise: 575_000,
-    category: StoreProductCategory.SUPPLEMENTS,
-    description: 'Focused antioxidant support for everyday wellness.',
-    detailDescription:
-      'GT-500 Booster is a focused antioxidant supplement built to support glow and daily wellness. Its wellness-led formulation is positioned for customers looking to strengthen their long-term wellness routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. Use consistently with your daily food and hydration routine.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to recharge, restore & revive wellness',
-  },
-  {
-    slug: 'br-1-supplement',
-    title: 'BR-1 Supplement',
-    shortTitle: 'BR-1',
-    capacity: '30 cap',
-    pricePaise: 257_500,
-    mrpPaise: 515_000,
-    category: StoreProductCategory.SUPPLEMENTS,
-    description: 'Mineral balance support to round out your booster routine.',
-    detailDescription:
-      'BR-1 Supplement is a focused mineral support supplement built to round out daily wellness and balance. Its wellness-led formulation is positioned for customers looking to strengthen their long-term wellness routine with a more holistic approach.',
-    howToUse:
-      'Use as guided by your wellness advisor. Use with your recommended supplement and diet plan.',
-    subtitle: 'Wellness Supplement for Adults',
-    supportLine: 'Support to balance, recharge & revive wellness',
-  },
-] satisfies Prisma.ProductCreateInput[];
-
 type CartInput = z.infer<typeof cartItemSchema>;
 type Coupon = Awaited<ReturnType<typeof findCoupon>>;
-
-let seedProductsPromise: Promise<void> | null = null;
 
 function normalizeCouponCode(code?: string | null) {
   const normalized = code?.trim().toUpperCase() ?? '';
@@ -212,41 +112,22 @@ function buildRazorpayUnavailableResponse() {
   };
 }
 
-async function seedStoreProducts() {
-  await Promise.all(
-    STORE_PRODUCT_SEED.map(product =>
-      prisma.product.upsert({
-        where: { slug: product.slug },
-        update: product,
-        create: product,
-      })
-    )
-  );
-}
-
-async function ensureStoreProducts() {
-  if (!seedProductsPromise) {
-    seedProductsPromise = seedStoreProducts().catch(error => {
-      seedProductsPromise = null;
-      throw error;
-    });
-  }
-
-  return seedProductsPromise;
-}
-
 function aggregateCartItems(items: CartInput[]) {
-  const quantities = new Map<string, number>();
+  const quantities = new Map<string, CartInput>();
 
   for (const item of items) {
     const productId = item.productId.trim();
-    quantities.set(productId, (quantities.get(productId) ?? 0) + item.quantity);
+    const variantId = item.variantId?.trim() || null;
+    const key = `${productId}:${variantId ?? ''}`;
+    const existing = quantities.get(key);
+    quantities.set(key, {
+      productId,
+      variantId,
+      quantity: (existing?.quantity ?? 0) + item.quantity,
+    });
   }
 
-  return Array.from(quantities.entries()).map(([productId, quantity]) => ({
-    productId,
-    quantity,
-  }));
+  return Array.from(quantities.values());
 }
 
 async function findCoupon(code: string) {
@@ -256,15 +137,22 @@ async function findCoupon(code: string) {
 }
 
 async function calculateCart(items: CartInput[], couponCode?: string | null) {
-  await ensureStoreProducts();
-
   const aggregatedItems = aggregateCartItems(items);
   const productSlugs = aggregatedItems.map(item => item.productId);
   const products = await prisma.product.findMany({
     where: {
       active: true,
+      hidden: false,
+      deletedAt: null,
+      archived: false,
       slug: {
         in: productSlugs,
+      },
+    },
+    include: {
+      variants: {
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' },
       },
     },
   });
@@ -281,15 +169,42 @@ async function calculateCart(items: CartInput[], couponCode?: string | null) {
 
   const lines = aggregatedItems.map(item => {
     const product = productBySlug.get(item.productId)!;
+    const variant =
+      item.variantId
+        ? product.variants.find(candidate => candidate.id === item.variantId)
+        : product.variants[0] ?? null;
+    const unitPricePaise = variant?.pricePaise ?? product.minPricePaise ?? product.pricePaise;
+    const capacity = variant?.title ?? product.capacity;
+
+    if (item.variantId && !variant) {
+      return {
+        ok: false as const,
+        message: `Variant is not available for ${product.slug}.`,
+      };
+    }
 
     return {
+      ok: true as const,
       product,
+      variant,
+      capacity,
+      unitPricePaise,
       quantity: item.quantity,
-      lineTotalPaise: product.pricePaise * item.quantity,
+      lineTotalPaise: unitPricePaise * item.quantity,
     };
   });
+  const unavailableLine = lines.find(line => !line.ok);
+
+  if (unavailableLine && !unavailableLine.ok) {
+    return {
+      ok: false as const,
+      status: 400 as const,
+      message: unavailableLine.message,
+    };
+  }
+  const validLines = lines.filter(line => line.ok);
   const subtotalPaise = lines.reduce(
-    (total, line) => total + line.lineTotalPaise,
+    (total, line) => total + (line.ok ? line.lineTotalPaise : 0),
     0
   );
   const normalizedCouponCode = normalizeCouponCode(couponCode);
@@ -312,6 +227,14 @@ async function calculateCart(items: CartInput[], couponCode?: string | null) {
         ok: false as const,
         status: 400 as const,
         message: 'Coupon code has expired.',
+      };
+    }
+
+    if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+      return {
+        ok: false as const,
+        status: 400 as const,
+        message: 'Coupon code usage limit has been reached.',
       };
     }
 
@@ -340,7 +263,7 @@ async function calculateCart(items: CartInput[], couponCode?: string | null) {
 
   return {
     ok: true as const,
-    lines,
+    lines: validLines,
     coupon,
     subtotalPaise,
     discountPaise,
@@ -472,14 +395,35 @@ function serializeOrder(order: Prisma.OrderGetPayload<{ include: { items: true }
   };
 }
 
-storeRouter.use('*', requireAuth);
+storeRouter.get('/categories', c => {
+  return c.json({
+    success: true,
+    data: [
+      { key: StoreProductCategory.BOOSTERS, label: 'Boosters' },
+      { key: StoreProductCategory.SUPPLEMENTS, label: 'Supplements' },
+      { key: StoreProductCategory.PACKAGES, label: 'Packages' },
+    ],
+  });
+});
 
 storeRouter.get('/products', async c => {
-  await ensureStoreProducts();
-
   const products = await prisma.product.findMany({
-    where: { active: true },
-    orderBy: { createdAt: 'asc' },
+    where: {
+      active: true,
+      hidden: false,
+      archived: false,
+      deletedAt: null,
+    },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    include: {
+      variants: {
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' },
+      },
+      gallery: {
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
   });
 
   return c.json({
@@ -487,6 +431,38 @@ storeRouter.get('/products', async c => {
     data: products,
   });
 });
+
+storeRouter.get('/products/:slug', async c => {
+  const product = await prisma.product.findFirst({
+    where: {
+      slug: c.req.param('slug'),
+      active: true,
+      hidden: false,
+      archived: false,
+      deletedAt: null,
+    },
+    include: {
+      variants: {
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' },
+      },
+      gallery: {
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
+  });
+
+  if (!product) {
+    return c.json({ success: false, message: 'Product not found.' }, 404);
+  }
+
+  return c.json({
+    success: true,
+    data: product,
+  });
+});
+
+storeRouter.use('*', requireAuth);
 
 storeRouter.get('/addresses', async c => {
   const dbUser = c.get('dbUser');
@@ -857,9 +833,9 @@ storeRouter.post('/orders', async c => {
           productId: line.product.id,
           productSlug: line.product.slug,
           title: line.product.title,
-          capacity: line.product.capacity,
+          capacity: line.capacity,
           quantity: line.quantity,
-          unitPricePaise: line.product.pricePaise,
+          unitPricePaise: line.unitPricePaise,
           lineTotalPaise: line.lineTotalPaise,
         })),
       },
@@ -868,6 +844,17 @@ storeRouter.post('/orders', async c => {
       items: true,
     },
   });
+
+  if (calculation.coupon) {
+    await prisma.coupon.update({
+      where: { id: calculation.coupon.id },
+      data: {
+        usedCount: {
+          increment: 1,
+        },
+      },
+    });
+  }
 
   return c.json(
     {

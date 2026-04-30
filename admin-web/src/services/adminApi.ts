@@ -1,139 +1,91 @@
-import { apiClient } from './apiClient';
+import { api } from './api';
 import type {
-  AdminUser,
-  AdminUserDetails,
+  AdminMe,
+  AiSummary,
   ApiEnvelope,
-  GameRoom,
-  HealthResponse,
+  AuditLog,
+  Coupon,
+  DashboardData,
+  HealthStatus,
+  ImmunitySubmission,
   ListQuery,
-  ManualAdjustmentPayload,
-  PaginatedEnvelope,
-  TransactionRecord,
-  WalletAdjustmentPayload,
-  WithdrawalDecisionPayload,
-  WithdrawalRecord,
+  OrderRecord,
+  Paginated,
+  Product,
+  UserDetails,
+  UserRecord,
+  WeeklyReport,
 } from './types';
 
-type ListResult<T> = {
-  items: T[];
-  total: number;
-  summary?: Record<string, number>;
-};
+function params(query?: ListQuery) {
+  const search = new URLSearchParams();
 
-function unwrapItem<T>(payload: ApiEnvelope<T>): T {
-  if (typeof payload === 'object' && payload !== null && ('data' in payload || 'item' in payload)) {
-    return (payload.data ?? payload.item) as T;
-  }
-
-  return payload as T;
-}
-
-function unwrapList<T>(payload: PaginatedEnvelope<T>): ListResult<T> {
-  if (Array.isArray(payload)) {
-    return {
-      items: payload,
-      total: payload.length,
-    };
-  }
-
-  const items =
-    payload.items ??
-    payload.data ??
-    payload.results ??
-    payload.users ??
-    payload.transactions ??
-    payload.withdrawals ??
-    payload.games ??
-    [];
-
-  return {
-    items,
-    total: payload.total ?? items.length,
-    summary: payload.summary,
-  };
-}
-
-function toSearchParams(query?: ListQuery) {
-  const params = new URLSearchParams();
-
-  if (!query) {
-    return params;
-  }
-
-  Object.entries(query).forEach(([key, value]) => {
-    if (value) {
-      params.set(key, value);
+  Object.entries(query ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      search.set(key, String(value));
     }
   });
 
-  return params;
+  return search;
 }
 
-export async function getUsers(query?: ListQuery) {
-  const { data } = await apiClient.get<PaginatedEnvelope<AdminUser>>(`/users?${toSearchParams(query)}`);
-  return unwrapList(data);
+async function item<T>(request: Promise<{ data: ApiEnvelope<T> }>) {
+  const response = await request;
+  return response.data.data;
 }
 
-export async function getUserById(userId: string) {
-  const { data } = await apiClient.get<ApiEnvelope<AdminUserDetails>>(`/users/${userId}`);
-  return unwrapItem(data);
+async function list<T>(request: Promise<{ data: Paginated<T> }>) {
+  const response = await request;
+  return response.data;
 }
 
-export async function updateUserWallet(userId: string, payload: WalletAdjustmentPayload) {
-  const { data } = await apiClient.patch<ApiEnvelope<AdminUserDetails>>(`/users/${userId}/wallet`, payload);
-  return unwrapItem(data);
-}
-
-export async function setUserBanState(userId: string, banned: boolean) {
-  const path = banned ? `/users/${userId}/ban` : `/users/${userId}/unban`;
-  const { data } = await apiClient.post<ApiEnvelope<AdminUserDetails>>(path);
-  return unwrapItem(data);
-}
-
-export async function getTransactions(query?: ListQuery) {
-  const { data } = await apiClient.get<PaginatedEnvelope<TransactionRecord>>(
-    `/transactions?${toSearchParams(query)}`
-  );
-  return unwrapList(data);
-}
-
-export async function createManualAdjustment(payload: ManualAdjustmentPayload) {
-  const { data } = await apiClient.post<ApiEnvelope<TransactionRecord>>(
-    '/transactions/manual-adjustment',
-    payload
-  );
-  return unwrapItem(data);
-}
-
-export async function getWithdrawals(query?: ListQuery) {
-  const { data } = await apiClient.get<PaginatedEnvelope<WithdrawalRecord>>(
-    `/withdrawals?${toSearchParams(query)}`
-  );
-  return unwrapList(data);
-}
-
-export async function approveWithdrawal(withdrawalId: string, payload: WithdrawalDecisionPayload) {
-  const { data } = await apiClient.post<ApiEnvelope<WithdrawalRecord>>(
-    `/withdrawals/${withdrawalId}/approve`,
-    payload
-  );
-  return unwrapItem(data);
-}
-
-export async function rejectWithdrawal(withdrawalId: string, payload: WithdrawalDecisionPayload) {
-  const { data } = await apiClient.post<ApiEnvelope<WithdrawalRecord>>(
-    `/withdrawals/${withdrawalId}/reject`,
-    payload
-  );
-  return unwrapItem(data);
-}
-
-export async function getGames(query?: ListQuery) {
-  const { data } = await apiClient.get<PaginatedEnvelope<GameRoom>>(`/games?${toSearchParams(query)}`);
-  return unwrapList(data);
-}
-
-export async function getHealth() {
-  const { data } = await apiClient.get<HealthResponse>('/health');
-  return data;
-}
+export const adminApi = {
+  me: () => item<AdminMe>(api.get('/me')),
+  dashboard: () => item<DashboardData>(api.get('/dashboard')),
+  health: () => item<HealthStatus>(api.get('/health')),
+  configStatus: () => item<Record<string, unknown>>(api.get('/config-status')),
+  users: (query?: ListQuery) => list<UserRecord>(api.get(`/users?${params(query)}`)),
+  user: (id: string) => item<UserDetails>(api.get(`/users/${id}`)),
+  updateUser: (id: string, payload: unknown) => item<UserRecord>(api.patch(`/users/${id}`, payload)),
+  updateUserStatus: (id: string, payload: unknown) =>
+    item<UserRecord>(api.patch(`/users/${id}/status`, payload)),
+  deleteUser: (id: string) => item<UserRecord>(api.delete(`/users/${id}`)),
+  immunitySubmissions: (query?: ListQuery) =>
+    list<ImmunitySubmission>(api.get(`/immunity-submissions?${params(query)}`)),
+  exportImmunityCsv: async (query?: ListQuery) => {
+    const response = await api.get(`/immunity-submissions/export/csv?${params(query)}`, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
+  immunitySubmission: (id: string) =>
+    item<ImmunitySubmission>(api.get(`/immunity-submissions/${id}`)),
+  immunityHistory: (userId: string) =>
+    list<ImmunitySubmission>(api.get(`/users/${userId}/immunity-history`)),
+  reports: (query?: ListQuery) => list<WeeklyReport>(api.get(`/reports?${params(query)}`)),
+  report: (id: string) => item<WeeklyReport>(api.get(`/reports/${id}`)),
+  generateReport: (userId: string) => item<unknown>(api.post(`/users/${userId}/reports/generate`)),
+  regenerateReport: (id: string) => item<unknown>(api.post(`/reports/${id}/regenerate`)),
+  aiSummaries: (query?: ListQuery) => list<AiSummary>(api.get(`/ai-summaries?${params(query)}`)),
+  aiSummary: (id: string) => item<AiSummary>(api.get(`/ai-summaries/${id}`)),
+  products: (query?: ListQuery) => list<Product>(api.get(`/products?${params(query)}`)),
+  product: (id: string) => item<Product>(api.get(`/products/${id}`)),
+  createProduct: (payload: unknown) => item<Product>(api.post('/products', payload)),
+  updateProduct: (id: string, payload: unknown) => item<Product>(api.put(`/products/${id}`, payload)),
+  updateProductStatus: (id: string, payload: unknown) =>
+    item<Product>(api.patch(`/products/${id}/status`, payload)),
+  deleteProduct: (id: string) => item<Product>(api.delete(`/products/${id}`)),
+  bulkImportProducts: (csv: string) => item<{ imported: number }>(api.post('/products/bulk-import', { csv })),
+  coupons: (query?: ListQuery) => list<Coupon>(api.get(`/coupons?${params(query)}`)),
+  createCoupon: (payload: unknown) => item<Coupon>(api.post('/coupons', payload)),
+  updateCoupon: (id: string, payload: unknown) => item<Coupon>(api.put(`/coupons/${id}`, payload)),
+  updateCouponStatus: (id: string, payload: unknown) =>
+    item<Coupon>(api.patch(`/coupons/${id}/status`, payload)),
+  orders: (query?: ListQuery) => list<OrderRecord>(api.get(`/orders?${params(query)}`)),
+  order: (id: string) => item<OrderRecord>(api.get(`/orders/${id}`)),
+  updateOrderStatus: (id: string, payload: unknown) =>
+    item<OrderRecord>(api.patch(`/orders/${id}/status`, payload)),
+  updateFulfillment: (id: string, payload: unknown) =>
+    item<OrderRecord>(api.patch(`/orders/${id}/fulfillment`, payload)),
+  auditLogs: (query?: ListQuery) => list<AuditLog>(api.get(`/audit-logs?${params(query)}`)),
+};

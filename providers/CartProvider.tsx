@@ -8,12 +8,12 @@ import {
 } from 'react';
 
 import {
-  getBoosterProduct,
   type BoosterProduct,
 } from '../constants/boosterStore';
 
 type StoredCartEntry = {
   productId: string;
+  product: BoosterProduct;
   quantity: number;
 };
 
@@ -27,9 +27,9 @@ type CartContextValue = {
   itemCount: number;
   totalAmount: number;
   ready: boolean;
-  addItem: (productId: string) => void;
+  addItem: (product: BoosterProduct) => void;
   removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  updateQuantity: (product: BoosterProduct, quantity: number) => void;
   clearCart: () => void;
   getQuantity: (productId: string) => number;
 };
@@ -60,12 +60,13 @@ function toValidEntries(value: unknown) {
         return null;
       }
 
-      if (!getBoosterProduct(productId)) {
+      if (!candidate.product || typeof candidate.product !== 'object') {
         return null;
       }
 
       return {
         productId,
+        product: candidate.product as BoosterProduct,
         quantity,
       };
     })
@@ -115,20 +116,10 @@ export function CartProvider({ children }: PropsWithChildren) {
     });
   }, [entries, ready]);
 
-  const items = entries
-    .map(entry => {
-      const product = getBoosterProduct(entry.productId);
-
-      if (!product) {
-        return null;
-      }
-
-      return {
-        product,
-        quantity: entry.quantity,
-      };
-    })
-    .filter((entry): entry is CartItem => Boolean(entry));
+  const items = entries.map(entry => ({
+    product: entry.product,
+    quantity: entry.quantity,
+  }));
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const totalAmount = items.reduce(
@@ -136,23 +127,18 @@ export function CartProvider({ children }: PropsWithChildren) {
     0
   );
 
-  function addItem(productId: string) {
-    const product = getBoosterProduct(productId);
-
-    if (!product) {
-      return;
-    }
-
+  function addItem(product: BoosterProduct) {
+    const productId = product.id;
     setEntries(currentEntries => {
       const existingEntry = currentEntries.find(entry => entry.productId === productId);
 
       if (!existingEntry) {
-        return [...currentEntries, { productId, quantity: 1 }];
+        return [...currentEntries, { productId, product, quantity: 1 }];
       }
 
       return currentEntries.map(entry =>
         entry.productId === productId
-          ? { ...entry, quantity: entry.quantity + 1 }
+          ? { ...entry, product, quantity: entry.quantity + 1 }
           : entry
       );
     });
@@ -164,13 +150,9 @@ export function CartProvider({ children }: PropsWithChildren) {
     );
   }
 
-  function updateQuantity(productId: string, quantity: number) {
-    const product = getBoosterProduct(productId);
+  function updateQuantity(product: BoosterProduct, quantity: number) {
+    const productId = product.id;
     const nextQuantity = Math.floor(quantity);
-
-    if (!product) {
-      return;
-    }
 
     if (nextQuantity <= 0) {
       removeItem(productId);
@@ -181,12 +163,12 @@ export function CartProvider({ children }: PropsWithChildren) {
       const existingEntry = currentEntries.find(entry => entry.productId === productId);
 
       if (!existingEntry) {
-        return [...currentEntries, { productId, quantity: nextQuantity }];
+        return [...currentEntries, { productId, product, quantity: nextQuantity }];
       }
 
       return currentEntries.map(entry =>
         entry.productId === productId
-          ? { ...entry, quantity: nextQuantity }
+          ? { ...entry, product, quantity: nextQuantity }
           : entry
       );
     });

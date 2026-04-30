@@ -1,10 +1,12 @@
 import type { Prisma } from '@prisma/client';
+import { AdminRole } from '@prisma/client';
 import { Prisma as PrismaNamespace } from '@prisma/client';
 import type { DecodedIdToken } from 'firebase-admin/auth';
 import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
 import { getFirebaseAdminProjectId } from '../lib/env.js';
+import { env } from '../lib/env.js';
 import { getAdminAuth } from '../lib/firebase-admin.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -23,6 +25,20 @@ export type AuthVariables = {
 
 export type AuthEnv = {
   Variables: AuthVariables;
+};
+
+export type AdminAuthVariables = {
+  firebaseUser: DecodedIdToken;
+  adminUser: {
+    uid: string;
+    email: string;
+    role: AdminRole;
+    active: boolean;
+  };
+};
+
+export type AdminAuthEnv = {
+  Variables: AdminAuthVariables;
 };
 
 function getBearerToken(c: Context) {
@@ -94,6 +110,10 @@ function buildFirebaseAuthFailureMessage(error: unknown) {
       return 'Firebase ID token expired. Sign out and sign in again to refresh the session.';
     case 'auth/id-token-revoked':
       return 'Firebase ID token was revoked. Sign out and sign in again.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Contact support if you believe this is a mistake.';
+    case 'auth/user-not-found':
+      return 'This account no longer exists. Sign in again or create a new account if needed.';
     case 'auth/invalid-id-token':
       return 'Firebase ID token is malformed or invalid. The app may be sending a stale or mismatched session token.';
     case 'auth/invalid-credential':
@@ -133,6 +153,113 @@ function getSignInProvider(decoded: DecodedIdToken) {
   return typeof decoded.firebase?.sign_in_provider === 'string'
     ? decoded.firebase.sign_in_provider
     : undefined;
+}
+
+function getBootstrapSuperAdminEmails() {
+  return new Set(
+    env.ADMIN_SUPER_EMAILS.split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function readAdminRole(decoded: DecodedIdToken): AdminRole | null {
+  if (
+    decoded.email &&
+    getBootstrapSuperAdminEmails().has(decoded.email.toLowerCase())
+  ) {
+    return AdminRole.super_admin;
+  }
+
+  if (decoded.admin === true) {
+    return AdminRole.admin;
+  }
+
+  if (decoded.role === AdminRole.super_admin) {
+    return AdminRole.super_admin;
+  }
+
+  if (decoded.role === AdminRole.admin) {
+    return AdminRole.admin;
+  }
+
+  if (decoded.role === AdminRole.support) {
+    return AdminRole.support;
+  }
+
+  if (decoded.role === AdminRole.viewer) {
+    return AdminRole.viewer;
+  }
+
+  return null;
+}
+
+export function requireAdminRole(roles: AdminRole[]): MiddlewareHandler<AdminAuthEnv> {
+  return createMiddleware(async (c, next) => {
+    const adminUser = c.get('adminUser');
+
+    if (!roles.includes(adminUser.role)) {
+      return c.json(
+        {
+          success: false,
+          message: 'You do not have permission to perform this admin action.',
+        },
+        403
+      );
+    }
+
+    await next();
+  });
+}
+
+async function syncAdminUser(decoded: DecodedIdToken, role: AdminRole) {
+  const select = {
+    uid: true,
+    email: true,
+    role: true,
+    active: true,
+  } satisfies Prisma.AdminUserSelect;
+
+  const existingByUid = await prisma.adminUser.findUnique({
+    where: { uid: decoded.uid },
+    select: { id: true },
+  });
+
+  if (existingByUid) {
+    return prisma.adminUser.update({
+      where: { id: existingByUid.id },
+      data: {
+        email: decoded.email!,
+        role,
+      },
+      select,
+    });
+  }
+
+  const existingByEmail = await prisma.adminUser.findUnique({
+    where: { email: decoded.email! },
+    select: { id: true },
+  });
+
+  if (existingByEmail) {
+    return prisma.adminUser.update({
+      where: { id: existingByEmail.id },
+      data: {
+        uid: decoded.uid,
+        role,
+      },
+      select,
+    });
+  }
+
+  return prisma.adminUser.create({
+    data: {
+      uid: decoded.uid,
+      email: decoded.email!,
+      role,
+    },
+    select,
+  });
 }
 
 export async function upsertDbUserFromFirebaseUser(decoded: DecodedIdToken) {
@@ -230,7 +357,7 @@ export const requireVerifiedAuth: MiddlewareHandler<VerifiedAuthEnv> =
     }
 
     try {
-      const decoded = await adminAuth.verifyIdToken(token);
+      const decoded = await adminAuth.verifyIdToken(token, true);
       c.set('firebaseUser', decoded);
       await next();
     } catch (error) {
@@ -270,7 +397,7 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
     }
 
     try {
-      const decoded = await adminAuth.verifyIdToken(token);
+      const decoded = await adminAuth.verifyIdToken(token, true);
       c.set('firebaseUser', decoded);
       try {
         const dbUser = await upsertDbUserFromFirebaseUser(decoded);
@@ -293,6 +420,92 @@ export const requireAuth: MiddlewareHandler<AuthEnv> = createMiddleware(
       }
     } catch (error) {
       return handleFirebaseVerificationFailure(c, token, error);
+    }
+  }
+);
+
+export const requireAdmin: MiddlewareHandler<AdminAuthEnv> = createMiddleware(
+  async (c, next) => {
+    const token = getBearerToken(c);
+
+    if (!token) {
+      return c.json(
+        {
+          success: false,
+          message: 'Missing Authorization bearer token.',
+        },
+        401
+      );
+    }
+
+    let adminAuth;
+
+    try {
+      adminAuth = getAdminAuth();
+    } catch (error) {
+      console.error('Firebase auth bootstrap failed:', error);
+
+      return c.json(
+        {
+          success: false,
+          message:
+            'Backend auth is not configured. Add Firebase Admin credentials to the backend .env file.',
+        },
+        500
+      );
+    }
+
+    let decoded: DecodedIdToken;
+
+    try {
+      decoded = await adminAuth.verifyIdToken(token, true);
+    } catch (error) {
+      return handleFirebaseVerificationFailure(c, token, error);
+    }
+
+    const role = readAdminRole(decoded);
+
+    if (!role || !decoded.email) {
+      return c.json(
+        {
+          success: false,
+          message: 'Admin access required.',
+        },
+        403
+      );
+    }
+
+    try {
+      const adminUser = await syncAdminUser(decoded, role);
+
+      if (!adminUser.active) {
+        return c.json(
+          {
+            success: false,
+            message: 'This admin account is disabled.',
+          },
+          403
+        );
+      }
+
+      c.set('firebaseUser', decoded);
+      c.set('adminUser', adminUser);
+      await next();
+    } catch (error) {
+      console.error('Admin user sync failed after Firebase verification:', {
+        error,
+        firebaseUid: decoded.uid,
+        email: decoded.email,
+        isInitializationError: isPrismaInitializationError(error),
+      });
+
+      return c.json(
+        {
+          success: false,
+          message: buildDatabaseFailureMessage(error),
+        },
+        503
+      );
     }
   }
 );

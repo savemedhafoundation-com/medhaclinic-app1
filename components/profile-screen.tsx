@@ -550,6 +550,10 @@ export default function ProfileScreen() {
     router.push('/(tabs)/privacy-policy');
   }
 
+  function handleAccountDeletion() {
+    router.push('/account-deletion');
+  }
+
   const actionItems: ActionCardItem[] = [
     {
       key: 'support',
@@ -577,6 +581,15 @@ export default function ProfileScreen() {
       iconColor: '#9333EA',
       iconBackground: '#F5F3FF',
       onPress: handleAbout,
+    },
+    {
+      key: 'delete-account',
+      title: 'Delete Account',
+      subtitle: 'Permanently remove your account and linked data',
+      icon: 'trash-outline',
+      iconColor: '#DC2626',
+      iconBackground: '#FEF2F2',
+      onPress: handleAccountDeletion,
     },
   ];
 
@@ -964,7 +977,7 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.sectionBlock}>
-            <Text style={styles.sectionTitle}>General</Text>
+            <Text style={styles.sectionTitle}>Settings</Text>
 
             <View style={styles.actionListCard}>
               {actionItems.map((item, index) => (

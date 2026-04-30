@@ -29,16 +29,19 @@ function RootNavigator() {
     const firstSegment = segments[0];
     const onLoginScreen = firstSegment === 'Loginscreen';
     const onSignupScreen = firstSegment === 'signup';
+    const onAccountDeletionScreen = firstSegment === 'account-deletion';
     const onWelcomeScreen = typeof firstSegment === 'undefined';
+    const onPublicScreen =
+      onLoginScreen || onWelcomeScreen || onAccountDeletionScreen;
 
     // Logged-out users can stay on the welcome screen and reach login via swipe.
-    if (!user && !onLoginScreen && !onWelcomeScreen) {
+    if (!user && !onPublicScreen) {
       router.replace('/Loginscreen');
       return;
     }
 
     // Logged in but wellness profile not completed -> force to signup
-    if (user && needsProfile && !onSignupScreen) {
+    if (user && needsProfile && !onSignupScreen && !onAccountDeletionScreen) {
       router.replace('/signup');
       return;
     }
@@ -58,6 +61,7 @@ function RootNavigator() {
       <Stack.Screen name="index" />
       <Stack.Screen name="Loginscreen" />
       <Stack.Screen name="signup" />
+      <Stack.Screen name="account-deletion" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="dietscreen" />
       <Stack.Screen name="foodpreferance" />

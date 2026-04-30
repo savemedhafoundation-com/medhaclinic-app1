@@ -131,6 +131,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     title: 'User Rights',
     paragraphs: [
       'You may request access, correction, update, or deletion of your personal information, subject to applicable law and record-retention requirements.',
+      'You can request account deletion inside the app from Profile > Settings > Delete Account, or through the Medha Clinic account-deletion web resource if you cannot access the app.',
       'You may also withdraw consent for optional communications where available, while understanding that some information is necessary to continue providing wellness services.',
     ],
   },

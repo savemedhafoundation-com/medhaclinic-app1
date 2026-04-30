@@ -1,5 +1,12 @@
 import type { ImagePickerAsset } from 'expo-image-picker';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import {
+  deleteObject,
+  getDownloadURL,
+  listAll,
+  ref,
+  type StorageReference,
+  uploadBytes,
+} from 'firebase/storage';
 import { Platform } from 'react-native';
 
 import {
@@ -107,6 +114,30 @@ async function withNativeStorageAuth<T>(
   }
 }
 
+function getStorageErrorCode(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    return error.code;
+  }
+
+  return null;
+}
+
+async function listStorageItems(
+  storagePath: string
+): Promise<StorageReference[]> {
+  const listing = await listAll(ref(storage, storagePath));
+  const nestedItems: StorageReference[][] = await Promise.all(
+    listing.prefixes.map(prefix => listStorageItems(prefix.fullPath))
+  );
+
+  return [...listing.items, ...nestedItems.flat()];
+}
+
 export async function uploadCurrentUserProfilePhoto(
   asset: ImagePickerAsset,
   authUser?: AppAuthUser | null
@@ -145,4 +176,50 @@ export async function uploadCurrentUserProfilePhoto(
   await saveCurrentUserPhotoUrl(downloadUrl, signedInUser);
 
   return downloadUrl;
+}
+
+export async function deleteCurrentUserProfilePhotos(
+  authUser?: AppAuthUser | null
+) {
+  const signedInUser = authUser ?? getCurrentAuthUser();
+
+  if (!signedInUser) {
+    throw new Error('Please sign in again before deleting your account.');
+  }
+
+  const directoryPath = `profile-images/${sanitizeFileSegment(signedInUser.uid)}`;
+
+  await withNativeStorageAuth(signedInUser, async () => {
+    let items: Awaited<ReturnType<typeof listStorageItems>>;
+
+    try {
+      items = await listStorageItems(directoryPath);
+    } catch (error) {
+      if (getStorageErrorCode(error) === 'storage/object-not-found') {
+        return;
+      }
+
+      throw error;
+    }
+
+    if (!items.length) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      items.map((item: StorageReference) => deleteObject(item))
+    );
+    const firstFailure = results.find(
+      result => result.status === 'rejected'
+    ) as PromiseRejectedResult | undefined;
+
+    if (firstFailure) {
+      throw firstFailure.reason;
+    }
+  }).catch(error => {
+    console.log('Profile photo cleanup failed:', error);
+    throw new Error(
+      'We could not remove your profile photos yet. Please try deleting your account again.'
+    );
+  });
 }

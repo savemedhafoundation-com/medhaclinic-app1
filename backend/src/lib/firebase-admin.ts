@@ -8,6 +8,13 @@ import {
   hasGoogleCloudRuntime,
 } from './env.js';
 
+function normalizePrivateKey(privateKey: string) {
+  return privateKey
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\\n/g, '\n');
+}
+
 function getServiceAccount() {
   if (env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     const parsed = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON) as {
@@ -22,7 +29,7 @@ function getServiceAccount() {
     return {
       projectId: parsed.projectId ?? parsed.project_id ?? '',
       clientEmail: parsed.clientEmail ?? parsed.client_email ?? '',
-      privateKey: parsed.privateKey ?? parsed.private_key ?? '',
+      privateKey: normalizePrivateKey(parsed.privateKey ?? parsed.private_key ?? ''),
     };
   }
 
@@ -34,7 +41,7 @@ function getServiceAccount() {
     return {
       projectId: env.FIREBASE_PROJECT_ID,
       clientEmail: env.FIREBASE_CLIENT_EMAIL,
-      privateKey: env.FIREBASE_PRIVATE_KEY,
+      privateKey: normalizePrivateKey(env.FIREBASE_PRIVATE_KEY),
     };
   }
 

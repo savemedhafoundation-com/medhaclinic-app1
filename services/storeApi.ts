@@ -8,7 +8,55 @@ type ApiResponse<T> = {
 
 export type CheckoutItemInput = {
   productId: string;
+  variantId?: string | null;
   quantity: number;
+};
+
+export type StoreProductVariant = {
+  id: string;
+  productId: string;
+  title: string;
+  pricePaise: number;
+  stock: number;
+  sku?: string | null;
+  active: boolean;
+  sortOrder: number;
+};
+
+export type StoreProductImage = {
+  id: string;
+  productId: string;
+  url: string;
+  alt?: string | null;
+  sortOrder: number;
+};
+
+export type StoreProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  shortTitle: string;
+  capacity: string;
+  pricePaise: number;
+  priceType: 'FIXED' | 'RANGE';
+  minPricePaise?: number | null;
+  maxPricePaise?: number | null;
+  mrpPaise: number;
+  category: 'BOOSTERS' | 'SUPPLEMENTS' | 'PACKAGES';
+  description: string;
+  detailDescription: string;
+  benefits?: string | null;
+  usage?: string | null;
+  howToUse: string;
+  subtitle: string;
+  supportLine: string;
+  stock: number;
+  sku?: string | null;
+  images?: string[] | null;
+  tags?: string[] | null;
+  featured: boolean;
+  variants?: StoreProductVariant[];
+  gallery?: StoreProductImage[];
 };
 
 export type StoreAddressInput = {
@@ -97,6 +145,33 @@ export type StoreOrder = {
 async function readData<T>(request: Promise<ApiResponse<T>>) {
   const response = await request;
   return response.data;
+}
+
+export function getStoreProducts() {
+  return readData<StoreProduct[]>(
+    requestBackend('/v1/store/products', {
+      method: 'GET',
+      authRequired: false,
+    })
+  );
+}
+
+export function getStoreProduct(slug: string) {
+  return readData<StoreProduct>(
+    requestBackend(`/v1/store/products/${encodeURIComponent(slug)}`, {
+      method: 'GET',
+      authRequired: false,
+    })
+  );
+}
+
+export function getStoreCategories() {
+  return readData<Array<{ key: string; label: string }>>(
+    requestBackend('/v1/store/categories', {
+      method: 'GET',
+      authRequired: false,
+    })
+  );
 }
 
 export function getStoreAddresses() {

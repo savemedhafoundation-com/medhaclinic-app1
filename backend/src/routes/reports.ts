@@ -210,7 +210,7 @@ function mergeWeeklyInsights(
   };
 }
 
-async function generateWeeklyReportForUser(userId: string) {
+export async function generateWeeklyReportForUser(userId: string) {
   const [submissions, user] = await Promise.all([
     prisma.dailyImmunitySubmission.findMany({
       where: { userId },

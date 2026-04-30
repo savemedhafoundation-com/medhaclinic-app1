@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 
+import { getAdminAuth } from '../lib/firebase-admin.js';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthEnv } from '../middleware/auth.js';
 
@@ -107,6 +108,82 @@ meRouter.put('/photo', async c => {
     success: true,
     message: 'Profile photo updated successfully.',
     data: user,
+  });
+});
+
+meRouter.delete('/', async c => {
+  const dbUser = c.get('dbUser');
+  const firebaseUser = c.get('firebaseUser');
+
+  const existingUser = await prisma.user.findUnique({
+    where: { id: dbUser.id },
+    include: {
+      profile: true,
+      _count: {
+        select: {
+          submissions: true,
+          reports: true,
+          aiSummaries: true,
+          addresses: true,
+          orders: true,
+        },
+      },
+    },
+  });
+
+  if (existingUser) {
+    await prisma.user.delete({
+      where: { id: existingUser.id },
+    });
+  }
+
+  try {
+    await getAdminAuth().deleteUser(firebaseUser.uid);
+  } catch (error) {
+    const errorCode =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof error.code === 'string'
+        ? error.code
+        : null;
+
+    if (errorCode !== 'auth/user-not-found') {
+      console.error('Firebase account deletion failed:', {
+        error,
+        firebaseUid: firebaseUser.uid,
+      });
+
+      return c.json(
+        {
+          success: false,
+          message:
+            'Your stored data was removed, but we could not finish deleting the sign-in account. Please try again or contact support.',
+        },
+        502
+      );
+    }
+  }
+
+  return c.json({
+    success: true,
+    message: 'Account deleted successfully.',
+    data: {
+      deleted: {
+        account: true,
+        profile: Boolean(existingUser?.profile),
+        dailyImmunitySubmissions: existingUser?._count.submissions ?? 0,
+        weeklyReports: existingUser?._count.reports ?? 0,
+        aiSummaries: existingUser?._count.aiSummaries ?? 0,
+        savedAddresses: existingUser?._count.addresses ?? 0,
+        storeOrders: existingUser?._count.orders ?? 0,
+      },
+      retention: {
+        hasExceptions: false,
+        message: 'No retention exceptions were applied for this deletion request.',
+        exceptions: [] as string[],
+      },
+    },
   });
 });
 

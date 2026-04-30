@@ -11,6 +11,12 @@ datasource db {
 enum StoreProductCategory {
   BOOSTERS
   SUPPLEMENTS
+  PACKAGES
+}
+
+enum ProductPriceType {
+  FIXED
+  RANGE
 }
 
 enum CouponDiscountType {
@@ -24,13 +30,40 @@ enum OrderStatus {
   PAYMENT_FAILED
 }
 
+enum AdminRole {
+  super_admin
+  admin
+  support
+  viewer
+}
+
+enum ShippingStatus {
+  NOT_STARTED
+  PACKING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum RefundStatus {
+  NOT_REQUESTED
+  REQUESTED
+  PROCESSING
+  REFUNDED
+  REJECTED
+}
+
 model User {
   id          String                   @id @default(uuid())
   firebaseUid String                   @unique
   email       String?                  @unique
   name        String?
+  phone       String?
   photoUrl    String?
   provider    String?
+  disabled    Boolean                  @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @updatedAt
 
@@ -40,6 +73,51 @@ model User {
   aiSummaries AiSummary[]
   addresses   Address[]
   orders      Order[]
+  notes       UserNote[]
+}
+
+model AdminUser {
+  id        String    @id @default(cuid())
+  uid       String    @unique
+  email     String    @unique
+  role      AdminRole @default(viewer)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  notes     UserNote[]
+  auditLogs AuditLog[]
+
+  @@index([role, active])
+}
+
+model UserNote {
+  id        String   @id @default(cuid())
+  userId    String
+  note      String
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin AdminUser? @relation(fields: [createdBy], references: [uid], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor AdminUser? @relation(fields: [actorId], references: [uid], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+  @@index([action, createdAt])
 }
 
 model PatientProfile {
@@ -129,15 +207,65 @@ model Product {
   description       String
   detailDescription String               @map("detail_description")
   howToUse          String               @map("how_to_use")
+  benefits          String?
+  usage             String?
+  priceType         ProductPriceType     @default(FIXED) @map("price_type")
+  minPricePaise     Int?                 @map("min_price_paise")
+  maxPricePaise     Int?                 @map("max_price_paise")
   subtitle          String
   supportLine       String               @map("support_line")
+  stock             Int                  @default(0)
+  sku               String?
+  images            Json?
+  tags              Json?
+  sortOrder         Int                  @default(0) @map("sort_order")
+  featured          Boolean              @default(false)
+  hidden            Boolean              @default(false)
   active            Boolean              @default(true)
+  archived          Boolean              @default(false)
+  deletedAt         DateTime?            @map("deleted_at")
+  seoTitle          String?              @map("seo_title")
+  seoDescription    String?              @map("seo_description")
   createdAt         DateTime             @default(now()) @map("created_at")
   updatedAt         DateTime             @updatedAt @map("updated_at")
 
   orderItems OrderItem[]
+  variants   ProductVariant[]
+  gallery    ProductImage[]
 
   @@map("products")
+}
+
+model ProductVariant {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  title      String
+  pricePaise Int      @map("price_paise")
+  stock      Int      @default(0)
+  sku        String?
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  url       String
+  alt       String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
 }
 
 model Address {
@@ -172,6 +300,8 @@ model Coupon {
   discountValue     Int                @map("discount_value")
   minSubtotalPaise  Int                @default(0) @map("min_subtotal_paise")
   maxDiscountPaise  Int?               @map("max_discount_paise")
+  usageLimit        Int?               @map("usage_limit")
+  usedCount         Int                @default(0) @map("used_count")
   active            Boolean            @default(true)
   expiresAt         DateTime?          @map("expires_at")
   createdAt         DateTime           @default(now()) @map("created_at")
@@ -196,6 +326,14 @@ model Order {
   razorpayOrderId   String      @unique @map("razorpay_order_id")
   razorpayPaymentId String      @unique @map("razorpay_payment_id")
   razorpaySignature String      @map("razorpay_signature")
+  shippingStatus    ShippingStatus @default(NOT_STARTED) @map("shipping_status")
+  trackingNumber    String?     @map("tracking_number")
+  courier           String?
+  adminNotes        String?     @map("admin_notes")
+  refundStatus      RefundStatus @default(NOT_REQUESTED) @map("refund_status")
+  packedAt          DateTime?   @map("packed_at")
+  shippedAt         DateTime?   @map("shipped_at")
+  deliveredAt       DateTime?   @map("delivered_at")
   createdAt         DateTime    @default(now()) @map("created_at")
   updatedAt         DateTime    @updatedAt @map("updated_at")
 

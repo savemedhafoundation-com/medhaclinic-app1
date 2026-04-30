@@ -124,7 +124,7 @@ export default function BoosterCartScreen() {
                         <TouchableOpacity
                           activeOpacity={0.88}
                           onPress={() =>
-                            updateQuantity(item.product.id, item.quantity - 1)
+                            updateQuantity(item.product, item.quantity - 1)
                           }
                           style={styles.quantityButton}
                         >
@@ -136,7 +136,7 @@ export default function BoosterCartScreen() {
                         <TouchableOpacity
                           activeOpacity={0.88}
                           onPress={() =>
-                            updateQuantity(item.product.id, item.quantity + 1)
+                            updateQuantity(item.product, item.quantity + 1)
                           }
                           style={styles.quantityButton}
                         >

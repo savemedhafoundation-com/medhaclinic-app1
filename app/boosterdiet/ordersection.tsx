@@ -3,7 +3,7 @@ import {
   router,
   useLocalSearchParams,
 } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -18,14 +18,16 @@ import {
 } from 'react-native-safe-area-context';
 
 import {
-  BOOSTER_PRODUCTS,
-  getBoosterProduct,
+  mapStoreProductToBoosterProduct,
+  selectBoosterVariant,
+  type BoosterProduct,
 } from '../../constants/boosterStore';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
 import { useCart } from '../../providers/CartProvider';
 import { goBackOrReplace } from '../../services/navigation';
+import { getStoreProduct } from '../../services/storeApi';
 
 type DetailTab = 'description' | 'howToUse' | 'review';
 
@@ -68,25 +70,65 @@ export default function BoosterOrderSectionScreen() {
   const insets = useSafeAreaInsets();
   const { productId } = useLocalSearchParams<{ productId?: string }>();
   const selectedProductId = getParamValue(productId);
-  const product =
-    getBoosterProduct(selectedProductId ?? '') ??
-    getBoosterProduct('bone-marrow-booster') ??
-    BOOSTER_PRODUCTS[0];
+  const [product, setProduct] = useState<BoosterProduct | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
   const { getQuantity, updateQuantity } = useCart();
-  const cartQuantity = getQuantity(product.id);
+  const cartQuantity = product ? getQuantity(product.id) : 0;
   const [quantity, setQuantity] = useState(cartQuantity > 0 ? cartQuantity : 1);
   const [selectedPackSize, setSelectedPackSize] = useState(
-    product.packSizes.includes(product.capacity)
+    product?.packSizes.includes(product.capacity)
       ? product.capacity
-      : product.packSizes[0]
+      : product?.packSizes[0] ?? 'Standard'
   );
   const [activeTab, setActiveTab] = useState<DetailTab>('description');
 
+  const loadProduct = useCallback(async () => {
+    if (!selectedProductId) {
+      setLoadingProduct(false);
+      return;
+    }
+
+    setLoadingProduct(true);
+    try {
+      const storeProduct = await getStoreProduct(selectedProductId);
+      const mappedProduct = mapStoreProductToBoosterProduct(storeProduct);
+      setProduct(mappedProduct);
+      setSelectedPackSize(
+        mappedProduct.packSizes.includes(mappedProduct.capacity)
+          ? mappedProduct.capacity
+          : mappedProduct.packSizes[0]
+      );
+    } catch (error) {
+      console.log('Product detail load error:', error);
+      setProduct(null);
+    } finally {
+      setLoadingProduct(false);
+    }
+  }, [selectedProductId]);
+
+  useEffect(() => {
+    void loadProduct();
+  }, [loadProduct]);
+
+  if (loadingProduct || !product) {
+    return (
+      <View style={styles.screen}>
+        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+          <ScreenNav onBackPress={() => goBackOrReplace('/boosterdiet/store')} />
+          <View style={[styles.content, { paddingTop: SCREEN_NAV_CONTENT_PADDING_TOP }]}>
+            <Text style={styles.productTitle}>{loadingProduct ? 'Loading product...' : 'Product not found'}</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  const selectedProduct = selectBoosterVariant(product, selectedPackSize);
   const discountPercent = Math.round(
-    ((product.mrp - product.price) / product.mrp) * 100
+    ((selectedProduct.mrp - selectedProduct.price) / selectedProduct.mrp) * 100
   );
-  const totalCost = product.price * quantity;
-  const pricePerCapsule = product.price / getPackCount(product.packSizes[0]);
+  const totalCost = selectedProduct.price * quantity;
+  const pricePerCapsule = selectedProduct.price / getPackCount(selectedProduct.capacity);
   const activeDetail =
     activeTab === 'howToUse'
       ? product.howToUse
@@ -103,7 +145,11 @@ export default function BoosterOrderSectionScreen() {
   }
 
   function handlePayNow() {
-    updateQuantity(product.id, quantity);
+    if (!product) {
+      return;
+    }
+
+    updateQuantity(selectedProduct, quantity);
     router.push('/boosterdiet/cart');
   }
 
@@ -212,8 +258,8 @@ export default function BoosterOrderSectionScreen() {
           </View>
 
           <View style={styles.priceRow}>
-            <Text style={styles.priceText}>{formatPrice(product.price)}</Text>
-            <Text style={styles.mrpText}>MRP* {formatPrice(product.mrp)}</Text>
+            <Text style={styles.priceText}>{formatPrice(selectedProduct.price)}</Text>
+            <Text style={styles.mrpText}>MRP* {formatPrice(selectedProduct.mrp)}</Text>
             <Text style={styles.discountText}>{discountPercent}% Off</Text>
           </View>
 

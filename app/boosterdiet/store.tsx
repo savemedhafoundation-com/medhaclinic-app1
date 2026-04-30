@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { router } from 'expo-router';
 import {
@@ -24,12 +24,14 @@ import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
 import {
-  BOOSTER_PRODUCTS,
+  mapStoreProductToBoosterProduct,
   type BoosterCategory,
   type BoosterProduct,
 } from '../../constants/boosterStore';
 import { useCart } from '../../providers/CartProvider';
+import { getConfiguredBackendUrl } from '../../services/backend';
 import { goBackOrReplace } from '../../services/navigation';
+import { getStoreProducts } from '../../services/storeApi';
 
 const storeHeroImage = require('../../assets/images/Untitled design (3) 1.png');
 const storePosterBackground = require('../../assets/images/Rectangle 665.png');
@@ -127,10 +129,32 @@ export default function BoosterStoreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<FilterTab>('all');
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [prioritizeFavorites, setPrioritizeFavorites] = useState(false);
+  const [products, setProducts] = useState<BoosterProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const { getQuantity, itemCount } = useCart();
 
+  const loadProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    try {
+      const storeProducts = await getStoreProducts();
+      setProducts(storeProducts.map(mapStoreProductToBoosterProduct));
+    } catch (error) {
+      console.log('Store products load error:', {
+        backendUrl: getConfiguredBackendUrl(),
+        error,
+      });
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
+
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const filteredProducts = BOOSTER_PRODUCTS.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesCategory =
       selectedCategory === 'all' || product.category === selectedCategory;
     const matchesSearch =
@@ -154,7 +178,7 @@ export default function BoosterStoreScreen() {
     return leftFavorite ? -1 : 1;
   });
 
-  const popularProducts = BOOSTER_PRODUCTS.filter(product => product.popular);
+  const popularProducts = products.filter(product => product.popular);
 
   function toggleFavorite(productId: string) {
     setFavoriteIds(currentIds =>
@@ -272,6 +296,11 @@ export default function BoosterStoreScreen() {
               label="Supplements"
               onPress={() => setSelectedCategory('supplements')}
             />
+            <CategoryPill
+              active={selectedCategory === 'packages'}
+              label="Packages"
+              onPress={() => setSelectedCategory('packages')}
+            />
           </View>
 
           <View>
@@ -293,7 +322,9 @@ export default function BoosterStoreScreen() {
               })}
             </View>
 
-            {filteredProducts.length === 0 ? (
+            {loadingProducts ? (
+              <Text style={styles.emptyText}>Loading products...</Text>
+            ) : filteredProducts.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons color="#1A880E" name="search" size={28} />
                 <Text style={styles.emptyTitle}>No products found</Text>

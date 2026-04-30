@@ -1,77 +1,95 @@
-# Medha Admin Dashboard
+# Medha Clinic Admin Panel
 
-React + TypeScript admin dashboard for a Cloud Run backend secured with Firebase
-Authentication.
+Production admin workspace for Medha Clinic operations: patients, immunity submissions, weekly reports, AI logs, products, coupons, orders, fulfillment, health checks, and audit logs.
 
 ## Stack
 
-- Vite
-- React 19
-- TypeScript
-- Material UI
+- Vite + React + TypeScript
+- Tailwind CSS
 - React Router
-- React Query
-- Firebase client SDK
-- Recharts
-- Zustand
+- TanStack Query
+- TanStack Table
+- React Hook Form + Zod
+- Firebase Auth
 
-## Quick start
+## Environment
 
-```bash
-cd admin-web
-cp .env.example .env
-npm install
-npm run dev
-```
-
-## Required environment variables
+Create `.env.local`, `.env.staging`, or `.env.production`:
 
 ```env
-VITE_API_URL=https://your-cloud-run-backend-url
+VITE_API_URL=https://your-backend.example.com
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
+VITE_SUPER_ADMIN_EMAILS=mirajsk2000@gmail.com
 ```
 
-## Firebase admin access
+## Admin Access
 
-The frontend checks the signed-in Firebase user's custom claims and only allows
-users with either:
+The frontend and backend require Firebase custom claims:
 
-- `admin: true`
-- `role: "admin"`
-
-Example command for setting a claim:
-
-```bash
-firebase auth:setcustomclaims <UID> '{"admin": true, "role": "admin"}'
+```json
+{ "admin": true }
 ```
 
-## Build
+or:
+
+```json
+{ "role": "super_admin" }
+```
+
+Supported roles are `super_admin`, `admin`, `support`, and `viewer`.
+
+`mirajsk2000@gmail.com` is configured as the bootstrap `super_admin` in the frontend and backend defaults. For production, set `ADMIN_SUPER_EMAILS` on the backend and `VITE_SUPER_ADMIN_EMAILS` on the admin web app to the approved comma-separated list.
+
+Seed the backend `AdminUser` mirror after assigning Firebase claims:
 
 ```bash
+cd ../backend
+ADMIN_FIREBASE_UID="<firebase uid>" ADMIN_EMAIL="admin@medha.example" ADMIN_ROLE="super_admin" npm run seed:admin
+```
+
+Seed the initial Medha store catalog after running migrations:
+
+```bash
+cd ../backend
+npm run seed:catalog
+```
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build Checks
+
+```bash
+npm run check
 npm run build
 ```
 
-## Deploy to Vercel
+## Deployment
 
-1. Import `admin-web/` as the project root.
-2. Add the `VITE_*` environment variables.
-3. Build command: `npm run build`
-4. Output directory: `dist`
+Deploy `admin-web` as the project root. Build command is `npm run build`; output directory is `dist`.
 
-`vercel.json` is included for SPA rewrites.
+The backend must expose `/v1/admin/*` and include the deployed admin origin in `CORS_ORIGIN`.
 
-## Deploy to Firebase Hosting
+## Test Checklist
 
-```bash
-npm run build
-firebase hosting:sites:create medha-admin
-firebase target:apply hosting admin medha-admin
-firebase deploy --only hosting:admin
-```
-
-Point Hosting to `admin-web/dist`.
+- Login rejects non-admin Firebase users.
+- Login accepts users with `admin: true` or valid `role`.
+- Dashboard cards load from `/v1/admin/dashboard`.
+- Users list supports search, status filter, notes, disable, and super-admin soft delete.
+- Immunity submissions load and CSV export works with auth.
+- Weekly reports list and regenerate.
+- AI summaries show redacted prompt previews.
+- Product create/edit/archive works.
+- Coupon create/edit/status works and store validation honors usage limits.
+- Orders load and fulfillment updates write tracking/courier/status.
+- Settings shows DB, Firebase, OpenAI, Razorpay, env, uptime.
+- Audit logs are created for sensitive admin mutations.
