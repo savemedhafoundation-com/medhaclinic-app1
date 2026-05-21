@@ -25,7 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const logo = require('../../assets/images/medha_logo.png');
 const bgImage = require('../../assets/images/dashbg.png');
-const NATURAL_IMMUNOTHERAPY_URL = 'https://nit.care';
+const WELLNESS_RESOURCE_URL = 'https://nit.care';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type DashboardRoute = '/homescreen/basicscreens' | '/analysis/stepanalyst' | '/(tabs)/profile';
@@ -62,15 +62,15 @@ const actionItems: ActionItem[] = [
   {
     title: 'Advanced Wellness Assessment',
     description: 'A deeper lifestyle review for people who want more structured support.',
-    icon: 'medkit-outline',
+    icon: 'analytics-outline',
     route: '/homescreen/basicscreens',
     comingSoon: true,
   },
   {
-    title: 'What is Natural Immunity Support',
-    description: 'Learn how daily habits can support natural immunity.',
+    title: 'Daily Wellness Learning',
+    description: 'Learn how daily habits can support everyday wellness.',
     icon: 'leaf-outline',
-    websiteUrl: NATURAL_IMMUNOTHERAPY_URL,
+    websiteUrl: WELLNESS_RESOURCE_URL,
   },
 ];
 
@@ -155,7 +155,7 @@ export default function HomeScreen() {
               Welcome to
             </Text>
             <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroTitle}>
-              Medha Clinic
+              Medha Wellness
             </Text>
             <Text style={styles.heroDescription}>
               We are here to understand your lifestyle and support wellness naturally

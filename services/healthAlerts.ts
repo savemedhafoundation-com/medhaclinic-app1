@@ -7,6 +7,7 @@ import type { PersonalizedDietPlan } from './personalizedDiet';
 const HEALTH_ALERT_STORAGE_PREFIX = 'medha_health_alert_plan';
 const HEALTH_ALERT_NOTIFICATION_PREFERENCE_PREFIX =
   'medha_health_alert_notification_preference';
+const LAST_ACCEPTED_HEALTH_ALERT_USER_KEY = `${HEALTH_ALERT_STORAGE_PREFIX}:last_user`;
 export const HEALTH_REMINDER_CHANNEL_ID = 'health-reminders';
 
 type ReminderTime = {
@@ -112,17 +113,26 @@ export async function saveAcceptedHealthAlertPlan(
   plan: PersonalizedDietPlan,
   userId?: string | null
 ) {
+  const normalizedUserId = userId?.trim() || null;
   const payload: AcceptedHealthAlertPlan = {
     acceptedAt: new Date().toISOString(),
     plan,
   };
+  const serializedPayload = JSON.stringify(payload);
 
-  await AsyncStorage.setItem(getStorageKey(userId), JSON.stringify(payload));
+  await AsyncStorage.setItem(getStorageKey(normalizedUserId), serializedPayload);
+
+  if (normalizedUserId) {
+    await Promise.all([
+      AsyncStorage.setItem(getStorageKey(null), serializedPayload),
+      AsyncStorage.setItem(LAST_ACCEPTED_HEALTH_ALERT_USER_KEY, normalizedUserId),
+    ]);
+  }
 }
 
-export async function getAcceptedHealthAlertPlan(userId?: string | null) {
+async function readAcceptedHealthAlertPlanByKey(storageKey: string) {
   try {
-    const rawValue = await AsyncStorage.getItem(getStorageKey(userId));
+    const rawValue = await AsyncStorage.getItem(storageKey);
 
     if (!rawValue) {
       return null;
@@ -153,6 +163,41 @@ export async function getAcceptedHealthAlertPlan(userId?: string | null) {
   }
 }
 
+export async function getAcceptedHealthAlertPlan(userId?: string | null) {
+  const normalizedUserId = userId?.trim() || null;
+  const directPlan = await readAcceptedHealthAlertPlanByKey(
+    getStorageKey(normalizedUserId)
+  );
+
+  if (directPlan) {
+    return directPlan;
+  }
+
+  if (normalizedUserId) {
+    return readAcceptedHealthAlertPlanByKey(getStorageKey(null));
+  }
+
+  try {
+    const lastAcceptedUserId = await AsyncStorage.getItem(
+      LAST_ACCEPTED_HEALTH_ALERT_USER_KEY
+    );
+
+    if (lastAcceptedUserId?.trim()) {
+      const lastUserPlan = await readAcceptedHealthAlertPlanByKey(
+        getStorageKey(lastAcceptedUserId)
+      );
+
+      if (lastUserPlan) {
+        return lastUserPlan;
+      }
+    }
+  } catch (error) {
+    console.log('Health alert last user read error:', error);
+  }
+
+  return readAcceptedHealthAlertPlanByKey(getStorageKey(null));
+}
+
 export async function prepareHealthAlertNotifications(promptForPermission = false) {
   try {
     if (Platform.OS === 'android') {
@@ -180,7 +225,9 @@ export async function prepareHealthAlertNotifications(promptForPermission = fals
 
 export async function getHealthAlertNotificationPreference(userId?: string | null) {
   try {
-    const rawValue = await AsyncStorage.getItem(getNotificationPreferenceKey(userId));
+    const rawValue =
+      (await AsyncStorage.getItem(getNotificationPreferenceKey(userId))) ??
+      (userId ? await AsyncStorage.getItem(getNotificationPreferenceKey(null)) : null);
 
     if (rawValue === 'true') {
       return true;
@@ -202,10 +249,20 @@ export async function saveHealthAlertNotificationPreference(
   userId?: string | null
 ) {
   try {
+    const normalizedUserId = userId?.trim() || null;
+    const serializedPreference = enabled ? 'true' : 'false';
+
     await AsyncStorage.setItem(
-      getNotificationPreferenceKey(userId),
-      enabled ? 'true' : 'false'
+      getNotificationPreferenceKey(normalizedUserId),
+      serializedPreference
     );
+
+    if (normalizedUserId) {
+      await AsyncStorage.setItem(
+        getNotificationPreferenceKey(null),
+        serializedPreference
+      );
+    }
   } catch (error) {
     console.log('Health alert notification preference write error:', error);
   }

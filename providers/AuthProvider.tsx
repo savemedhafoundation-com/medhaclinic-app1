@@ -103,7 +103,7 @@ function shouldAskForProfile(
 function getProfileFromUser(user: AppAuthUser): AuthUserProfile {
   return {
     uid: user.uid,
-    name: user.displayName ?? user.phoneNumber ?? 'MedhaClinic User',
+    name: user.displayName ?? user.phoneNumber ?? 'Medha Wellness User',
     email: user.email ?? '',
     photoURL: user.photoURL ?? null,
   };

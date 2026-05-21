@@ -7,9 +7,9 @@ import {
   requestBackend,
 } from './backend';
 
-const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-app1.onrender.com';
+const DEFAULT_PUBLIC_AI_BACKEND_URL = 'https://medhaclinic-app1.vercel.app';
 const PUBLIC_AI_SUMMARY_PATH = '/v1/ai/immunity-summary-public';
-const PUBLIC_AI_TIMEOUT_MS = 20_000;
+const AI_SUMMARY_TIMEOUT_MS = 60_000;
 
 function shouldUsePublicAiSummaryRoute(error: unknown) {
   return (
@@ -27,7 +27,7 @@ function shouldUseDefaultPublicBackend(error: unknown) {
 
 function getPublicAiTimeoutMessage() {
   return `Public AI summary request timed out after ${Math.ceil(
-    PUBLIC_AI_TIMEOUT_MS / 1000
+    AI_SUMMARY_TIMEOUT_MS / 1000
   )}s.`;
 }
 
@@ -64,7 +64,7 @@ function combineAiSummaryErrors(primaryError: unknown, fallbackError: unknown) {
 
 async function requestPublicAiSummary(baseUrl: string, promptText: string) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PUBLIC_AI_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), AI_SUMMARY_TIMEOUT_MS);
 
   try {
     const response = await fetch(
@@ -149,6 +149,7 @@ export async function fetchImmunityResult(
               method: 'POST',
               body: JSON.stringify({ prompt: promptText }),
               authUser,
+              timeoutMs: AI_SUMMARY_TIMEOUT_MS,
             }
           );
         } catch (error) {
@@ -166,6 +167,7 @@ export async function fetchImmunityResult(
             method: 'POST',
             body: JSON.stringify({ prompt: promptText }),
             authRequired: false,
+            timeoutMs: AI_SUMMARY_TIMEOUT_MS,
           });
         } catch (error) {
           if (

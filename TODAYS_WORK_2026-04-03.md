@@ -11,7 +11,7 @@ Date: 2026-04-03
 - Added health reminder storage helpers for accepted plan data, notification preference, and meal reminder time parsing.
 - Changed the `Diet & Lifestyle` screen from blue styling to the app's main green theme.
 - Changed the `Food Preferences` screen from blue styling to the app's main green theme.
-- Restored the Medha Clinic logo in the `Food Preferences` app bar.
+- Restored the Medha Wellness logo in the `Food Preferences` app bar.
 - Updated the dashboard `What is Natural Immunotherapy` button to open `https://nit.care`.
 
 ## Files Touched

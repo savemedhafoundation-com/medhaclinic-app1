@@ -19,16 +19,16 @@ import { goBackOrReplace } from '../services/navigation';
 
 const SUPPORT_EMAIL = 'info@savemedha.com';
 const ACCOUNT_DELETION_MAILTO_URL = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-  'MedhaClinic Account Deletion Request'
+  'Medha Wellness Account Deletion Request'
 )}&body=${encodeURIComponent(
-  'Hello MedhaClinic team,\n\nI would like to request deletion of my account and associated personal data.\n\nRegistered phone or email:\nFull name:\nAdditional details:\n'
+  'Hello Medha Wellness team,\n\nI would like to request deletion of my account and associated personal data.\n\nRegistered phone or email:\nFull name:\nAdditional details:\n'
 )}`;
 
 const DATA_DELETION_ITEMS = [
-  'Your MedhaClinic profile and saved wellness details',
+  'Your Medha Wellness profile and saved wellness details',
   'Daily immunity submissions and generated wellness summaries',
   'Saved addresses and linked personal account data',
-  'Your MedhaClinic sign-in account',
+  'Your Medha Wellness sign-in account',
 ] as const;
 
 export default function AccountDeletionScreen() {
@@ -111,7 +111,7 @@ export default function AccountDeletionScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.bodyText}>
               If you cannot access the app, you can still request deletion
-              through this web resource by emailing MedhaClinic support from
+              through this web resource by emailing Medha Wellness support from
               your registered email address or with your registered phone number.
             </Text>
 

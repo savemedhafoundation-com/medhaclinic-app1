@@ -145,7 +145,7 @@ export function usePatientProfile() {
       storedUser?.fullName?.trim() ||
       remoteUser?.name?.trim() ||
       profile?.name ||
-      'MedhaClinic User',
+      'Medha Wellness User',
     patientPhoto:
       remoteUser?.photoUrl || profile?.photoURL || storedUser?.photoURL || null,
     patientAge: parseNumber(remoteUser?.profile?.age ?? storedUser?.age),

@@ -35,7 +35,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'scope',
     title: 'Scope of Policy',
     paragraphs: [
-      'This Privacy Policy applies to all users of the Medha Clinic platform, including members, caregivers, and visitors accessing our Services.',
+      'This Privacy Policy applies to all users of the Medha Wellness platform, including members, caregivers, and visitors accessing our Services.',
       'By accessing or using our Services, you agree to the terms of this Privacy Policy and consent to the collection and use of your information as described herein.',
     ],
   },
@@ -75,10 +75,10 @@ const POLICY_SECTIONS: PolicySection[] = [
         ],
       },
       {
-        title: 'Appointment & Transaction Data',
+        title: 'Transaction Data',
         items: [
-          'Appointment bookings and history',
-          'Care preferences',
+          'Order and transaction history',
+          'Wellness preferences',
           'Payment details processed via secure third-party gateways',
         ],
       },
@@ -88,7 +88,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'purpose',
     title: 'Purpose of Data Collection',
     paragraphs: [
-      'We use your information to deliver and improve Medha Clinic services in a safe and reliable manner.',
+      'We use your information to deliver and improve Medha Wellness services in a safe and reliable manner.',
     ],
     groups: [
       {
@@ -131,7 +131,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     title: 'User Rights',
     paragraphs: [
       'You may request access, correction, update, or deletion of your personal information, subject to applicable law and record-retention requirements.',
-      'You can request account deletion inside the app from Profile > Settings > Delete Account, or through the Medha Clinic account-deletion web resource if you cannot access the app.',
+      'You can request account deletion inside the app from Profile > Settings > Delete Account, or through the Medha Wellness account-deletion web resource if you cannot access the app.',
       'You may also withdraw consent for optional communications where available, while understanding that some information is necessary to continue providing wellness services.',
     ],
   },
@@ -147,7 +147,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'changes',
     title: 'Changes to This Privacy Policy',
     paragraphs: [
-      'We may update this Privacy Policy from time to time. Updates will be posted in the app or on the Medha Clinic website with a revised update date.',
+      'We may update this Privacy Policy from time to time. Updates will be posted in the app or on the Medha Wellness website with a revised update date.',
       'Continued use of the Services after an update means you accept the revised Privacy Policy.',
     ],
   },
@@ -155,7 +155,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     key: 'grievance',
     title: 'Grievance Officer',
     paragraphs: [
-      'For privacy concerns, data requests, or complaints, contact Medha Clinic support at info@savemedha.com or through Wellness Support in the app.',
+      'For privacy concerns, data requests, or complaints, contact Medha Wellness support at info@savemedha.com or through Wellness Support in the app.',
     ],
   },
 ];
@@ -201,10 +201,10 @@ export default function PrivacyPolicyScreen() {
           <Text style={styles.updatedText}>Updated 05 May, 2025</Text>
 
           <Text style={styles.introText}>
-            Medha Clinic is committed to protecting the privacy and security of
+            Medha Wellness is committed to protecting the privacy and security of
             your personal and wellness information. This Privacy Policy describes
             how we collect, use, disclose, store, and protect your information
-            when you access or use the Medha Clinic mobile application,
+            when you access or use the Medha Wellness mobile application,
             website, and related services, collectively called the Services.
           </Text>
 

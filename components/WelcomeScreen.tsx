@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import WellnessDisclaimer from './WellnessDisclaimer';
 import LiquidGlassSwipeButton from './ui/liquid-glass-swipe-button';
 
 const bgimage = require('../assets/images/bg_pattern.png');
@@ -179,10 +180,14 @@ export default function WelcomeScreen({
 
           <View className="items-center px-5">
             <Text className="text-white text-[18px]">Welcome to</Text>
-            <Text className="text-white text-[30px] font-bold my-1">Medha Clinic</Text>
+            <Text className="text-white text-[30px] font-bold my-1">Medha Wellness</Text>
             <Text className="text-[#EAF2FF] text-[15px] text-center">
               Your Family&apos;s Wellness, Our Priority
             </Text>
+            <WellnessDisclaimer
+              className="mt-4 bg-white/90"
+              textClassName="text-center"
+            />
           </View>
 
           <LiquidGlassSwipeButton

@@ -1,4 +1,4 @@
-# MedhaClinic app data model for Firebase Data Connect.
+# Medha Wellness app data model for Firebase Data Connect.
 # Firebase Auth remains the source of identity; app health data lives in Cloud SQL.
 
 type User @table {

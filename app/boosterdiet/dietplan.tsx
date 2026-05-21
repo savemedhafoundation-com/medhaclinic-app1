@@ -371,7 +371,7 @@ export default function BoosterDietScreen() {
         >
           <View style={styles.heroCard}>
             <View style={styles.heroCopy}>
-              <Text style={styles.heroEyebrow}>Medha Clinic</Text>
+              <Text style={styles.heroEyebrow}>Medha Wellness</Text>
               <Text style={styles.heroTitle}>
                 {state.plan?.title ?? '30-Day Personalized Wellness Plan'}
               </Text>
@@ -429,7 +429,7 @@ export default function BoosterDietScreen() {
               <ActivityIndicator color="#18841A" size="large" />
               <Text style={styles.loadingTitle}>Creating your plan...</Text>
               <Text style={styles.loadingSubtitle}>
-                Medha Clinic is turning your inputs into a structured wellness support plan.
+                Medha Wellness is turning your inputs into a structured wellness support plan.
               </Text>
             </View>
           ) : null}

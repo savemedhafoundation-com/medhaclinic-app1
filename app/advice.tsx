@@ -12,7 +12,7 @@ export default function AdviceScreen() {
     <View className="flex-1 bg-gray-100">
 
       {/* ===== HEADER ===== */}
-      <ScreenNav onBackPress={() => goBackOrReplace("/certification/daily")} />
+      <ScreenNav onBackPress={() => goBackOrReplace("/wellness-summary/daily")} />
 
       {/* ===== CONTENT ===== */}
       <ScrollView

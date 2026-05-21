@@ -70,7 +70,7 @@ export function mapStoreProductToBoosterProduct(product: StoreProduct): BoosterP
     mrp: product.mrpPaise / 100,
     packSizes: product.variants?.map(variant => variant.title) ?? [product.capacity],
     popular: product.featured,
-    review: 'Managed by Medha Clinic for guided wellness routines.',
+    review: 'Managed by Medha Wellness for guided wellness routines.',
     searchTerms: [product.title.toLowerCase(), product.slug, ...(product.tags ?? [])],
     subtitle: product.subtitle,
     supportLine: product.supportLine,

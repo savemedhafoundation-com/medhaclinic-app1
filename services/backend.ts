@@ -31,6 +31,7 @@ export class BackendRequestError extends Error {
 type BackendRequestOptions = RequestInit & {
   authRequired?: boolean;
   authUser?: AppAuthUser | null;
+  timeoutMs?: number;
 };
 
 function createRequestSignal(
@@ -63,9 +64,13 @@ function createRequestSignal(
   };
 }
 
-function getFetchFailureMessage(path: string, error: unknown) {
+function getFetchFailureMessage(
+  path: string,
+  error: unknown,
+  timeoutMs = BACKEND_REQUEST_TIMEOUT_MS
+) {
   const timeoutMessage = `Backend request timed out after ${Math.ceil(
-    BACKEND_REQUEST_TIMEOUT_MS / 1000
+    timeoutMs / 1000
   )}s for ${path}.`;
 
   if (error instanceof Error) {
@@ -219,6 +224,7 @@ export async function requestBackend<T>(
     authUser: _authUser,
     headers: _requestHeaders,
     signal: externalSignal,
+    timeoutMs = BACKEND_REQUEST_TIMEOUT_MS,
     ...fetchOptions
   } = options;
 
@@ -243,7 +249,7 @@ export async function requestBackend<T>(
     }
 
     const { signal, cleanup } = createRequestSignal(
-      BACKEND_REQUEST_TIMEOUT_MS,
+      timeoutMs,
       externalSignal
     );
 
@@ -255,7 +261,7 @@ export async function requestBackend<T>(
       });
     } catch (error) {
       throw new BackendRequestError({
-        message: getFetchFailureMessage(path, error),
+        message: getFetchFailureMessage(path, error, timeoutMs),
         status: null,
         path,
         payload: error,

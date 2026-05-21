@@ -69,7 +69,7 @@ function RootNavigator() {
       <Stack.Screen name="report/weeklyreport" />
       <Stack.Screen name="process" />
       <Stack.Screen name="advice" />
-      <Stack.Screen name="assessment/certificate" />
+      <Stack.Screen name="assessment/wellness-summary" />
       <Stack.Screen name="boosterdiet/boosters" />
       <Stack.Screen name="boosterdiet/store" />
       <Stack.Screen name="boosterdiet/ordersection" />
@@ -78,7 +78,8 @@ function RootNavigator() {
       <Stack.Screen name="boosterdiet/confirmation" />
       <Stack.Screen name="boosterdiet/dietplan" />
       <Stack.Screen name="analysis/stepanalyst" />
-      <Stack.Screen name="certification/daily" />
+      <Stack.Screen name="wellness-summary/daily" />
+      <Stack.Screen name="wellness-summary/weekly" />
       <Stack.Screen name="immunity/dailyimmunity" />
     </Stack>
   );

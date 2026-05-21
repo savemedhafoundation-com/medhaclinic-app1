@@ -170,7 +170,7 @@ export default function ProcessSection() {
         ],
       },
       {
-        title: '4. Digestive Problems',
+        title: '4. Digestion Comfort',
         options: [
           { source: EMOJI.veryGood, label: 'Very Good' },
           { source: EMOJI.good, label: 'Good' },
@@ -180,7 +180,7 @@ export default function ProcessSection() {
         ],
       },
       {
-        title: '5. Burning or Pain',
+        title: '5. Body Comfort',
         options: [
           { source: EMOJI.veryGood, label: 'Very Good' },
           { source: EMOJI.good, label: 'Good' },
@@ -190,29 +190,29 @@ export default function ProcessSection() {
         ],
       },
       {
-        title: '6. Blood Pressure',
+        title: '6. Energy Balance',
         options: [
           { source: EMOJI.moderate, label: 'Very Low' },
           { source: EMOJI.good, label: 'Low' },
-          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.veryGood, label: 'Balanced' },
           { source: EMOJI.bad, label: 'High' },
           { source: EMOJI.veryBad, label: 'Very High' },
         ],
       },
       {
-        title: '7. Fever',
+        title: '7. Temperature Comfort',
         options: [
-          { source: EMOJI.veryGood, label: 'Normal' },
+          { source: EMOJI.veryGood, label: 'Comfortable' },
           { source: EMOJI.bad, label: 'High' },
           { source: EMOJI.veryBad, label: 'Very High' },
         ],
       },
       {
-        title: '8. Breathing Problem',
+        title: '8. Breathing Comfort',
         options: [
-          { source: EMOJI.veryGood, label: 'Normal' },
-          { source: EMOJI.bad, label: 'High' },
-          { source: EMOJI.veryBad, label: 'Very High' },
+          { source: EMOJI.veryGood, label: 'Comfortable' },
+          { source: EMOJI.bad, label: 'Some Discomfort' },
+          { source: EMOJI.veryBad, label: 'High Discomfort' },
         ],
       },
       {
@@ -224,7 +224,7 @@ export default function ProcessSection() {
         ],
       },
       {
-        title: '10. Hair Problem',
+        title: '10. Hair Wellness',
         options: [
           { source: EMOJI.good, label: 'Very Low' },
           { source: EMOJI.veryGood, label: 'Low' },

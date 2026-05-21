@@ -131,7 +131,7 @@ export default function WeeklyImmunityCheck() {
         {/* ACTION BUTTON */}
         <TouchableOpacity
           className="mt-6 bg-[#1fa2ff] py-4 rounded-full items-center"
-          onPress={() => router.push('/certification/weekly')}
+          onPress={() => router.push('/wellness-summary/weekly')}
         >
           <Text className="text-white text-[18px] font-semibold">
             Prepare Wellness Summary

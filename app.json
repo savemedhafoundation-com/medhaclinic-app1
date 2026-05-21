@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "medhaclinic",
+    "name": "Medha Wellness",
     "slug": "medha-clinic",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -41,13 +41,13 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow MedhaClinic to access your photos so you can upload a profile picture."
+          "photosPermission": "Allow Medha Wellness to access your photos so you can upload a profile picture."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow MedhaClinic to use your location to fill delivery address details."
+          "locationWhenInUsePermission": "Allow Medha Wellness to use your location to fill delivery address details."
         }
       ],
       "expo-web-browser",
@@ -63,7 +63,7 @@
         "projectId": "64bd29f2-7c0e-4a35-be76-0702cd8ffbef"
       },
       "publicConfig": {
-        "backendUrl": "http://192.168.29.106:4000",
+        "backendUrl": "https://medhaclinic-app1.vercel.app",
         "firebase": {
           "apiKey": "AIzaSyDZNg6cCLLKTGQb0Y5tPZXri0zwqK1aa6Q",
           "authDomain": "medhaclinic-3ba87.firebaseapp.com",

@@ -470,8 +470,8 @@ export default function BoosterCheckoutScreen() {
         key: paymentSession.razorpay.keyId,
         amount: paymentSession.razorpay.amountPaise,
         currency: paymentSession.razorpay.currency,
-        name: 'Medha Clinic',
-        description: 'Natural Immunotherapy Boosters',
+        name: 'Medha Wellness',
+        description: 'Wellness support products',
         order_id: paymentSession.razorpay.orderId,
         prefill: {
           name: selectedAddress.recipientName || profile?.name,

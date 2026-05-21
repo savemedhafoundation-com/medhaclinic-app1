@@ -154,7 +154,7 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "burning",
-    title: "Burning / Pain",
+    title: "Body Comfort",
     options: [
       {
         key: "good",
@@ -164,13 +164,13 @@ const QUESTIONS: Question[] = [
       },
       {
         key: "poor",
-        label: "Poor Pain",
+        label: "Low Comfort",
         img: require("../../assets/images/immunity/burning2.png"),
         score: 6,
       },
       {
         key: "verypoor",
-        label: "Very Poor Pain",
+        label: "Very Low Comfort",
         img: require("../../assets/images/immunity/burning3.png"),
         score: 3,
       },
@@ -202,7 +202,7 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "pressure",
-    title: "Blood Pressure",
+    title: "Energy Balance",
     options: [
       {
         key: "low",
@@ -212,7 +212,7 @@ const QUESTIONS: Question[] = [
       },
       {
         key: "normal",
-        label: "Normal",
+        label: "Balanced",
         img: require("../../assets/images/immunity/pressure2.png"),
         score: 10,
       },
@@ -226,23 +226,23 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "swelling",
-    title: "Swelling",
+    title: "Body Lightness",
     options: [
       {
         key: "none",
-        label: "None",
+        label: "Light",
         img: require("../../assets/images/immunity/swelling1.png"),
         score: 10,
       },
       {
         key: "mild",
-        label: "Mild Swelling",
+        label: "Moderate",
         img: require("../../assets/images/immunity/swelling2.png"),
         score: 6,
       },
       {
         key: "severe",
-        label: "Severe Swelling",
+        label: "Heavy",
         img: require("../../assets/images/immunity/swelling3.png"),
         score: 3,
       },
@@ -250,23 +250,23 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "fever",
-    title: "Fever",
+    title: "Temperature Comfort",
     options: [
       {
         key: "mild",
-        label: "Mild Fever",
+        label: "Comfortable",
         img: require("../../assets/images/immunity/fever2.png"),
         score: 10,
       },
       {
         key: "moderate",
-        label: "Moderate Fever",
+        label: "Warm",
         img: require("../../assets/images/immunity/fever3.png"),
         score: 6,
       },
       {
         key: "high",
-        label: "High Fever",
+        label: "Very Warm",
         img: require("../../assets/images/immunity/fever1.png"),
         score: 3,
       },
@@ -274,23 +274,23 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "infection",
-    title: "Infection",
+    title: "Seasonal Wellness",
     options: [
       {
         key: "none",
-        label: "No Infection",
+        label: "Feeling Well",
         img: require("../../assets/images/immunity/infection1.png"),
         score: 10,
       },
       {
         key: "mild",
-        label: "Mild Infection",
+        label: "Slightly Low",
         img: require("../../assets/images/immunity/infection2.png"),
         score: 6,
       },
       {
         key: "severe",
-        label: "Severe Infection",
+        label: "Very Low",
         img: require("../../assets/images/immunity/infection3.png"),
         score: 3,
       },
@@ -298,23 +298,23 @@ const QUESTIONS: Question[] = [
   },
   {
     id: "breathing",
-    title: "Breathing Problem",
+    title: "Breathing Comfort",
     options: [
       {
         key: "good",
-        label: "Normal Breathing",
+        label: "Comfortable Breathing",
         img: require("../../assets/images/immunity/breathing1.png"),
         score: 10,
       },
       {
         key: "poor",
-        label: "Mild Difficulty",
+        label: "Some Discomfort",
         img: require("../../assets/images/immunity/breathing2.png"),
         score: 6,
       },
       {
         key: "severe",
-        label: "Severe Difficulty",
+        label: "High Discomfort",
         img: require("../../assets/images/immunity/breathing3.png"),
         score: 3,
       },
@@ -717,7 +717,7 @@ export default function DailyImmunityCheck() {
 
       router.push(
         {
-          pathname: "/certification/daily",
+          pathname: "/wellness-summary/daily",
           params: {
             data: JSON.stringify(payload),
             summary: JSON.stringify(summary),

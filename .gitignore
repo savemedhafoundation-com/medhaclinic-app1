@@ -35,10 +35,12 @@ android/app/.cxx/
 # Gradle daemon logs written to project root
 .gradle-local/
 .gradle-local-build/
+.gradle-local-release-signing/
 
 # ─── Android – signing keys (never commit) ───────────────────────────────────
 *.jks
 *.keystore
+*.credentials.txt
 
 # ─── iOS ─────────────────────────────────────────────────────────────────────
 ios/
@@ -78,3 +80,7 @@ Microsoft/
 app-example
 stdout
 .vercel
+
+# Split repositories
+backend/
+admin-web/

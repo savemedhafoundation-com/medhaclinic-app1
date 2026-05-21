@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../components/ScreenNav';
+import WellnessDisclaimer from '../components/WellnessDisclaimer';
 import { goBackOrReplace } from '../services/navigation';
 
 const leaderImage = require('../assets/images/Mask group.png');
@@ -39,7 +40,7 @@ const STATS = [
 
 const CORE_VALUES = [
   {
-    key: 'patient-first',
+    key: 'people-first',
     icon: 'heart-outline',
     iconColor: '#6D5EF5',
     iconBackground: '#F1EEFF',
@@ -72,7 +73,7 @@ export default function AboutScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <ScreenNav
         onBackPress={() => goBackOrReplace('/(tabs)/profile')}
-        title="About Medha Clinic"
+        title="About Medha Wellness"
       />
       <ScrollView
         contentContainerStyle={[
@@ -159,7 +160,7 @@ export default function AboutScreen() {
               <View style={styles.leaderCopy}>
                 <Text style={styles.leaderName}>Mr. Subhankar Sarkar</Text>
               <Text style={styles.leaderRole}>
-                  Founder & Wellness Research Lead of MedhaClinic
+                  Founder & Wellness Research Lead of Medha Wellness
               </Text>
               </View>
             </View>
@@ -167,11 +168,13 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.hqCard}>
-          <Text style={styles.hqTitle}>MedhaClinic HQ</Text>
+          <Text style={styles.hqTitle}>Medha Wellness HQ</Text>
           <Text style={styles.hqAddress}>
             Govt Colony, Raghunathganj,{'\n'}West Bengal - 742225, Murshidabad
           </Text>
         </View>
+
+        <WellnessDisclaimer className="mt-5" />
       </ScrollView>
     </SafeAreaView>
   );

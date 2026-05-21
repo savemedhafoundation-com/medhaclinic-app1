@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 
 export const WELLNESS_DISCLAIMER_TEXT =
-  'This app provides wellness information only.';
+  'This app provides general wellness and lifestyle information only. It is not a medical device and does not diagnose, treat, cure, or prevent any disease. Please consult a qualified healthcare professional for medical advice.';
 
 type WellnessDisclaimerProps = {
   className?: string;

@@ -15,20 +15,20 @@ import ScreenNav, {
 } from '../components/ScreenNav';
 import { goBackOrReplace } from '../services/navigation';
 
-const CLINIC_PHONE_NUMBER = '+91 9800808595';
-const CLINIC_DIALER_URL = 'tel:+919800808595';
+const SUPPORT_PHONE_NUMBER = '+91 9800808595';
+const SUPPORT_DIALER_URL = 'tel:+919800808595';
 const SUPPORT_EMAIL = 'info@savemedha.com';
 const GMAIL_COMPOSE_URL = `googlegmail://co?to=${encodeURIComponent(SUPPORT_EMAIL)}`;
 const MAILTO_URL = `mailto:${SUPPORT_EMAIL}`;
 
-async function openClinicDialer() {
+async function openSupportDialer() {
   try {
-    await Linking.openURL(CLINIC_DIALER_URL);
+    await Linking.openURL(SUPPORT_DIALER_URL);
   } catch (error) {
     console.log('Dialer open failed:', error);
     Alert.alert(
-      'Call Clinic',
-      `Could not open the dialer. Please call ${CLINIC_PHONE_NUMBER}.`
+      'Call Support',
+      `Could not open the dialer. Please call ${SUPPORT_PHONE_NUMBER}.`
     );
   }
 }
@@ -73,12 +73,12 @@ const CONTACT_OPTIONS = [
   },
   {
     key: 'call',
-    title: 'Call Clinic',
+    title: 'Call Support',
     subtitle: 'Available Mon-Sat, 9am-5pm',
     icon: 'call-outline',
     iconColor: '#4D6CFA',
     iconBackground: '#EEF2FF',
-    onPress: openClinicDialer,
+    onPress: openSupportDialer,
   },
   {
     key: 'email',
@@ -185,7 +185,7 @@ export default function SupportScreen() {
         </View>
 
         <Text style={styles.footerText}>
-          Medha Clinic Support - Your Partner in Wellness
+          Medha Wellness Support - Your Partner in Wellness
         </Text>
       </ScrollView>
     </SafeAreaView>

@@ -575,7 +575,7 @@ export default function ProfileScreen() {
     },
     {
       key: 'about',
-      title: 'About MedhaClinic',
+      title: 'About Medha Wellness',
       subtitle: 'Restoring life naturally',
       icon: 'information-circle-outline',
       iconColor: '#9333EA',
@@ -600,7 +600,7 @@ export default function ProfileScreen() {
     storedUser?.fullName?.trim() ||
     remoteUser?.name?.trim() ||
     profile?.name ||
-    'MedhaClinic User';
+    'Medha Wellness User';
   const savedEmail =
     remoteUser?.email?.trim() ||
     profile?.email?.trim() ||

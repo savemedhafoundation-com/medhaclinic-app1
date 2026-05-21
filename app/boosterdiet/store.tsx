@@ -131,18 +131,25 @@ export default function BoosterStoreScreen() {
   const [prioritizeFavorites, setPrioritizeFavorites] = useState(false);
   const [products, setProducts] = useState<BoosterProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const { getQuantity, itemCount } = useCart();
 
   const loadProducts = useCallback(async () => {
     setLoadingProducts(true);
+    setProductsError(null);
     try {
       const storeProducts = await getStoreProducts();
       setProducts(storeProducts.map(mapStoreProductToBoosterProduct));
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not reach the product backend.';
       console.log('Store products load error:', {
         backendUrl: getConfiguredBackendUrl(),
         error,
       });
+      setProductsError(message);
       setProducts([]);
     } finally {
       setLoadingProducts(false);
@@ -324,6 +331,19 @@ export default function BoosterStoreScreen() {
 
             {loadingProducts ? (
               <Text style={styles.emptyText}>Loading products...</Text>
+            ) : productsError ? (
+              <View style={styles.emptyState}>
+                <Ionicons color="#1A880E" name="cloud-offline-outline" size={28} />
+                <Text style={styles.emptyTitle}>Product backend unavailable</Text>
+                <Text style={styles.emptyText}>{productsError}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={loadProducts}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
             ) : filteredProducts.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons color="#1A880E" name="search" size={28} />
@@ -641,6 +661,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 14,
+    minHeight: 42,
+    borderRadius: 14,
+    backgroundColor: '#138A07',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   sectionHeader: {
     marginTop: 8,

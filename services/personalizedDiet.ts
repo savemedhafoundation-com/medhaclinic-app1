@@ -10,7 +10,7 @@ import {
 const PERSONALIZED_DIET_PATH = '/v1/ai/personalized-diet';
 const PUBLIC_PERSONALIZED_DIET_PATH = '/v1/ai/personalized-diet-public';
 const DEFAULT_PUBLIC_PERSONALIZED_DIET_BACKEND_URL =
-  'https://medhaclinic-app1.onrender.com';
+  'https://medhaclinic-app1.vercel.app';
 const PUBLIC_PERSONALIZED_DIET_TIMEOUT_MS = 45_000;
 
 export type PersonalizedDietInput = {
@@ -208,6 +208,7 @@ export async function fetchPersonalizedDietPlan(
               method: 'POST',
               body: JSON.stringify(input),
               authUser,
+              timeoutMs: PUBLIC_PERSONALIZED_DIET_TIMEOUT_MS,
             }
           );
         } catch (error) {
@@ -227,6 +228,7 @@ export async function fetchPersonalizedDietPlan(
               method: 'POST',
               body: JSON.stringify(input),
               authRequired: false,
+              timeoutMs: PUBLIC_PERSONALIZED_DIET_TIMEOUT_MS,
             }
           );
         } catch (error) {

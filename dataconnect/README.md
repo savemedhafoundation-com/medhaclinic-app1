@@ -1,6 +1,6 @@
-# MedhaClinic Data Connect
+# Medha Wellness Data Connect
 
-This workspace keeps MedhaClinic inside the Firebase data layer:
+This workspace keeps Medha Wellness inside the Firebase data layer:
 
 - Firebase Auth for user identity
 - Firebase Data Connect for app queries and mutations

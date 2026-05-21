@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../providers/AuthProvider';
+import WellnessDisclaimer from '../components/WellnessDisclaimer';
 
 const patternImage = require('../assets/images/bg_pattern.png');
 const backgroundImage = require('../assets/images/common_bgpage.png');
@@ -284,9 +285,9 @@ export default function LoginScreen() {
 
             <View style={styles.heroBlock}>
               <Text style={styles.heroLead}>Be a part of</Text>
-              <Text style={styles.heroTitle}>Medha Clinic</Text>
+              <Text style={styles.heroTitle}>Medha Wellness</Text>
               <Text style={styles.heroSubtitle}>
-                Login to continue to MedhaClinic
+                Login to continue to Medha Wellness
               </Text>
             </View>
           </View>
@@ -399,6 +400,11 @@ export default function LoginScreen() {
                   style={styles.hiddenRecaptcha}
                 />
               ) : null}
+
+              <WellnessDisclaimer
+                className="mt-4 bg-white/90"
+                textClassName="text-center"
+              />
             </View>
 
           </View>
