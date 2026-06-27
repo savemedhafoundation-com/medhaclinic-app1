@@ -2,10 +2,10 @@
 node_modules/
 
 # ─── Expo ────────────────────────────────────────────────────────────────────
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+client/.expo/
+client/dist/
+client/web-build/
+client/expo-env.d.ts
 
 # ─── Metro bundler ───────────────────────────────────────────────────────────
 .metro-health-check*
@@ -18,22 +18,30 @@ expo-env.d.ts
 .env.*
 !.env.example
 !.env.*.example
+client/.env
+client/.env.*
+!client/.env.example
+!client/.env.*.example
 backend/.env
 backend/.env.*
-admin-web/.env
-admin-web/.env.*
+admin/.env
+admin/.env.*
+!backend/.env.example
+!admin/.env.example
 google-services.json
-android/app/google-services.json
+client/google-services.json
+client/android/app/google-services.json
 
 # ─── Android – build output & local config ───────────────────────────────────
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/app/.cxx/
+client/android/.gradle/
+client/android/build/
+client/android/app/build/
+client/android/local.properties
+client/android/app/.cxx/
 
 # Gradle daemon logs written to project root
 .gradle-local/
+.gradle-local-audit/
 .gradle-local-build/
 .gradle-local-release-signing/
 
@@ -68,7 +76,7 @@ yarn-error.*
 .vscode/
 
 # ─── Expo export check artifacts ─────────────────────────────────────────────
-.expo-export-*/
+client/.expo-export-*/
 
 # ─── Build logs ──────────────────────────────────────────────────────────────
 *.log
@@ -81,6 +89,3 @@ app-example
 stdout
 .vercel
 
-# Split repositories
-backend/
-admin-web/

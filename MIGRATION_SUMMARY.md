@@ -1,0 +1,333 @@
+﻿# Migration Summary
+
+## Moved files
+
+- .env.example -> client/.env.example
+- .firebaserc -> client/.firebaserc
+- App.tsx -> client/App.tsx
+- TODAYS_WORK_2026-04-03.md -> client/TODAYS_WORK_2026-04-03.md
+- android/.gitignore -> client/android/.gitignore
+- android/RELEASE_SIGNING.md -> client/android/RELEASE_SIGNING.md
+- android/app/build.gradle -> client/android/app/build.gradle
+- android/app/proguard-rules.pro -> client/android/app/proguard-rules.pro
+- android/app/src/debug/AndroidManifest.xml -> client/android/app/src/debug/AndroidManifest.xml
+- android/app/src/debugOptimized/AndroidManifest.xml -> client/android/app/src/debugOptimized/AndroidManifest.xml
+- android/app/src/main/AndroidManifest.xml -> client/android/app/src/main/AndroidManifest.xml
+- android/app/src/main/java/com/medhaclinic/app/MainActivity.kt -> client/android/app/src/main/java/com/medhaclinic/app/MainActivity.kt
+- android/app/src/main/java/com/medhaclinic/app/MainApplication.kt -> client/android/app/src/main/java/com/medhaclinic/app/MainApplication.kt
+- android/app/src/main/res/drawable-hdpi/splashscreen_logo.png -> client/android/app/src/main/res/drawable-hdpi/splashscreen_logo.png
+- android/app/src/main/res/drawable-mdpi/splashscreen_logo.png -> client/android/app/src/main/res/drawable-mdpi/splashscreen_logo.png
+- android/app/src/main/res/drawable-xhdpi/splashscreen_logo.png -> client/android/app/src/main/res/drawable-xhdpi/splashscreen_logo.png
+- android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png -> client/android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png
+- android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png -> client/android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png
+- android/app/src/main/res/drawable/ic_launcher_background.xml -> client/android/app/src/main/res/drawable/ic_launcher_background.xml
+- android/app/src/main/res/drawable/rn_edit_text_material.xml -> client/android/app/src/main/res/drawable/rn_edit_text_material.xml
+- android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml -> client/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+- android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml -> client/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+- android/app/src/main/res/mipmap-hdpi/ic_launcher.webp -> client/android/app/src/main/res/mipmap-hdpi/ic_launcher.webp
+- android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.webp -> client/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.webp
+- android/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp -> client/android/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp
+- android/app/src/main/res/mipmap-mdpi/ic_launcher.webp -> client/android/app/src/main/res/mipmap-mdpi/ic_launcher.webp
+- android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp -> client/android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp
+- android/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp -> client/android/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp
+- android/app/src/main/res/mipmap-xhdpi/ic_launcher.webp -> client/android/app/src/main/res/mipmap-xhdpi/ic_launcher.webp
+- android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp -> client/android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp
+- android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp -> client/android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp
+- android/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp -> client/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp
+- android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp -> client/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp
+- android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp -> client/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp
+- android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp -> client/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp
+- android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp -> client/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp
+- android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp -> client/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp
+- android/app/src/main/res/values-night/colors.xml -> client/android/app/src/main/res/values-night/colors.xml
+- android/app/src/main/res/values/colors.xml -> client/android/app/src/main/res/values/colors.xml
+- android/app/src/main/res/values/strings.xml -> client/android/app/src/main/res/values/strings.xml
+- android/app/src/main/res/values/styles.xml -> client/android/app/src/main/res/values/styles.xml
+- android/build.gradle -> client/android/build.gradle
+- android/gradle.properties -> client/android/gradle.properties
+- android/gradle/wrapper/gradle-wrapper.jar -> client/android/gradle/wrapper/gradle-wrapper.jar
+- android/gradle/wrapper/gradle-wrapper.properties -> client/android/gradle/wrapper/gradle-wrapper.properties
+- android/gradlew -> client/android/gradlew
+- android/gradlew.bat -> client/android/gradlew.bat
+- android/settings.gradle -> client/android/settings.gradle
+- app.json -> client/app.json
+- app/(tabs)/_layout.tsx -> client/app/(tabs)/_layout.tsx
+- app/(tabs)/dashboard.tsx -> client/app/(tabs)/dashboard.tsx
+- app/(tabs)/healthalert.tsx -> client/app/(tabs)/healthalert.tsx
+- app/(tabs)/privacy-policy.tsx -> client/app/(tabs)/privacy-policy.tsx
+- app/(tabs)/profile.tsx -> client/app/(tabs)/profile.tsx
+- app/(tabs)/reports.tsx -> client/app/(tabs)/reports.tsx
+- app/Loginscreen.tsx -> client/app/Loginscreen.tsx
+- app/_layout.tsx -> client/app/_layout.tsx
+- app/about.tsx -> client/app/about.tsx
+- app/account-deletion.tsx -> client/app/account-deletion.tsx
+- app/advice.tsx -> client/app/advice.tsx
+- app/analysis/_layout.tsx -> client/app/analysis/_layout.tsx
+- app/analysis/dailydietswaps.tsx -> client/app/analysis/dailydietswaps.tsx
+- app/analysis/stepanalyst.tsx -> client/app/analysis/stepanalyst.tsx
+- app/assessment/next-step.tsx -> client/app/assessment/next-step.tsx
+- app/assessment/wellness-summary.tsx -> client/app/assessment/wellness-summary.tsx
+- app/boosterdiet/boosters.tsx -> client/app/boosterdiet/boosters.tsx
+- app/boosterdiet/cart.tsx -> client/app/boosterdiet/cart.tsx
+- app/boosterdiet/checkout.tsx -> client/app/boosterdiet/checkout.tsx
+- app/boosterdiet/confirmation.tsx -> client/app/boosterdiet/confirmation.tsx
+- app/boosterdiet/dietplan.tsx -> client/app/boosterdiet/dietplan.tsx
+- app/boosterdiet/ordersection.tsx -> client/app/boosterdiet/ordersection.tsx
+- app/boosterdiet/store.tsx -> client/app/boosterdiet/store.tsx
+- app/dietscreen.tsx -> client/app/dietscreen.tsx
+- app/foodpreferance.tsx -> client/app/foodpreferance.tsx
+- app/healthassessment.tsx -> client/app/healthassessment.tsx
+- app/homescreen/_layout.tsx -> client/app/homescreen/_layout.tsx
+- app/homescreen/assessment.tsx -> client/app/homescreen/assessment.tsx
+- app/homescreen/basicscreens.tsx -> client/app/homescreen/basicscreens.tsx
+- app/homescreen/information.tsx -> client/app/homescreen/information.tsx
+- app/homescreen/profile.tsx -> client/app/homescreen/profile.tsx
+- app/immunity/dailyimmunity.tsx -> client/app/immunity/dailyimmunity.tsx
+- app/immunity/weeklyimmunity.tsx -> client/app/immunity/weeklyimmunity.tsx
+- app/index.tsx -> client/app/index.tsx
+- app/modal.tsx -> client/app/modal.tsx
+- app/process.tsx -> client/app/process.tsx
+- app/report/monthlyreport.tsx -> client/app/report/monthlyreport.tsx
+- app/report/weeklyreport.tsx -> client/app/report/weeklyreport.tsx
+- app/signup.tsx -> client/app/signup.tsx
+- app/support.tsx -> client/app/support.tsx
+- app/uploaddoc/wellness-records.tsx -> client/app/uploaddoc/wellness-records.tsx
+- app/wellness-summary/daily.tsx -> client/app/wellness-summary/daily.tsx
+- app/wellness-summary/weekly.tsx -> client/app/wellness-summary/weekly.tsx
+- "assets/images/BR-1 1.png" -> "client/assets/images/BR-1 1.png"
+- "assets/images/GT-500 1.png" -> "client/assets/images/GT-500 1.png"
+- "assets/images/Mask group.png" -> "client/assets/images/Mask group.png"
+- "assets/images/Rectangle 665.png" -> "client/assets/images/Rectangle 665.png"
+- "assets/images/Untitled design (3) 1.png" -> "client/assets/images/Untitled design (3) 1.png"
+- assets/images/analysis/diet.png -> client/assets/images/analysis/diet.png
+- assets/images/analysis/digestion.png -> client/assets/images/analysis/digestion.png
+- assets/images/analysis/relaxation.png -> client/assets/images/analysis/relaxation.png
+- assets/images/analysis/respiratory.png -> client/assets/images/analysis/respiratory.png
+- assets/images/analysis/supplements.png -> client/assets/images/analysis/supplements.png
+- assets/images/android-icon-background.png -> client/assets/images/android-icon-background.png
+- assets/images/android-icon-foreground.png -> client/assets/images/android-icon-foreground.png
+- assets/images/android-icon-monochrome.png -> client/assets/images/android-icon-monochrome.png
+- assets/images/arc.png -> client/assets/images/arc.png
+- assets/images/badge.png -> client/assets/images/badge.png
+- assets/images/basic_details_bg.jpg -> client/assets/images/basic_details_bg.jpg
+- assets/images/bg_pattern.png -> client/assets/images/bg_pattern.png
+- assets/images/center.png -> client/assets/images/center.png
+- assets/images/check.png -> client/assets/images/check.png
+- assets/images/common_bgpage.png -> client/assets/images/common_bgpage.png
+- assets/images/dashbg.png -> client/assets/images/dashbg.png
+- assets/images/dietheader.png -> client/assets/images/dietheader.png
+- assets/images/doubletick.png -> client/assets/images/doubletick.png
+- assets/images/family.png -> client/assets/images/family.png
+- assets/images/favicon.png -> client/assets/images/favicon.png
+- assets/images/google.png -> client/assets/images/google.png
+- assets/images/high.png -> client/assets/images/high.png
+- assets/images/icon.png -> client/assets/images/icon.png
+- assets/images/immunity/appetite1.png -> client/assets/images/immunity/appetite1.png
+- assets/images/immunity/appetite2.png -> client/assets/images/immunity/appetite2.png
+- assets/images/immunity/appetite3.png -> client/assets/images/immunity/appetite3.png
+- assets/images/immunity/bloating1.png -> client/assets/images/immunity/bloating1.png
+- assets/images/immunity/bloating2.png -> client/assets/images/immunity/bloating2.png
+- assets/images/immunity/bloating3.png -> client/assets/images/immunity/bloating3.png
+- assets/images/immunity/breathing1.png -> client/assets/images/immunity/breathing1.png
+- assets/images/immunity/breathing2.png -> client/assets/images/immunity/breathing2.png
+- assets/images/immunity/breathing3.png -> client/assets/images/immunity/breathing3.png
+- assets/images/immunity/burning1.png -> client/assets/images/immunity/burning1.png
+- assets/images/immunity/burning2.png -> client/assets/images/immunity/burning2.png
+- assets/images/immunity/burning3.png -> client/assets/images/immunity/burning3.png
+- assets/images/immunity/digestion1.png -> client/assets/images/immunity/digestion1.png
+- assets/images/immunity/digestion2.png -> client/assets/images/immunity/digestion2.png
+- assets/images/immunity/digestion3.png -> client/assets/images/immunity/digestion3.png
+- assets/images/immunity/digestion3.svg -> client/assets/images/immunity/digestion3.svg
+- assets/images/immunity/emoji.zip -> client/assets/images/immunity/emoji.zip
+- "assets/images/immunity/emoji/Untitled-1 11.png" -> "client/assets/images/immunity/emoji/Untitled-1 11.png"
+- "assets/images/immunity/emoji/Untitled-1 12.png" -> "client/assets/images/immunity/emoji/Untitled-1 12.png"
+- "assets/images/immunity/emoji/Untitled-1 13.png" -> "client/assets/images/immunity/emoji/Untitled-1 13.png"
+- "assets/images/immunity/emoji/Untitled-1 14.png" -> "client/assets/images/immunity/emoji/Untitled-1 14.png"
+- "assets/images/immunity/emoji/Untitled-1 5.png" -> "client/assets/images/immunity/emoji/Untitled-1 5.png"
+- "assets/images/immunity/emoji/Untitled-1 6.png" -> "client/assets/images/immunity/emoji/Untitled-1 6.png"
+- "assets/images/immunity/emoji/Untitled-1 7.png" -> "client/assets/images/immunity/emoji/Untitled-1 7.png"
+- "assets/images/immunity/emoji/Untitled-1 8.png" -> "client/assets/images/immunity/emoji/Untitled-1 8.png"
+- "assets/images/immunity/emoji/Untitled-1 9.png" -> "client/assets/images/immunity/emoji/Untitled-1 9.png"
+- "assets/images/immunity/emoji/Untitled-2 10.png" -> "client/assets/images/immunity/emoji/Untitled-2 10.png"
+- "assets/images/immunity/emoji/Untitled-2 11.png" -> "client/assets/images/immunity/emoji/Untitled-2 11.png"
+- "assets/images/immunity/emoji/Untitled-2 12.png" -> "client/assets/images/immunity/emoji/Untitled-2 12.png"
+- "assets/images/immunity/emoji/Untitled-2 13.png" -> "client/assets/images/immunity/emoji/Untitled-2 13.png"
+- "assets/images/immunity/emoji/Untitled-2 14.png" -> "client/assets/images/immunity/emoji/Untitled-2 14.png"
+- "assets/images/immunity/emoji/Untitled-2 15.png" -> "client/assets/images/immunity/emoji/Untitled-2 15.png"
+- "assets/images/immunity/emoji/Untitled-2 3.png" -> "client/assets/images/immunity/emoji/Untitled-2 3.png"
+- "assets/images/immunity/emoji/Untitled-2 5.png" -> "client/assets/images/immunity/emoji/Untitled-2 5.png"
+- "assets/images/immunity/emoji/Untitled-2 7.png" -> "client/assets/images/immunity/emoji/Untitled-2 7.png"
+- "assets/images/immunity/emoji/Untitled-2 8.png" -> "client/assets/images/immunity/emoji/Untitled-2 8.png"
+- "assets/images/immunity/emoji/Untitled-2 9.png" -> "client/assets/images/immunity/emoji/Untitled-2 9.png"
+- "assets/images/immunity/emoji/Untitled-3 10.png" -> "client/assets/images/immunity/emoji/Untitled-3 10.png"
+- "assets/images/immunity/emoji/Untitled-3 12.png" -> "client/assets/images/immunity/emoji/Untitled-3 12.png"
+- "assets/images/immunity/emoji/Untitled-3 13.png" -> "client/assets/images/immunity/emoji/Untitled-3 13.png"
+- "assets/images/immunity/emoji/Untitled-3 14.png" -> "client/assets/images/immunity/emoji/Untitled-3 14.png"
+- "assets/images/immunity/emoji/Untitled-3 15.png" -> "client/assets/images/immunity/emoji/Untitled-3 15.png"
+- "assets/images/immunity/emoji/Untitled-3 2.png" -> "client/assets/images/immunity/emoji/Untitled-3 2.png"
+- "assets/images/immunity/emoji/Untitled-3 4.png" -> "client/assets/images/immunity/emoji/Untitled-3 4.png"
+- "assets/images/immunity/emoji/Untitled-3 5.png" -> "client/assets/images/immunity/emoji/Untitled-3 5.png"
+- "assets/images/immunity/emoji/Untitled-3 6.png" -> "client/assets/images/immunity/emoji/Untitled-3 6.png"
+- "assets/images/immunity/emoji/Untitled-3 9.png" -> "client/assets/images/immunity/emoji/Untitled-3 9.png"
+- "assets/images/immunity/emoji/Untitled-4 1.png" -> "client/assets/images/immunity/emoji/Untitled-4 1.png"
+- "assets/images/immunity/emoji/Untitled-5 1.png" -> "client/assets/images/immunity/emoji/Untitled-5 1.png"
+- assets/images/immunity/fever1.png -> client/assets/images/immunity/fever1.png
+- assets/images/immunity/fever2.png -> client/assets/images/immunity/fever2.png
+- assets/images/immunity/fever3.png -> client/assets/images/immunity/fever3.png
+- assets/images/immunity/hair1.png -> client/assets/images/immunity/hair1.png
+- assets/images/immunity/hair2.png -> client/assets/images/immunity/hair2.png
+- assets/images/immunity/hair3.png -> client/assets/images/immunity/hair3.png
+- assets/images/immunity/infection1.png -> client/assets/images/immunity/infection1.png
+- assets/images/immunity/infection2.png -> client/assets/images/immunity/infection2.png
+- assets/images/immunity/infection3.png -> client/assets/images/immunity/infection3.png
+- assets/images/immunity/lipid1.png -> client/assets/images/immunity/lipid1.png
+- assets/images/immunity/lipid2.png -> client/assets/images/immunity/lipid2.png
+- assets/images/immunity/lipid3.png -> client/assets/images/immunity/lipid3.png
+- assets/images/immunity/menstural1.png -> client/assets/images/immunity/menstural1.png
+- assets/images/immunity/menstural2.png -> client/assets/images/immunity/menstural2.png
+- assets/images/immunity/menstural3.png -> client/assets/images/immunity/menstural3.png
+- assets/images/immunity/physical1.png -> client/assets/images/immunity/physical1.png
+- assets/images/immunity/physical2.png -> client/assets/images/immunity/physical2.png
+- assets/images/immunity/physical3.png -> client/assets/images/immunity/physical3.png
+- assets/images/immunity/pressure1.png -> client/assets/images/immunity/pressure1.png
+- assets/images/immunity/pressure2.png -> client/assets/images/immunity/pressure2.png
+- assets/images/immunity/pressure3.png -> client/assets/images/immunity/pressure3.png
+- assets/images/immunity/sleep1.png -> client/assets/images/immunity/sleep1.png
+- assets/images/immunity/sleep2.png -> client/assets/images/immunity/sleep2.png
+- assets/images/immunity/sleep3.png -> client/assets/images/immunity/sleep3.png
+- assets/images/immunity/sleep4.png -> client/assets/images/immunity/sleep4.png
+- assets/images/immunity/swelling1.png -> client/assets/images/immunity/swelling1.png
+- assets/images/immunity/swelling2.png -> client/assets/images/immunity/swelling2.png
+- assets/images/immunity/swelling3.png -> client/assets/images/immunity/swelling3.png
+- assets/images/low.png -> client/assets/images/low.png
+- assets/images/medha_logo.png -> client/assets/images/medha_logo.png
+- assets/images/mixed_diet.png -> client/assets/images/mixed_diet.png
+- assets/images/models/adviceimg.png -> client/assets/images/models/adviceimg.png
+- assets/images/needle.png -> client/assets/images/needle.png
+- assets/images/nonveg.png -> client/assets/images/nonveg.png
+- assets/images/normal.png -> client/assets/images/normal.png
+- assets/images/partial-react-logo.png -> client/assets/images/partial-react-logo.png
+- assets/images/privacy-policy-hero.jpg -> client/assets/images/privacy-policy-hero.jpg
+- assets/images/process_emoji/bad.png -> client/assets/images/process_emoji/bad.png
+- assets/images/process_emoji/normal.png -> client/assets/images/process_emoji/normal.png
+- assets/images/process_emoji/verybad.png -> client/assets/images/process_emoji/verybad.png
+- assets/images/profile.png -> client/assets/images/profile.png
+- assets/images/react-logo.png -> client/assets/images/react-logo.png
+- assets/images/react-logo@2x.png -> client/assets/images/react-logo@2x.png
+- assets/images/react-logo@3x.png -> client/assets/images/react-logo@3x.png
+- assets/images/report/cardiology1.png -> client/assets/images/report/cardiology1.png
+- assets/images/report/digestive1.png -> client/assets/images/report/digestive1.png
+- assets/images/report/hexagon1.png -> client/assets/images/report/hexagon1.png
+- assets/images/report/lighting1.png -> client/assets/images/report/lighting1.png
+- assets/images/report/protection1.png -> client/assets/images/report/protection1.png
+- assets/images/report/respiratory1.png -> client/assets/images/report/respiratory1.png
+- assets/images/splash-icon.png -> client/assets/images/splash-icon.png
+- assets/images/veg.png -> client/assets/images/veg.png
+- assets/images/vegan.png -> client/assets/images/vegan.png
+- assets/images/very-high.png -> client/assets/images/very-high.png
+- assets/images/very-low.png -> client/assets/images/very-low.png
+- babel.config.js -> client/babel.config.js
+- components/BottomNav.tsx -> client/components/BottomNav.tsx
+- components/Clipperbg.tsx -> client/components/Clipperbg.tsx
+- components/CustomBottomNav.tsx -> client/components/CustomBottomNav.tsx
+- components/GoogleSignInButton.tsx -> client/components/GoogleSignInButton.tsx
+- components/HeaderBackButton.tsx -> client/components/HeaderBackButton.tsx
+- components/ScreenNav.tsx -> client/components/ScreenNav.tsx
+- components/Svgspeedometer.tsx -> client/components/Svgspeedometer.tsx
+- components/WelcomeScreen.tsx -> client/components/WelcomeScreen.tsx
+- components/WellnessDisclaimer.tsx -> client/components/WellnessDisclaimer.tsx
+- components/external-link.tsx -> client/components/external-link.tsx
+- components/haptic-tab.tsx -> client/components/haptic-tab.tsx
+- components/hello-wave.tsx -> client/components/hello-wave.tsx
+- components/parallax-scroll-view.tsx -> client/components/parallax-scroll-view.tsx
+- components/profile-screen.tsx -> client/components/profile-screen.tsx
+- components/themed-text.tsx -> client/components/themed-text.tsx
+- components/themed-view.tsx -> client/components/themed-view.tsx
+- components/ui/collapsible.tsx -> client/components/ui/collapsible.tsx
+- components/ui/icon-symbol.ios.tsx -> client/components/ui/icon-symbol.ios.tsx
+- components/ui/icon-symbol.tsx -> client/components/ui/icon-symbol.tsx
+- components/ui/liquid-glass-swipe-button.tsx -> client/components/ui/liquid-glass-swipe-button.tsx
+- constants/boosterStore.ts -> client/constants/boosterStore.ts
+- constants/theme.ts -> client/constants/theme.ts
+- dataconnect/README.md -> client/dataconnect/README.md
+- dataconnect/dataconnect.yaml -> client/dataconnect/dataconnect.yaml
+- dataconnect/mobile/connector.yaml -> client/dataconnect/mobile/connector.yaml
+- dataconnect/mobile/mutations.gql -> client/dataconnect/mobile/mutations.gql
+- dataconnect/mobile/queries.gql -> client/dataconnect/mobile/queries.gql
+- dataconnect/schema/schema.gql -> client/dataconnect/schema/schema.gql
+- docs/play-store-policy-audit.md -> client/docs/play-store-policy-audit.md
+- eas.json -> client/eas.json
+- eslint.config.js -> client/eslint.config.js
+- firebase.json -> client/firebase.json
+- firebase/authClient.native.ts -> client/firebase/authClient.native.ts
+- firebase/authClient.ts -> client/firebase/authClient.ts
+- firebase/authClient.types.ts -> client/firebase/authClient.types.ts
+- firebase/authClient.web.ts -> client/firebase/authClient.web.ts
+- firebase/dataConnect.ts -> client/firebase/dataConnect.ts
+- firebase/dataconnect-generated/.guides/config.json -> client/firebase/dataconnect-generated/.guides/config.json
+- firebase/dataconnect-generated/.guides/setup.md -> client/firebase/dataconnect-generated/.guides/setup.md
+- firebase/dataconnect-generated/.guides/usage.md -> client/firebase/dataconnect-generated/.guides/usage.md
+- firebase/dataconnect-generated/README.md -> client/firebase/dataconnect-generated/README.md
+- firebase/dataconnect-generated/esm/index.esm.js -> client/firebase/dataconnect-generated/esm/index.esm.js
+- firebase/dataconnect-generated/esm/package.json -> client/firebase/dataconnect-generated/esm/package.json
+- firebase/dataconnect-generated/index.cjs.js -> client/firebase/dataconnect-generated/index.cjs.js
+- firebase/dataconnect-generated/index.d.ts -> client/firebase/dataconnect-generated/index.d.ts
+- firebase/dataconnect-generated/package.json -> client/firebase/dataconnect-generated/package.json
+- firebase/firebaseConfig.ts -> client/firebase/firebaseConfig.ts
+- global.css -> client/global.css
+- hooks/use-color-scheme.ts -> client/hooks/use-color-scheme.ts
+- hooks/use-color-scheme.web.ts -> client/hooks/use-color-scheme.web.ts
+- hooks/use-patient-profile.ts -> client/hooks/use-patient-profile.ts
+- hooks/use-theme-color.ts -> client/hooks/use-theme-color.ts
+- metro.config.js -> client/metro.config.js
+- nativewind-env.d.ts -> client/nativewind-env.d.ts
+- package-lock.json -> client/package-lock.json
+- package.json -> client/package.json
+- play-store-metadata/app-description.md -> client/play-store-metadata/app-description.md
+- play-store-metadata/category.txt -> client/play-store-metadata/category.txt
+- play-store-metadata/release-notes.txt -> client/play-store-metadata/release-notes.txt
+- play-store-metadata/short-description.txt -> client/play-store-metadata/short-description.txt
+- providers/AuthProvider.tsx -> client/providers/AuthProvider.tsx
+- providers/CartProvider.tsx -> client/providers/CartProvider.tsx
+- scripts/patch-expo-android-adb.js -> client/scripts/patch-expo-android-adb.js
+- scripts/reset-project.js -> client/scripts/reset-project.js
+- services/accountDeletion.ts -> client/services/accountDeletion.ts
+- services/backend.ts -> client/services/backend.ts
+- services/healthAlerts.ts -> client/services/healthAlerts.ts
+- services/immunityScoring.ts -> client/services/immunityScoring.ts
+- services/medhaDataConnect.ts -> client/services/medhaDataConnect.ts
+- services/navigation.ts -> client/services/navigation.ts
+- services/openai.ts -> client/services/openai.ts
+- services/personalizedDiet.ts -> client/services/personalizedDiet.ts
+- services/profilePhoto.ts -> client/services/profilePhoto.ts
+- services/razorpayCheckout.ts -> client/services/razorpayCheckout.ts
+- services/storeApi.ts -> client/services/storeApi.ts
+- storage.rules -> client/storage.rules
+- tailwind.config.js -> client/tailwind.config.js
+- tsconfig.json -> client/tsconfig.json
+- types/assets.d.ts -> client/types/assets.d.ts
+- types/expo-router.d.ts -> client/types/expo-router.d.ts
+
+## Configuration changes
+
+- Added root package.json with workspace-style scripts delegating to client, admin, and backend.
+- Updated root .gitignore for client/, admin/, and backend/ env/build locations.
+- Moved Expo/Firebase client config into client/ alongside the Expo app.
+- Updated client/metro.config.js to remove missing root watch folders and resolve dependencies from client/node_modules in the monorepo layout.
+- Added semver to client dependencies for react-native-reanimated web bundling resolution.
+- Added client/scripts/patch-vector-icons-gradle.js and wired it into client postinstall to keep react-native-vector-icons on the local Android Gradle Plugin version instead of downloading AGP 7.0.4.
+- Added client/android/app/google-services.json from the Firebase values already present in client/app.json so Android debug builds can run from the new folder.
+- Moved local client .env to client/.env. Existing admin/backend env files remain inside admin/ and backend/.
+
+## Verification
+
+- PASS: npm --prefix client run lint completed with 0 errors and 6 existing warnings.
+- PASS: npm --prefix client start -- --port 8082 --offline started Metro from client/ and loaded client/.env.
+- PASS: client/android/gradlew.bat app:assembleDebug -x lint -x test --configure-on-demand --build-cache -PreactNativeDevServerPort=8081 -PreactNativeArchitectures=arm64-v8a completed successfully.
+- BLOCKED: admin cannot be started because admin/package.json and the tracked admin source files are deleted in the nested admin Git working tree.
+- BLOCKED: backend cannot be started because backend/package.json and the tracked backend source files are deleted in the nested backend Git working tree.
+
+## Notes
+
+- admin/ and backend/ preserve their nested .git directories. Their histories are still present, but their working trees currently show deleted files.
+- Existing deleted Gradle cache fragments under .gradle-local-* were left untouched.
