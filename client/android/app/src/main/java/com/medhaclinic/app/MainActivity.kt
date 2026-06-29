@@ -1,4 +1,4 @@
-package com.medhaclinic.app
+package com.savemedhafoundation.medhaclinic
 
 import android.os.Build
 import android.os.Bundle

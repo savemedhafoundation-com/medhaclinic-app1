@@ -104,9 +104,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.medhaclinic.app'
+    namespace 'com.savemedhafoundation.medhaclinic'
     defaultConfig {
-        applicationId 'com.medhaclinic.app'
+        applicationId 'com.savemedhafoundation.medhaclinic'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

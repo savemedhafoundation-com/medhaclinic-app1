@@ -2,11 +2,9 @@ import { getApp as getNativeApp } from '@react-native-firebase/app';
 import {
   type FirebaseAuthTypes,
   GoogleAuthProvider as NativeGoogleAuthProvider,
-  PhoneAuthProvider as NativePhoneAuthProvider,
   getAuth as getNativeAuth,
   onAuthStateChanged as onNativeAuthStateChanged,
   signInWithCredential as signInWithNativeCredential,
-  signInWithPhoneNumber as signInWithNativePhoneNumber,
   signOut as signOutFromNativeAuth,
 } from '@react-native-firebase/auth';
 import {
@@ -18,7 +16,6 @@ import {
 } from '@react-native-firebase/auth/lib/modular';
 import {
   GoogleAuthProvider,
-  PhoneAuthProvider as WebPhoneAuthProvider,
   signInWithCredential,
 } from 'firebase/auth';
 
@@ -28,7 +25,7 @@ import type {
   AppPhoneConfirmation,
   PendingPhoneVerification,
 } from './authClient.types';
-import { AsyncStorage, auth } from './firebaseConfig';
+import { AsyncStorage, auth, backendBaseUrl } from './firebaseConfig';
 
 type NativeUser = FirebaseAuthTypes.User;
 
@@ -46,12 +43,28 @@ const NATIVE_WEB_PROXY_MARKER = '__medhaNativeWebSdkProxyUser';
 const PENDING_PHONE_VERIFICATION_STORAGE_KEY =
   'medha_pending_phone_verification';
 const PENDING_PHONE_VERIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
+const TWILIO_AUTH_SESSION_STORAGE_KEY = 'medha_twilio_auth_session';
 
 type StoredPendingPhoneVerification = {
   createdAt: number;
   phoneNumber: string;
   verificationId: string;
 };
+
+type StoredTwilioAuthSession = {
+  token: string;
+  expiresAt: string;
+  user: {
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    phoneNumber: string | null;
+    photoURL: string | null;
+  };
+};
+
+let twilioAuthSession: StoredTwilioAuthSession | null = null;
+const twilioAuthListeners = new Set<(user: AppAuthUser | null) => void>();
 
 function getFirebaseErrorCode(error: unknown) {
   if (
@@ -94,6 +107,119 @@ function toAppAuthUser(nativeUser: NativeUser | null): NativeWrappedAppAuthUser 
   });
 
   return appUser;
+}
+
+function isTwilioSessionValid(session: StoredTwilioAuthSession | null) {
+  return Boolean(
+    session?.token &&
+      session.expiresAt &&
+      new Date(session.expiresAt).getTime() > Date.now()
+  );
+}
+
+function toTwilioAppAuthUser(
+  session: StoredTwilioAuthSession | null
+): AppAuthUser | null {
+  if (!isTwilioSessionValid(session)) {
+    return null;
+  }
+
+  return {
+    uid: session!.user.uid,
+    displayName: session!.user.displayName,
+    email: session!.user.email,
+    phoneNumber: session!.user.phoneNumber,
+    photoURL: session!.user.photoURL,
+    getIdToken: async () => session!.token,
+  };
+}
+
+async function readTwilioAuthSession() {
+  if (isTwilioSessionValid(twilioAuthSession)) {
+    return twilioAuthSession;
+  }
+
+  const rawValue = await AsyncStorage.getItem(TWILIO_AUTH_SESSION_STORAGE_KEY);
+
+  if (!rawValue) {
+    twilioAuthSession = null;
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as StoredTwilioAuthSession;
+
+    if (!isTwilioSessionValid(parsed)) {
+      await AsyncStorage.removeItem(TWILIO_AUTH_SESSION_STORAGE_KEY);
+      twilioAuthSession = null;
+      return null;
+    }
+
+    twilioAuthSession = parsed;
+    return parsed;
+  } catch (error) {
+    console.log('[AuthClient] Twilio auth session read note:', error);
+    await AsyncStorage.removeItem(TWILIO_AUTH_SESSION_STORAGE_KEY);
+    twilioAuthSession = null;
+    return null;
+  }
+}
+
+async function saveTwilioAuthSession(session: StoredTwilioAuthSession) {
+  twilioAuthSession = session;
+  await AsyncStorage.setItem(
+    TWILIO_AUTH_SESSION_STORAGE_KEY,
+    JSON.stringify(session)
+  );
+}
+
+async function clearTwilioAuthSession() {
+  twilioAuthSession = null;
+  await AsyncStorage.removeItem(TWILIO_AUTH_SESSION_STORAGE_KEY);
+}
+
+function notifyTwilioAuthListeners() {
+  const user = toTwilioAppAuthUser(twilioAuthSession);
+
+  for (const listener of twilioAuthListeners) {
+    listener(user);
+  }
+}
+
+async function requestPhoneAuthBackend<T>(
+  path: '/v1/auth/send-otp' | '/v1/auth/verify-otp',
+  body: Record<string, unknown>
+) {
+  if (!backendBaseUrl) {
+    throw new Error(
+      'Backend URL is not configured. Set EXPO_PUBLIC_BACKEND_URL before using phone sign-in.'
+    );
+  }
+
+  const response = await fetch(`${backendBaseUrl}${path}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  const responseText = await response.text();
+  const payload = responseText ? (JSON.parse(responseText) as unknown) : null;
+
+  if (!response.ok) {
+    const message =
+      payload &&
+      typeof payload === 'object' &&
+      'message' in payload &&
+      typeof payload.message === 'string'
+        ? payload.message
+        : `Phone authentication failed with status ${response.status}.`;
+
+    throw new Error(message);
+  }
+
+  return payload as T;
 }
 
 function unwrapNativeUser(currentUser?: AppAuthUser | null) {
@@ -409,74 +535,65 @@ function trackDataConnectAuthSync<T>(work: () => Promise<T>) {
   return task;
 }
 
-async function confirmNativePhoneVerificationCode(
-  verificationId: string,
+async function confirmTwilioPhoneVerificationCode(
+  phoneNumber: string,
   code: string
 ) {
-  const nativeCredential = NativePhoneAuthProvider.credential(
-    verificationId,
-    code
-  );
-  const webCredential = WebPhoneAuthProvider.credential(verificationId, code);
+  const response = await requestPhoneAuthBackend<{
+    data?: {
+      token?: string;
+      expiresAt?: string;
+      user?: {
+        uid?: string;
+        displayName?: string | null;
+        email?: string | null;
+        phoneNumber?: string | null;
+        photoURL?: string | null;
+      };
+    };
+  }>('/v1/auth/verify-otp', {
+    phoneNumber,
+    code,
+  });
+  const data = response.data;
 
-  const [nativeResult, webResult] = await Promise.allSettled([
-    signInWithNativeCredential(nativeAuth, nativeCredential),
-    signInWithCredential(auth, webCredential),
-  ]);
-
-  if (nativeResult.status === 'rejected') {
-    await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
-    throw nativeResult.reason as Error;
+  if (!data?.token || !data.expiresAt || !data.user?.uid) {
+    throw new Error('Phone sign-in did not return a valid app session.');
   }
 
-  const nativeCredentialResult = nativeResult.value as
-    | FirebaseAuthTypes.UserCredential
-    | null;
+  const session: StoredTwilioAuthSession = {
+    token: data.token,
+    expiresAt: data.expiresAt,
+    user: {
+      uid: data.user.uid,
+      displayName: data.user.displayName ?? null,
+      email: data.user.email ?? null,
+      phoneNumber: data.user.phoneNumber ?? phoneNumber,
+      photoURL: data.user.photoURL ?? null,
+    },
+  };
 
-  if (!nativeCredentialResult?.user) {
-    await Promise.allSettled([auth.signOut(), signOutFromNativeAuth(nativeAuth)]);
-    throw new Error(
-      'Phone sign-in finished on the device, but the Firebase app session could not be synced. Please request a new OTP and try again.'
-    );
-  }
-
-  if (webResult.status === 'rejected') {
-    const webError = webResult.reason as { code?: string } | Error;
-    console.log(
-      '[AuthClient] Web SDK phone auth sync note - injecting proxy user:',
-      (webError as { code?: string }).code ?? webError
-    );
-    lastKnownNativeUser = nativeCredentialResult.user;
-    syncWebSdkFromNativeUser(
-      nativeAuth.currentUser ?? nativeCredentialResult.user
-    );
-  }
-
+  await saveTwilioAuthSession(session);
   await clearPendingPhoneVerificationStorage();
+  await signOutFromNativeAuth(nativeAuth).catch(() => null);
+  await auth.signOut().catch(() => null);
+  notifyTwilioAuthListeners();
 
   return {
-    user: toAppAuthUser(nativeCredentialResult.user)!,
+    user: toTwilioAppAuthUser(session)!,
   } satisfies AppAuthUserCredential;
 }
 
-function createPhoneConfirmation(verificationId: string | null) {
+function createTwilioPhoneConfirmation(phoneNumber: string) {
   return {
     async confirm(code: string) {
-      return trackDataConnectAuthSync(async () => {
-        if (!verificationId) {
-          throw new Error(
-            'Verification session is invalid. Please request a new OTP and try again.'
-          );
-        }
-
-        return confirmNativePhoneVerificationCode(verificationId, code);
-      });
+      return confirmTwilioPhoneVerificationCode(phoneNumber, code);
     },
   } satisfies AppPhoneConfirmation;
 }
 
 export function getCurrentAuthUser() {
-  return toAppAuthUser(nativeAuth.currentUser);
+  return toAppAuthUser(nativeAuth.currentUser) ?? toTwilioAppAuthUser(twilioAuthSession);
 }
 
 async function ensureDataConnectAuthReadyInternal(
@@ -543,6 +660,20 @@ export async function ensureDataConnectAuthReady(
 export async function updateCurrentUserPhotoUrl(photoUrl: string) {
   const currentUser = nativeAuth.currentUser;
 
+  if (!currentUser && isTwilioSessionValid(twilioAuthSession)) {
+    const nextSession: StoredTwilioAuthSession = {
+      ...twilioAuthSession!,
+      user: {
+        ...twilioAuthSession!.user,
+        photoURL: photoUrl,
+      },
+    };
+
+    await saveTwilioAuthSession(nextSession);
+    notifyTwilioAuthListeners();
+    return toTwilioAppAuthUser(nextSession)!;
+  }
+
   if (!currentUser) {
     throw new Error('Please sign in again before updating your profile photo.');
   }
@@ -560,7 +691,14 @@ export async function updateCurrentUserPhotoUrl(photoUrl: string) {
 export function subscribeToAuthChanges(
   callback: (user: AppAuthUser | null) => void
 ) {
-  return onNativeAuthStateChanged(nativeAuth, user => {
+  twilioAuthListeners.add(callback);
+  void readTwilioAuthSession().then(session => {
+    if (!nativeAuth.currentUser) {
+      callback(toTwilioAppAuthUser(session));
+    }
+  });
+
+  const unsubscribe = onNativeAuthStateChanged(nativeAuth, user => {
     lastKnownNativeUser = user;
 
     if (!user) {
@@ -576,10 +714,18 @@ export function subscribeToAuthChanges(
 
     if (user) {
       clearPendingPhoneVerificationStorageLater();
+      void clearTwilioAuthSession().catch(error => {
+        console.log('[AuthClient] Twilio session clear after native sign-in note:', error);
+      });
     }
 
-    callback(toAppAuthUser(user));
+    callback(toAppAuthUser(user) ?? toTwilioAppAuthUser(twilioAuthSession));
   });
+
+  return () => {
+    twilioAuthListeners.delete(callback);
+    unsubscribe();
+  };
 }
 
 export async function signInWithGoogleIdToken(idToken: string) {
@@ -624,17 +770,10 @@ export async function sendPhoneVerificationCode(
   await clearPendingPhoneVerificationStorage();
 
   try {
-    const confirmation = await signInWithNativePhoneNumber(
-      nativeAuth,
-      phoneNumber
-    );
-    const verificationId = confirmation.verificationId;
+    await requestPhoneAuthBackend('/v1/auth/send-otp', { phoneNumber });
+    await persistPendingPhoneVerification(phoneNumber, 'twilio');
 
-    if (verificationId) {
-      await persistPendingPhoneVerification(phoneNumber, verificationId);
-    }
-
-    return createPhoneConfirmation(verificationId);
+    return createTwilioPhoneConfirmation(phoneNumber);
   } catch (error) {
     await clearPendingPhoneVerificationStorage();
     throw error;
@@ -654,19 +793,24 @@ export async function getPendingPhoneVerification(): Promise<PendingPhoneVerific
   }
 
   return {
-    confirmation: createPhoneConfirmation(pendingVerification.verificationId),
+    confirmation: createTwilioPhoneConfirmation(pendingVerification.phoneNumber),
     phoneNumber: pendingVerification.phoneNumber,
   };
 }
 
 export async function signOutFromAuth() {
   syncWebSdkFromNativeUser(null);
-  await Promise.allSettled([signOutFromNativeAuth(nativeAuth), auth.signOut()]);
+  await Promise.allSettled([
+    signOutFromNativeAuth(nativeAuth),
+    auth.signOut(),
+    clearTwilioAuthSession(),
+  ]);
   await clearPendingPhoneVerificationStorage();
   pendingDataConnectAuthSync = null;
   pendingWebSdkSignIn = null;
   suppressWebSdkProxyInjection = false;
   lastKnownNativeUser = null;
+  notifyTwilioAuthListeners();
 }
 
 export function resetPhoneAuthFlow() {

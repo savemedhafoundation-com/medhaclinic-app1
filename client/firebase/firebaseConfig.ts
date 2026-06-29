@@ -2,11 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
-  type ConfirmationResult,
   GoogleAuthProvider,
-  RecaptchaVerifier,
   getAuth,
-  signInWithPhoneNumber,
   signInWithCredential,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -167,9 +164,6 @@ export const storage = getStorage(
 export {
   AsyncStorage,
   GoogleAuthProvider,
-  RecaptchaVerifier,
   signInWithCredential,
-  signInWithPhoneNumber,
 };
-export type { ConfirmationResult };
 export const db = getFirestore(firebaseApp);

@@ -31,7 +31,7 @@ Not positioned as: medical, diagnostic, clinical, treatment-oriented, prescripti
 ## Safe Findings
 
 - Android permissions are minimal: INTERNET and VIBRATE. Storage/system-alert-window permissions are explicitly removed from the main manifest.
-- Android applicationId remains com.medhaclinic.app to preserve Firebase and Play Store identity.
+- Android applicationId is com.savemedhafoundation.medhaclinic for the new Play Store listing.
 - Deep link schemes remain unchanged to avoid breaking existing app links.
 - No iOS project or fastlane metadata was found in this repository.
 - Location/photo permission prompts in app.json are purpose-limited to delivery address assistance and profile photo upload. Main AndroidManifest does not request location, camera, microphone, advertising ID, or health data permissions.
