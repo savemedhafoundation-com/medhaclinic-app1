@@ -189,20 +189,20 @@ export default function BoosterOrderSectionScreen() {
             <View style={styles.quantityPill}>
               <TouchableOpacity
                 activeOpacity={0.86}
-                onPress={increaseQuantity}
+                onPress={decreaseQuantity}
                 style={styles.quantityButton}
               >
-                <Ionicons name="add" size={16} color="#117D07" />
+                <Ionicons name="remove" size={16} color="#117D07" />
               </TouchableOpacity>
 
               <Text style={styles.quantityText}>{quantity}</Text>
 
               <TouchableOpacity
                 activeOpacity={0.86}
-                onPress={decreaseQuantity}
+                onPress={increaseQuantity}
                 style={styles.quantityButton}
               >
-                <Ionicons name="remove" size={16} color="#117D07" />
+                <Ionicons name="add" size={16} color="#117D07" />
               </TouchableOpacity>
             </View>
           </View>

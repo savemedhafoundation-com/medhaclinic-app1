@@ -10,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../components/ScreenNav';
-import WellnessDisclaimer from '../components/WellnessDisclaimer';
 import { goBackOrReplace } from '../services/navigation';
 
 const leaderImage = require('../assets/images/Mask group.png');
@@ -174,7 +173,6 @@ export default function AboutScreen() {
           </Text>
         </View>
 
-        <WellnessDisclaimer className="mt-5" />
       </ScrollView>
     </SafeAreaView>
   );

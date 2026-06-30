@@ -8,7 +8,6 @@ import {
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { goBackOrReplace } from '../../services/navigation';
 
@@ -74,8 +73,6 @@ export default function WeeklyImmunityReport() {
             resilience patterns. Most lifestyle signals appear supportive or
             improving based on the answers shared this week.
           </Text>
-
-          <WellnessDisclaimer className="mb-10" />
 
           <View className="items-center mb-12">
             <Ionicons name="checkmark-circle" size={56} color="#1fa2ff" />

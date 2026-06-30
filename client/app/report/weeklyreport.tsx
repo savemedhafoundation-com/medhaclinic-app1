@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from "../../components/ScreenNav";
-import WellnessDisclaimer from "../../components/WellnessDisclaimer";
 import { usePatientProfile } from "../../hooks/use-patient-profile";
 import {
   buildAndStoreWeeklyReport,
@@ -326,8 +325,6 @@ export default function WeeklyReportScreen() {
         </Text>
         <Text className="text-gray-500 text-center mt-2">{error}</Text>
 
-        <WellnessDisclaimer className="mt-5" />
-
         <TouchableOpacity
           onPress={fetchWeeklyReport}
           className="mt-6 bg-[#166534] px-6 py-3 rounded-full"
@@ -499,8 +496,6 @@ export default function WeeklyReportScreen() {
         <Text className="text-center text-gray-500 text-[14px] mt-6 font-medium">
           {encouragementText}
         </Text>
-
-        <WellnessDisclaimer className="mx-5 mt-5" />
 
         <TouchableOpacity
           activeOpacity={0.85}

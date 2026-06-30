@@ -3,7 +3,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { goBackOrReplace } from '../../services/navigation';
 
 type Params = {
@@ -53,8 +52,6 @@ export default function WellnessSummaryScreen() {
             {resolvedImmunity}
           </Text>
         </View>
-
-        <WellnessDisclaimer className="mt-5" />
 
         <TouchableOpacity
           className="mt-8 bg-[#0B4F8A] py-4 rounded-[30px] items-center"

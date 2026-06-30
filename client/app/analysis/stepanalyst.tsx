@@ -13,7 +13,6 @@ import { goBackOrReplace } from '../../services/navigation';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 
 // IMAGES
 const digestionImg = require('../../assets/images/analysis/digestion.png');
@@ -45,8 +44,6 @@ export default function AnalysisRecommendationScreen() {
           <Text className="text-gray-700 text-center mt-4 text-[15px] leading-5">
             Based on what you shared,{'\n'}here are your Personal Wellness Insights.
           </Text>
-
-          <WellnessDisclaimer className="mt-5" />
 
           {/* PROGRESS */}
           <View className="mt-6">

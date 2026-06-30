@@ -20,7 +20,6 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../providers/AuthProvider';
-import WellnessDisclaimer from '../components/WellnessDisclaimer';
 
 const patternImage = require('../assets/images/bg_pattern.png');
 const backgroundImage = require('../assets/images/common_bgpage.png');
@@ -401,10 +400,6 @@ export default function LoginScreen() {
                 />
               ) : null}
 
-              <WellnessDisclaimer
-                className="mt-4 bg-white/90"
-                textClassName="text-center"
-              />
             </View>
 
           </View>

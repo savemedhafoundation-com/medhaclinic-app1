@@ -24,7 +24,6 @@ import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
 import ReportAiOutputButton from '../../components/ReportAiOutputButton';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import { goBackOrReplace } from '../../services/navigation';
@@ -519,8 +518,6 @@ Provide ONLY 3 short paragraphs for a wellness-summary tone. Use lifestyle-focus
             </>
           )}
         </View>
-
-        <WellnessDisclaimer className="mx-5 mt-5" />
 
         <View className="items-center mt-10">
           <View className="bg-[#16a34a] w-[56px] h-[56px] rounded-full items-center justify-center">

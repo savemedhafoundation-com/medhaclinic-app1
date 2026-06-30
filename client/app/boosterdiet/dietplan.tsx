@@ -27,7 +27,6 @@ import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
 import ReportAiOutputButton from '../../components/ReportAiOutputButton';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { usePatientProfile } from '../../hooks/use-patient-profile';
 import { useAuth } from '../../providers/AuthProvider';
 import {
@@ -453,8 +452,6 @@ export default function BoosterDietScreen() {
                 'Your plan will focus on practical meals, hydration, and simple routine support that match the inputs you just shared.'}
             </Text>
           </View>
-
-          <WellnessDisclaimer className="mt-4" />
 
           {state.loading ? (
             <View style={styles.loadingCard}>

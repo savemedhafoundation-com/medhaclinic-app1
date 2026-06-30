@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import ScreenNav, {
   SCREEN_NAV_CONTENT_PADDING_TOP,
 } from '../../components/ScreenNav';
-import WellnessDisclaimer from '../../components/WellnessDisclaimer';
 import { goBackOrReplace } from '../../services/navigation';
 
 export default function MonthlyReportScreen() {
@@ -35,8 +34,6 @@ export default function MonthlyReportScreen() {
             This screen is ready as a valid Expo Router route. You can plug in the full
             monthly wellness summary experience here next.
           </Text>
-
-          <WellnessDisclaimer className="mt-6 max-w-[320px]" />
 
           <TouchableOpacity
             activeOpacity={0.9}
